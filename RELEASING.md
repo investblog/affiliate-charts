@@ -26,6 +26,17 @@ slots-lite's RELEASING.md; the short form:
    run exits green on the duplicate check), delete the `NPM_TOKEN` secret, revoke the token on
    npmjs.com, delete `bootstrap-publish.yml`.
 
+**Done on 2026-10-08:** `affiliate-charts@0.1.0` published by the bootstrap workflow with provenance;
+the `NPM_TOKEN` secret and `bootstrap-publish.yml` were removed the same day. Two things seen on the way,
+for the next library:
+
+- The client printed `+ affiliate-charts@0.1.0` while the registry listed only a `0.0.0-stage`
+  version for about two minutes; `0.1.0` and `latest` then appeared. `0.0.0-stage` stays in the version
+  list as a trace of the first publish; `latest` never pointed at it.
+- A secret's value cannot be copied between repositories. An older `NPM_TOKEN` left in another
+  repository was tried from a throwaway branch there and failed `404 Not Found - PUT` (no rights): a
+  token of months ago is not a bootstrap path.
+
 ## Every later release
 
 ```sh

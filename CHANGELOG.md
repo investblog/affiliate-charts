@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 — unreleased
+## 0.1.0 — 2026-10-08
 
 - The core (`charts.js`): the shared SVG builder, an OKLCH palette fitted to a light or dark surface,
   `init` and `palette`.

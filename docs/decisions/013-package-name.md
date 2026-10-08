@@ -42,3 +42,8 @@ User decision, 2026-10-08: the package and the repository are **`affiliate-chart
 - Imports read `affiliate-charts/charts-funnel.js`.
 - The local folder `C:\projects\libs\charts-lite` keeps its name for now; the repository name is what
   the public sees.
+
+## Addendum (2026-10-08) — accepted at the publish
+
+npm accepted `affiliate-charts` at the first publish: `affiliate-charts@0.1.0`, `latest`, with a
+verified provenance attestation. The scoped fallback is not needed.
