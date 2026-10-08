@@ -10,10 +10,11 @@ project: charts-lite
 Docs for developers and agents. `index.html` is the playground, `test/verify.html` the browser
 gate, `test/*.test.mjs` the Node gate. Contract-first: change the doc here **before** the code.
 
-**Status (2026-10-08): M2 done — the funnel is drawn (three forms, base and earned, losses, negative
-values) and checked on the playground in Chromium, Firefox and WebKit at 375 and 1280 px; ADRs 009–011
-record the layout and palette. Its drawing has no Node tests or mutations yet — M3 adds them and the
-browser gate. M1 (the contract and input validation) is behind it.** Scope:
+**Status (2026-10-08): M3 done — core + funnel ready for 0.1.0, not yet published (M5).** The funnel
+(three forms, base and earned, losses, negative values, gaps) passes the Node tests, the typecheck, the
+Vite bundle gate and the browser gate (Chromium, Firefox, WebKit at 375 and 1280 px under
+`default-src 'self'`); every Node, type, bundle and browser check has been seen red under mutation.
+Budgets frozen (ADR 012): core 2344/2432 B, funnel 2003/2176 B. Next: M4, the first consumer. Scope:
 **a chart library for affiliate programmes** — the forms a partner cabinet uses to show traffic,
 conversions and money to a partner. Numbers marked *provisional* are forecasts, not measurements;
 each names the milestone that replaces it. Keep this line true at every milestone.
@@ -163,16 +164,19 @@ interface FunnelOptions extends Common {
 - **Base and earned** are a pair inside one step's row: the base bar (light) with the earned bar
   (solid) directly below it, both from the zero line, never nested — a CPA payout can exceed the
   deposit it was paid for. `earned` on a `part` step is drawn on the same scale and implies nothing
-  about its parent's earned value.
+  about its parent's earned value. In a chart where any step has `earned`, every base bar is light,
+  including a step without `earned` — a solid bar always means "earned", as the legend says.
 - Bars scale to the largest |value| on the chart, never to a sum; `part` steps never stack; a zero
-  value draws a zero-length bar with its label; a step the caller omits is not drawn.
+  value keeps its row, label and value but draws no bar; a step the caller omits is not drawn.
 - Forms: `bars` (default); `steps` — the `rate` chips emphasised and, behind each main bar, a faint
-  ghost of the previous main value (the drop-off read); `shape` — the classic funnel as **centred
+  ghost of the previous main value in the same block (the drop-off read; none after a `gap`, which
+  starts a base of another kind, and none when that value is not positive); `shape` — the classic funnel as **centred
   rectangles** whose width is the value, labels and values on the label line. Trapezoids are not
   drawn: their slanted edges would show values that do not exist. Row anatomy in pixels: ADR 010.
 - Class hooks: `-bar`, `-bar-earned`, `-bar-part`, `-bar-loss`, `-bar-ghost`, `-rate`, plus the core's
   `-label`, `-value`, `-legend`, `-grid` (separators), `-axis` (the zero line).
-- Throws: no steps or no main step; `earned` without a two-string `legend`; a `rate` that is not a
+- Throws: `steps` that is not an array, no steps or no main step; values whose range overflows a
+  number; `earned` without a `legend` array of two strings; a `rate` that is not a
   string, `null` or absent; a `part` step first or inside losses; a main step after
   a losses step; `gap` on a `part` step; `shape` with `earned`, `part`, losses or a negative value.
 - Allowed: `earned` on a losses step (a cancelled commission); a funnel of one step.

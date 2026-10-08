@@ -22,10 +22,10 @@
 	// every rule the spec lists under *Throws*; the library never repairs data. Returns the fields the
 	// chart draws, in a fixed order — the key its ids are derived from (ADR 003).
 	function check(steps, opts) {
-		steps = steps || []; // no steps at all fails below as "no main step"
+		if (!Array.isArray(steps)) fail('`steps` must be an array');
 		if (opts.form != null && opts.form !== 'bars' && opts.form !== 'steps' && opts.form !== 'shape') fail('unknown form');
-		var shape = opts.form === 'shape', losses = false, main = 0, legend = opts.legend, key = [];
-		if (legend != null && !(legend.length === 2 && typeof legend[0] === 'string' && typeof legend[1] === 'string')) fail('`legend` must be two strings');
+		var shape = opts.form === 'shape', losses = false, main = 0, legend = opts.legend, key = [], lo = 0, hi = 0;
+		if (legend != null && !(Array.isArray(legend) && legend.length === 2 && typeof legend[0] === 'string' && typeof legend[1] === 'string')) fail('`legend` must be two strings');
 		for (var i = 0; i < steps.length; i++) {
 			var s = steps[i] || {}, at = 'step ' + i, row = [_.str(s.label, at + ' label')].concat(bar(s, at));
 			if (s.earned) {
@@ -45,9 +45,13 @@
 				if (shape) fail('`shape` cannot draw `part`');
 			}
 			if (shape && s.value < 0) fail('`shape` cannot draw a negative value');
+			lo = Math.min(lo, s.value, s.earned ? s.earned.value : 0);
+			hi = Math.max(hi, s.value, s.earned ? s.earned.value : 0);
 			key.push(row.concat([!!s.part, s.group === 'losses', !!s.gap, s.rate]));
+			if (s.earned) key.earned = true;
 		}
 		if (!main) fail('no main step');
+		if (!isFinite(hi - lo)) fail('values too far apart to share a scale');
 		return key;
 	}
 
@@ -60,7 +64,7 @@
 	var NARROW = 343, GLYPH = 8;
 	var DASH = '—', DOWN = '↓ ';
 
-	function draw(steps, opts) {
+	function draw(steps, opts, earned) {
 		var p = opts.classPrefix || 'chart', form = opts.form || 'bars', pal = _.palette(opts.brand, opts.theme);
 		var lo = 0, hi = 0, prev = null, y = 0, out = '', marks = '', i, s;
 		for (i = 0; i < steps.length; i++) {
@@ -69,7 +73,7 @@
 			hi = Math.max(hi, s.value, s.earned ? s.earned.value : 0);
 		}
 		var range = hi - lo || 1, z = -lo / range * 100;
-		if (opts.legend && steps.some(function (st) { return st.earned; })) {
+		if (earned) {
 			var lg = _.legend(p, [[opts.legend[0], pal.solid, pal.opacity], [opts.legend[1], pal.solid, 1]], 0);
 			out += lg.svg;
 			y = lg.h + 8;
@@ -95,7 +99,10 @@
 			var chars = s.label.length + (s.part ? 2 : 0) + s.display.length + (s.earned ? s.earned.display.length + 3 : 0) + 2;
 			// a label longer than the narrow width holds is cut with an ellipsis; the row's <title> keeps it whole
 			var max = Math.floor(NARROW / GLYPH) - (s.part ? 2 : 0);
-			var label = s.label.length > max ? s.label.slice(0, max - 1) + '…' : s.label;
+			var cut = max - 1, c = s.label.charCodeAt(cut - 1);
+			// never between the halves of a surrogate pair: an emoji is dropped whole (ADR 010 addendum)
+			if (c >= 0xD800 && c <= 0xDBFF) cut--;
+			var label = s.label.length > max ? s.label.slice(0, cut) + '…' : s.label;
 			row += _.el('text', ['class', p + '-label', 'x', s.part ? INDENT : 0, 'y', y + 13], _.esc(label));
 			if (chars * GLYPH > NARROW) y += LINE;
 			row += _.el('text', ['class', p + '-value', 'x', '100%', 'y', y + 13, 'text-anchor', 'end'], valText);
@@ -103,10 +110,13 @@
 			var h = form === 'shape' ? SHAPE : s.part ? PART : BAR, top = y;
 			var cls = p + (loss ? '-bar-loss' : s.part ? '-bar-part' : '-bar');
 			var fill = loss ? 'currentColor' : pal.solid;
-			if (form === 'steps' && prev && !s.part && !loss) {
-				row += _.bar(z, Math.max(prev.value, 0) / range * 100, y, h, 'currentColor', 0.12, p + '-bar-ghost', false);
+			// the ghost belongs to a block: a gap starts a base of another kind (ADR 010 addendum)
+			if (s.gap) prev = null;
+			if (form === 'steps' && prev && prev.value > 0 && !s.part && !loss) {
+				row += _.bar(z, prev.value / range * 100, y, h, 'currentColor', 0.12, p + '-bar-ghost', false);
 			}
-			row += mark(s.value, y, h, fill, loss ? 0.35 : s.earned ? pal.opacity : 1, cls);
+			// in a chart with earned anywhere, a solid bar always means "earned", as the legend says
+			row += mark(s.value, y, h, fill, loss ? 0.35 : earned ? pal.opacity : 1, cls);
 			y += h;
 			if (s.earned) {
 				y += 2;
@@ -135,9 +145,10 @@
 
 	return function funnel(steps, options) {
 		var opts = _.common(options);
-		var key = check(steps, opts);
-		key.push([opts.form || 'bars', opts.legend || null, opts.title, opts.desc, opts.brand, opts.theme]);
-		var d = draw(steps, opts);
+		var key = check(steps, opts), earned = !!key.earned;
+		// only what is drawn goes into the ids: a legend no step needs changes nothing (ADR 003)
+		key.push([opts.form || 'bars', earned ? opts.legend : null, opts.title, opts.desc, opts.brand, opts.theme]);
+		var d = draw(steps, opts, earned);
 		return _.svg(opts, d.h, d.body, JSON.stringify(key));
 	};
 });

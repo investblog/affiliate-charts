@@ -23,6 +23,22 @@ module.exports = [
 		},
 	},
 	{
+		// the browser verify page: runs in the engines the gate opens, never shipped
+		files: ['test/verify.js'],
+		languageOptions: {
+			ecmaVersion: 2015,
+			globals: {
+				window: 'readonly',
+				document: 'readonly',
+				DOMParser: 'readonly',
+				getComputedStyle: 'readonly',
+				innerWidth: 'readonly',
+				setTimeout: 'readonly',
+				fetch: 'readonly',
+			},
+		},
+	},
+	{
 		files: ['**/*.mjs'],
 		languageOptions: {
 			ecmaVersion: 2023,

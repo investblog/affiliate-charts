@@ -21,3 +21,4 @@ context → decision → consequences.
 - [009 — width from the page: marks in percent, text in pixels](009-percent-layout.md)
 - [010 — the funnel row: labels, values, rates, truncation](010-funnel-anatomy.md)
 - [011 — the palette: OKLCH from `brand`, `currentColor` for everything else](011-palette.md)
+- [012 — size budgets, frozen per file for 0.1.0](012-size-budgets.md)

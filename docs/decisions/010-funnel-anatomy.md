@@ -57,3 +57,16 @@ text width.
 - Very long labels lose their tail on screen but never in the row's `<title>` or the data table.
 - The estimate is conservative: rows split sooner than strictly needed at desktop widths. Measured on
   the playground, this costs one extra line on money rows with long labels and nothing on count rows.
+
+## Addendum (M3 review, 2026-10-08)
+
+- The legend is followed by an 8 px gap before the first row (missing from the table above).
+- The estimate is for Latin and Cyrillic. Wide scripts (CJK runs about 13 px a glyph at 13 px) and
+  emoji are outside the 375 px promise: their rows may overflow on a phone.
+- Truncation counts UTF-16 code units but never cuts between the two halves of a surrogate pair: when
+  the cut lands after a high surrogate it backs off one unit, so an emoji is dropped whole, never split
+  into a replacement character.
+- In a chart where any step has `earned`, every base bar is light, a step without `earned` included:
+  a solid bar means "earned" everywhere in that chart, as the legend says.
+- The `steps` ghost belongs to a block: a `gap` starts a base of another kind and resets it, and no ghost
+  is drawn for a previous value that is not positive.

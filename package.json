@@ -10,7 +10,8 @@
     "charts.d.ts",
     "charts-funnel.js",
     "charts-funnel.min.js",
-    "charts-funnel.d.ts"
+    "charts-funnel.d.ts",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "node scripts/build.mjs",
@@ -20,12 +21,13 @@
     "prepack": "npm run build",
     "typecheck": "tsc -p tsconfig.json",
     "mutate": "node scripts/mutate.mjs",
-    "gate:bundle": "node scripts/bundle-gate.mjs"
+    "gate:bundle": "node scripts/bundle-gate.mjs",
+    "gate:browser": "node scripts/browser-gate.mjs"
   },
   "config": {
     "sizeBudget": {
-      "charts.js": 4096,
-      "charts-funnel.js": 2048
+      "charts.js": 2432,
+      "charts-funnel.js": 2176
     }
   },
   "keywords": [

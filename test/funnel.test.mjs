@@ -48,6 +48,10 @@ const throwsCases = [
 	['a class prefix with a space', counts, { classPrefix: 'a b' }],
 	['a class prefix starting with a digit', counts, { classPrefix: '1a' }],
 	['a class prefix that is an array', counts, { classPrefix: ['chart'] }],
+	['steps that are an array-like object', { length: 1, 0: S('a', 1) }, {}],
+	['steps that are a string', 'abc', {}],
+	['a legend that is a two-character string', money, { legend: 'ab' }],
+	['values too far apart to share a scale', [S('a', 1.7e308), S('b', -1.7e308)], {}],
 	['a class prefix that lies on its second toString', counts, {
 		classPrefix: { calls: 0, toString() { return this.calls++ ? 'x" onload="y' : 'ok'; } },
 	}],
@@ -60,6 +64,12 @@ for (const [name, steps, opts] of throwsCases) {
 	// the library's own error, not an engine error that a broken check would also raise
 	test(`throws: ${name}`, () => assert.throws(() => Charts.funnel(steps, opts), { name: 'TypeError', message: /^charts-lite: / }));
 }
+
+test('a non-finite value is named as such, not caught later as a scale overflow', () => {
+	assert.throws(() => Charts.funnel([S('a', 1), S('b', Infinity)]), /^TypeError: charts-lite: step 1 value must be a finite number$/u);
+	assert.throws(() => Charts.funnel([S('a', 1, { earned: { value: -Infinity, display: '' } })], { legend }),
+		/step 0 earned value must be a finite number/u);
+});
 
 test('allowed: earned on a losses step, a single step, a null or absent rate', () => {
 	assert.match(Charts.funnel([S('a', 1, { earned: { value: 1, display: '1' } }),
@@ -108,6 +118,12 @@ test('deterministic: same input, same bytes; different input, different ids', ()
 	assert.equal(Charts.funnel(structuredClone(counts), { title: 't' }), a);
 	const b = Charts.funnel(counts.slice(0, 2), { title: 't' });
 	assert.notEqual(a.match(/id="([^"]+)"/u)[1], b.match(/id="([^"]+)"/u)[1]);
+});
+
+test('ids come from what is drawn: a legend no step needs changes nothing', () => {
+	const id = (svg) => svg.match(/id="([^"]+)"/u)[1];
+	assert.equal(id(Charts.funnel(counts, { title: 't', legend })), id(Charts.funnel(counts, { title: 't' })));
+	assert.notEqual(id(Charts.funnel(money, { title: 't', legend })), id(Charts.funnel(money, { title: 't', legend: ['x', 'y'] })));
 });
 
 test('ids come from what is drawn: option order and unused fields do not change them', () => {
