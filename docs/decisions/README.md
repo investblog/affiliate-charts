@@ -1,0 +1,20 @@
+---
+type: note
+status: active
+tags: [decisions]
+project: charts-lite
+---
+
+# Decisions (ADRs)
+
+One file per decision, numbered, immutable once accepted — supersede, don't edit. Format:
+context → decision → consequences.
+
+- [001 — adopt the family ADRs](001-adopt-family-adrs.md)
+- [002 — a hand-written chart library, not a general package rendered elsewhere](002-hand-written-library.md)
+- [003 — input is data, not a seed](003-input-is-data.md)
+- [004 — text in the output; values from the caller, ticks through a callback](004-text-in-output.md)
+- [005 — colour through presentation attributes and class hooks](005-colour-via-classes-and-brand.md)
+- [006 — accessibility is part of the contract](006-accessibility.md)
+- [007 — the funnel: units per call, base and earned on one scale, three forms](007-funnel.md)
+- [008 — a core plus one file per chart](008-core-and-modules.md)
