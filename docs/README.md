@@ -318,7 +318,7 @@ money funnel already shows. Groups B–D are built against fixtures on the playg
   no library name, no comment.
 - Same `(data, options)` → identical bytes across runs and Node 22/24.
 - Labels with `<`, `&`, quotes render as text; so does the `format` callback's output.
-- `title` given → `role="img"` and `<title>`; every mark has a `<title>`; no `title` →
+- `title` given → `role="img"` and `<title>`; every row has a `<title>` (the accessible unit, ADR 010); no `title` →
   `aria-hidden="true"`.
 - Every documented throw fires; non-finite numbers throw.
 - Measured gzip size within the frozen budget of each file.
