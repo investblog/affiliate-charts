@@ -1,6 +1,6 @@
 {
   "name": "affiliate-charts",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Affiliate dashboard charts as SVG strings: conversion funnels in counts and money (deposits, GGR, partner commission), with more forms to come. No inline styles, so it renders under a strict CSP. A core plus one file per chart; zero dependencies; Node and the browser.",
   "main": "charts.js",
   "types": "charts.d.ts",
