@@ -10,7 +10,8 @@ project: charts-lite
 Docs for developers and agents. `index.html` is the playground, `test/verify.html` the browser
 gate, `test/*.test.mjs` the Node gate. Contract-first: change the doc here **before** the code.
 
-**Status (2026-10-08): bootstrapped, ADRs 001–008 accepted, spec reviewed, nothing built.** Scope:
+**Status (2026-10-08): M1 done — the contract (`charts.d.ts`, `charts-funnel.d.ts`), the core and the
+funnel module validate input and return an accessible root; no bars are drawn yet (M3).** Scope:
 **a chart library for affiliate programmes** — the forms a partner cabinet uses to show traffic,
 conversions and money to a partner. Numbers marked *provisional* are forecasts, not measurements;
 each names the milestone that replaces it. Keep this line true at every milestone.
@@ -85,7 +86,8 @@ interface Common {
   brand?: string;          // hex; default palette when the page sets no classes
   theme?: 'light' | 'dark';// picks the validated colour set for that surface; switching = re-render
                            // (or the page overrides colours through the class hooks)
-  classPrefix?: string;    // default: a token derived from the input
+  classPrefix?: string;    // class hooks are `<prefix>-<role>`; default 'chart'. Ids (for aria) are derived
+                           // from the input, so two different charts on a page do not collide
   format?: (v: number) => string;  // text for numbers the library chooses (axis ticks); default n(v)
   /** @unstable until M2 (O1–O3) */
   width?: number;
@@ -96,6 +98,12 @@ Input rules shared by every chart:
 - A non-finite number (`NaN`, `±Infinity`) throws `TypeError`; `null` is accepted only where a shape
   says so (it means "no data", never zero).
 - A violated shape rule (documented per chart below) throws — the library never silently repairs data.
+- Every caller string (`label`, `display`, `title`, `desc`, legend entries) must be a string; `options`, when
+  given, an object; `classPrefix` a string matching `[A-Za-z_][A-Za-z0-9_-]*` — it lands in ids and
+  `aria-labelledby`, where a space or a quote would break the accessible name or the markup;
+  `brand` a `#rrggbb` hex; `theme` `light` or `dark`; `width` a positive finite number; an unknown
+  `form` throws.
+- Every input error is a `TypeError` whose message starts with `charts-lite:`.
 
 **What the library computes, and what it never does.** It derives **positions**: scale domains, nice
 tick values, running offsets in a waterfall, segment widths in a part-to-whole bar. It never derives
@@ -157,8 +165,10 @@ interface FunnelOptions extends Common {
   do not exist.
 - Class hooks: `-bar`, `-bar-earned`, `-bar-part`, `-bar-loss`, `-rate`, plus the core's `-label`,
   `-value`, `-legend`.
-- Throws: `earned` without `legend`; a main step after a losses step; `gap` on a `part` step;
-  `shape` with `earned`, `part`, losses or a negative value.
+- Throws: no steps or no main step; `earned` without a two-string `legend`; a `rate` that is not a
+  string, `null` or absent; a `part` step first or inside losses; a main step after
+  a losses step; `gap` on a `part` step; `shape` with `earned`, `part`, losses or a negative value.
+- Allowed: `earned` on a losses step (a cancelled commission); a funnel of one step.
 - Units: counts and money are separate calls (ADR 007). A step with no money base (registrations)
   simply is not in the money call.
 - **Different bases on one money scale.** Deposit sums and GGR are both money in one currency, so they

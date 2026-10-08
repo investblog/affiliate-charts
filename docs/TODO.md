@@ -10,7 +10,7 @@ project: charts-lite
 The milestone table is in
 [README.md](README.md#milestones).
 
-- [ ] M1 — contract: `charts.d.ts` + `charts-funnel.d.ts`, core skeleton, module pattern on `funnel`, size map
+- [x] M1 — contract: `charts.d.ts` + `charts-funnel.d.ts`, core skeleton, module pattern on `funnel`, size map
 - [ ] M2 — playground `index.html`; decide O1–O4 (responsive text, long labels, value placement, palette)
 - [ ] M3 — core drawing + `funnel` (bars, steps, shape) → 0.1.0; Node + browser gates seen red
 - [ ] M4 — first consumer: both funnels above their tables, npm + Vite default import, CSP unchanged

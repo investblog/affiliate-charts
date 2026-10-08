@@ -45,3 +45,10 @@ User decision, 2026-10-08: **core + modules**, each file in the family format.
   minified twin.
 - In the browser, script order matters (core first); the README says so, and the module's error says
   it again.
+
+## Addendum (M1, 2026-10-08) — how a module reaches the core's helpers
+
+The core hands its shared helpers to modules through one property, `Charts._`. It is not part of the
+public contract: it is absent from the `.d.ts` files, its members may change in any release, and a
+module checks for it (not merely for `Charts`) before registering. A module receives `_` as its
+factory's argument and never reaches into it again at call time.
