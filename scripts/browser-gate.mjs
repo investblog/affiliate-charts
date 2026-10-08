@@ -63,14 +63,52 @@ function serve() {
 			fs.readFile(f, (e, d) => {
 				if (e) { rq.writeHead(404); return rq.end('no'); }
 				// no-store, so a run never reads the previous version of the library
-				rq.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream',
-					'cache-control': 'no-store', 'content-security-policy': CSP });
+				// the strict CSP on the verify page (the product's promise); the demo is served as Pages
+				// serves it, without one — it has its own inline styles and is not the product
+				const headers = { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream', 'cache-control': 'no-store' };
+				if (f.startsWith(path.join(ROOT, 'test') + path.sep)) headers['content-security-policy'] = CSP;
+				rq.writeHead(200, headers);
 				rq.end(d);
 			});
 		});
 		// loopback only: `listen(port)` alone binds every interface
 		s.listen(0, '127.0.0.1', () => res([s, s.address().port]));
 	});
+}
+
+// The live demo (index.html), every combination of its controls: no page error, and every card shows a
+// chart or the demo's own note. A shape that threw on the counts example (its part step) once reached
+// the published demo because nothing here opened it (2026-10-09).
+async function demo(pw, port) {
+	const browser = await pw.chromium.launch();
+	const problems = [];
+	try {
+		const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+		page.on('pageerror', (e) => problems.push(String(e).split('\n')[0]));
+		page.on('console', (m) => { if (m.type() === 'error' && !/fonts\.(googleapis|gstatic)/u.test(m.text())) problems.push(m.text()); });
+		await page.goto(`http://127.0.0.1:${port}/index.html`);
+		await page.waitForSelector('#stage .card');
+		let combos = 0;
+		for (const show of ['one', 'sheet']) {
+			for (const example of ['counts', 'money', 'negative', 'fresh']) {
+				for (const form of ['bars', 'steps', 'shape']) {
+					for (const theme of ['dark', 'light']) {
+						await page.selectOption('#show', show);
+						if (show === 'one') await page.selectOption('#example', example);
+						// a disabled option is the demo's answer for that example; selecting it must not throw
+						await page.selectOption('#form', form).catch(() => {});
+						await page.selectOption('#theme', theme);
+						/* global document -- runs in the page */
+						const empty = await page.evaluate(() => [...document.querySelectorAll('#stage .card')]
+							.filter((c) => !c.querySelector('svg') && !c.querySelector('.note')).length);
+						if (empty) problems.push(`${show}/${example}/${form}/${theme}: ${empty} card(s) with neither a chart nor a note`);
+						combos++;
+					}
+				}
+			}
+		}
+		return { combos, problems };
+	} finally { await browser.close(); }
 }
 
 async function verify(pw, engine, port, width) {
@@ -139,6 +177,13 @@ async function main() {
 			if (ran) engines.push(engine);
 		}
 		if (missing.length) console.log(`(not run: ${missing.join(', ')})`);
+
+		if (engines.includes('chromium')) {
+			const d = await demo(pw, port);
+			console.log(`${'demo / chromium'.padEnd(18)} ${d.problems.length ? 'FAIL' : 'ALL GREEN'} — ${d.combos} control combinations`);
+			d.problems.slice(0, 10).forEach((p) => console.log('     ✘ ' + p));
+			if (d.problems.length) red++;
+		}
 
 		if (MUTATE && !red && engines.length) {
 			console.log('\n── mutations: break the library, watch the page go red ──');

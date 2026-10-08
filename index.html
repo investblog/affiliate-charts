@@ -33,7 +33,7 @@
 		font-family: Montserrat, system-ui, sans-serif; }
 	.card svg { display: block; }
 	.card h2 { font-size: 13px; font-weight: 600; margin: 0 0 12px; opacity: .7; }
-	.error { color: #e66a67; font: 12px/1.4 ui-monospace, Consolas, monospace; }
+	.note { color: var(--card-ink); opacity: .6; font-size: 13px; margin: 0; }
 	#stage.sheet { grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); align-items: start; justify-items: stretch; }
 	@media (max-width: 48rem) { main { grid-template-columns: 1fr; } aside { border-right: 0; border-bottom: 1px solid var(--line); } #stage { padding: 16px; } }
 </style>
@@ -53,7 +53,9 @@
 			<option value="negative">a period players won</option>
 			<option value="fresh">a new campaign, zeros</option>
 		</select></label>
-		<label>form <select id="form"><option>bars</option><option>steps</option><option>shape</option></select></label>
+		<label>form <select id="form"><option>bars</option><option>steps</option><option id="shapeOpt">shape</option></select></label>
+		<p class="meta" id="formNote" hidden>The classic shape draws one positive series: counts only. Money funnels have two bars a step, losses and negatives.</p>
+		<p class="meta" id="partNote" hidden>The shape leaves out part steps such as unique clicks: they are subsets, not stages.</p>
 		<label>theme <select id="theme"><option>dark</option><option>light</option></select></label>
 		<label class="brand">brand <span class="row"><input type="color" id="brand" value="#0066ff"><span class="meta" id="brandHex">#0066ff</span></span></label>
 		<label>width <input type="range" id="width" min="320" max="1100" step="10" value="720"></label>
@@ -100,7 +102,7 @@ function app() {
 			S('Registrations', 3120, '3 120', { rate: '17.0%' }),
 			S('First deposits', 410, '410', { rate: '13.1%' }),
 		] },
-		money: { name: 'Money: base and earned', legend: true, steps: [
+		money: { name: 'Money: base and earned', legend: true, money: true, steps: [
 			S('Deposits — sum topped up', 124000, '124 000.00', { earned: E(18600, '18 600.00') }),
 			S('2nd deposits', 41000, '41 000.00', { part: true, earned: E(6150, '6 150.00') }),
 			S('3rd deposits', 22000, '22 000.00', { part: true, earned: E(3300, '3 300.00') }),
@@ -109,7 +111,7 @@ function app() {
 			S('Cancellations', -9600, '−9 600.00', { group: 'losses', earned: E(-1440, '−1 440.00') }),
 			S('Rejected', 5400, '5 400.00', { group: 'losses', earned: E(810, '810.00') }),
 		] },
-		negative: { name: 'A period players won', legend: true, steps: [
+		negative: { name: 'A period players won', legend: true, money: true, steps: [
 			S('Deposits — sum topped up', 64000, '64 000.00', { earned: E(9600, '9 600.00') }),
 			S('Revenue — GGR', -18200, '−18 200.00', { gap: true, earned: E(-4550, '−4 550.00') }),
 			S('Cancellations', -3100, '−3 100.00', { group: 'losses' }),
@@ -137,13 +139,15 @@ function app() {
 		box.appendChild(h);
 		box.appendChild(host);
 		var svg = '';
-		try {
-			svg = Charts.funnel(ex.steps, options(ex));
+		if (ex.money && $('form').value === 'shape') {
+			// the library refuses a shape it cannot draw honestly (ADR 007): say so instead of drawing
+			host.className = 'note';
+			host.textContent = 'The classic shape draws one positive series, so a money funnel stays in bars or steps.';
+		} else {
+			// a shape has one series: the caller leaves the part steps (unique clicks) out
+			var shape = $('form').value === 'shape';
+			svg = Charts.funnel(shape ? ex.steps.filter(function (s) { return !s.part; }) : ex.steps, options(ex));
 			Charts.init(host, svg);
-		} catch (e) {
-			// the library refuses what it cannot draw honestly (shape with earned or losses): show why
-			host.className = 'error';
-			host.textContent = e.message;
 		}
 		return { el: box, svg: svg };
 	}
@@ -154,6 +158,12 @@ function app() {
 		var sheet = $('show').value === 'sheet';
 		stage.className = sheet ? 'sheet' : '';
 		$('example').disabled = sheet;
+		// one money example on stage: the shape is not offered, and a chosen shape falls back to bars
+		var money = !sheet && EXAMPLES[$('example').value].money;
+		$('shapeOpt').disabled = !!money;
+		if (money && $('form').value === 'shape') $('form').value = 'bars';
+		$('formNote').hidden = !money;
+		$('partNote').hidden = $('form').value !== 'shape';
 		if (sheet) {
 			Object.keys(EXAMPLES).forEach(function (k) { stage.appendChild(card(k).el); });
 			$('bytes').textContent = '';
