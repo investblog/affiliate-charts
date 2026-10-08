@@ -16,14 +16,24 @@ declare namespace Charts {
 		classPrefix?: string;
 		/** Text for numbers the library chooses itself (axis ticks). Must be deterministic. */
 		format?: (v: number) => string;
-		/** @unstable until M2 — layout for responsive text is not decided yet. */
-		width?: number;
+	}
+
+	/** The colours a chart derives from `brand` for a theme, so a page can paint its table to match. */
+	interface Palette {
+		/** The solid mark (earned, single-series bars), `#rrggbb`. */
+		solid: string;
+		/** The light mark as drawn over the theme's reference surface, `#rrggbb`. */
+		light: string;
+		/** The opacity the light mark is drawn with over the page's own surface. */
+		opacity: number;
 	}
 
 	/** The core. Modules add their chart functions to it. */
 	interface Api {
 		/** Browser only: puts the SVG string into the element. Nothing else. */
 		init(target: Element, svg: string): void;
+		/** Pure. Throws like a chart on a brand that is not `#rrggbb` or an unknown theme. */
+		palette(brand?: string, theme?: 'light' | 'dark'): Palette;
 	}
 }
 

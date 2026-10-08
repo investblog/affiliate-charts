@@ -54,8 +54,6 @@ const throwsCases = [
 	['a brand that is not a hex', counts, { brand: 'blue' }],
 	['a circular brand', counts, (() => { const b = {}; b.b = b; return { brand: b }; })()],
 	['an unknown theme', counts, { theme: 'sepia' }],
-	['a zero width', counts, { width: 0 }],
-	['a NaN width', counts, { width: NaN }],
 	['an unknown form', counts, { form: 'pyramid' }],
 ];
 for (const [name, steps, opts] of throwsCases) {
@@ -86,14 +84,14 @@ test('with a title: role="img", <title> and <desc>, referenced by aria-labelledb
 test('without a title: aria-hidden and no role', () => {
 	const svg = Charts.funnel(counts);
 	assert.match(svg, /^<svg [^>]*aria-hidden="true"/u);
-	assert.doesNotMatch(svg, /role=|<title|aria-labelledby/u);
+	assert.doesNotMatch(svg, /role=|aria-labelledby|<title id=|<desc/u);
 });
 
 test('text is escaped, all five characters', () => {
 	const svg = Charts.funnel(counts, { title: `<b>&"x'`, desc: `'"` });
 	assert.ok(svg.includes('&lt;b&gt;&amp;&quot;x&#39;'));
 	assert.ok(svg.includes('&#39;&quot;'));
-	assert.doesNotMatch(svg.replace(/<\/?(svg|title|desc)\b[^>]*>/gu, ''), /[<>]/u);
+	assert.doesNotMatch(svg, /<b>|"x'/u);
 });
 
 test('the class prefix defaults to "chart" and starts every id', () => {

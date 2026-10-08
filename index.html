@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>charts-lite — playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+<style>
+	:root { --light-bg: #f3f5f6; --light-ink: #11171c; --dark-bg: #1f262c; --dark-ink: #e6e6e6; }
+	body { margin: 0; padding: 16px; font: 14px/1.4 Montserrat, system-ui, sans-serif; background: #fff; color: #11171c; }
+	h1 { font-size: 18px; margin: 0 0 4px; }
+	h2 { font-size: 14px; margin: 24px 0 8px; font-weight: 600; }
+	p { margin: 0 0 12px; max-width: 70ch; }
+	.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+	.card { padding: 16px; border-radius: 8px; }
+	.card.light { background: var(--light-bg); color: var(--light-ink); }
+	.card.dark { background: var(--dark-bg); color: var(--dark-ink); }
+	.card svg { display: block; }
+	.note { font-size: 12px; opacity: .7; margin-top: 8px; }
+	#report { font: 12px/1.4 ui-monospace, monospace; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>charts-lite playground</h1>
+<p>Generic affiliate data. Each chart is drawn twice, on a sample light and a sample dark surface. Resize the
+window: bars follow the width, text keeps its size.</p>
+<div id="charts"></div>
+<h2>Overlap report</h2>
+<div id="report">running…</div>
+
+<script>
+// cache-bust the library, so a stale copy never fakes a result; file:// falls back to the plain path
+(function () {
+	var bust = location.protocol === 'file:' ? '' : '?ts=' + Date.now();
+	var files = ['charts.js', 'charts-funnel.js'], i = 0;
+	(function next() {
+		if (i === files.length) return app();
+		var s = document.createElement('script');
+		s.src = files[i++] + bust;
+		s.onload = next;
+		s.onerror = function () { document.getElementById('report').textContent = 'FAIL: could not load ' + s.src; };
+		document.head.appendChild(s);
+	})();
+})();
+
+function app() {
+	var counts = [
+		{ label: 'Clicks', value: 18400, display: '18 400' },
+		{ label: 'Unique clicks', value: 12100, display: '12 100', part: true },
+		{ label: 'Registrations', value: 3120, display: '3 120', rate: '17.0%' },
+		{ label: 'First deposits', value: 410, display: '410', rate: '13.1%' },
+	];
+	var countsRu = [
+		{ label: 'Переходы', value: 18400, display: '18 400' },
+		{ label: 'уникальные', value: 12100, display: '12 100', part: true },
+		{ label: 'Регистрации', value: 0, display: '0', rate: '0%' },
+		{ label: 'Первые депозиты', value: 0, display: '0', rate: null },
+	];
+	var money = [
+		{ label: 'Deposits — sum topped up', value: 124000, display: '124 000.00', earned: { value: 18600, display: '18 600.00' } },
+		{ label: '2nd deposits', value: 41000, display: '41 000.00', part: true, earned: { value: 6150, display: '6 150.00' } },
+		{ label: '3rd deposits', value: 22000, display: '22 000.00', part: true, earned: { value: 3300, display: '3 300.00' } },
+		{ label: 'Later deposits', value: 9000, display: '9 000.00', part: true, earned: { value: 1350, display: '1 350.00' } },
+		{ label: 'First deposits', value: 41000, display: '41 000.00', earned: { value: 20500, display: '20 500.00' } },
+		{ label: 'Revenue — GGR', value: -18200, display: '−18 200.00', gap: true, earned: { value: -4550, display: '−4 550.00' } },
+		{ label: 'Cancellations', value: -9600, display: '−9 600.00', group: 'losses', earned: { value: -1440, display: '−1 440.00' } },
+		{ label: 'Отклонённые записи (фрод, запрещённый источник)', value: 5400, display: '5 400.00', group: 'losses', earned: { value: 810, display: '810.00' } },
+	];
+	var shape = [
+		{ label: 'Clicks', value: 18400, display: '18 400' },
+		{ label: 'Registrations', value: 3120, display: '3 120' },
+		{ label: 'First deposits', value: 410, display: '410' },
+	];
+	var cases = [
+		['Counts — bars', counts, { title: 'Funnel, counts' }],
+		['Counts, Cyrillic, zeros and a null rate — bars', countsRu, { title: 'Воронка, штуки' }],
+		['Counts — steps', counts, { title: 'Funnel, counts', form: 'steps' }],
+		['Money — base and earned, negative GGR after a gap, losses', money,
+			{ title: 'Funnel, money', desc: 'The bases differ per step', legend: ['base of the event', 'earned by the partner'] }],
+		['Counts — shape', shape, { title: 'Funnel', form: 'shape' }],
+	];
+	var root = document.getElementById('charts');
+	cases.forEach(function (c) {
+		var h = document.createElement('h2');
+		h.textContent = c[0];
+		root.appendChild(h);
+		var pair = document.createElement('div');
+		pair.className = 'pair';
+		['light', 'dark'].forEach(function (t) {
+			var card = document.createElement('div');
+			card.className = 'card ' + t;
+			var opts = Object.assign({ theme: t, brand: '#0066ff' }, c[2]);
+			Charts.init(card, Charts.funnel(c[1], opts));
+			pair.appendChild(card);
+		});
+		root.appendChild(pair);
+	});
+	// overlap report: any two text boxes in one chart that intersect, or text that leaves the chart —
+	// with 2-3px of slack, because Firefox measures text by the font's full box and side bearings;
+	// and the widest glyph average seen, which the layout's row-splitting estimate must cover
+	var overlaps = [], glyph = 0;
+	document.querySelectorAll('.card > svg').forEach(function (svg, k) {
+		var boxes = [].map.call(svg.querySelectorAll('text'), function (t) { return [t.textContent, t.getBoundingClientRect()]; });
+		var sr = svg.getBoundingClientRect();
+		boxes.forEach(function (a, i) {
+			if (a[0].length > 3) glyph = Math.max(glyph, a[1].width / a[0].length);
+			if (a[1].right > sr.right + 2 || a[1].left < sr.left - 2) overlaps.push('chart ' + k + ': "' + a[0] + '" leaves the chart');
+			boxes.slice(i + 1).forEach(function (b) {
+				var x = a[1], y = b[1];
+				if (x.left < y.right - 2 && y.left < x.right - 2 && x.top < y.bottom - 3 && y.top < x.bottom - 3) {
+					overlaps.push('chart ' + k + ': "' + a[0] + '" × "' + b[0] + '"');
+				}
+			});
+		});
+	});
+	window.__report = { width: innerWidth, overlaps: overlaps, glyph: Math.round(glyph * 100) / 100,
+		font: getComputedStyle(document.querySelector('.card > svg text')).fontFamily };
+	document.getElementById('report').textContent = (overlaps.length ? overlaps.join('\n') : 'no text overlaps at ' + innerWidth + 'px') +
+		'\nwidest average glyph: ' + window.__report.glyph + 'px';
+}
+</script>
+</body>
+</html>

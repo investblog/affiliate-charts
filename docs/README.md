@@ -10,8 +10,10 @@ project: charts-lite
 Docs for developers and agents. `index.html` is the playground, `test/verify.html` the browser
 gate, `test/*.test.mjs` the Node gate. Contract-first: change the doc here **before** the code.
 
-**Status (2026-10-08): M1 done — the contract (`charts.d.ts`, `charts-funnel.d.ts`), the core and the
-funnel module validate input and return an accessible root; no bars are drawn yet (M3).** Scope:
+**Status (2026-10-08): M2 done — the funnel is drawn (three forms, base and earned, losses, negative
+values) and checked on the playground in Chromium, Firefox and WebKit at 375 and 1280 px; ADRs 009–011
+record the layout and palette. Its drawing has no Node tests or mutations yet — M3 adds them and the
+browser gate. M1 (the contract and input validation) is behind it.** Scope:
 **a chart library for affiliate programmes** — the forms a partner cabinet uses to show traffic,
 conversions and money to a partner. Numbers marked *provisional* are forecasts, not measurements;
 each names the milestone that replaces it. Keep this line true at every milestone.
@@ -49,7 +51,7 @@ and a per-mark `<title>`, and is meant to sit **above** a data table, not to rep
 | Node tests plus a browser verification page; a check is trusted only after it was seen red (`--mutate`) | roulette-lite 008, cards-lite M5 |
 | Size: terser in process, Node `gzipSync` level 9; provisional budgets frozen at measured + margin | roulette-lite 009, slots-lite 007 |
 | Output stability: within a minor version the same input gives byte-identical SVG; consumers pin the exact version | roulette-lite 010 |
-| Palette derived from `brand` in CIE LCh | hexagons 002, roulette-lite 004 |
+| Palette derived from `brand` — **superseded by ADR 011**: OKLCH instead of CIE LCh | hexagons 002, roulette-lite 004 |
 | Contract-first; `author: 301st`; OIDC trusted publishing; "gzip beats clever — trim only by measurement" | family |
 
 ## Deviations — each its own ADR
@@ -62,6 +64,9 @@ and a per-mark `<title>`, and is meant to sit **above** a data table, not to rep
 - **006** accessibility: `role="img"` + `<title>`, a `<title>` per mark, else `aria-hidden`.
 - **007** the funnel: units per call; base and earned on one scale; three forms.
 - **008** core + modules: one core file, one file per chart, one `.d.ts` per file.
+- **009** width from the page: marks in percent, text in pixels; no `width` option.
+- **010** the funnel row: values on the label line, split and truncation by a conservative estimate.
+- **011** the palette: OKLCH from `brand`; `currentColor` for text, losses and chrome.
 
 ## Architecture (ADR 008)
 
@@ -89,10 +94,13 @@ interface Common {
   classPrefix?: string;    // class hooks are `<prefix>-<role>`; default 'chart'. Ids (for aria) are derived
                            // from the input, so two different charts on a page do not collide
   format?: (v: number) => string;  // text for numbers the library chooses (axis ticks); default n(v)
-  /** @unstable until M2 (O1–O3) */
-  width?: number;
 }
 ```
+
+**Width comes from the page (ADR 009).** The root `<svg>` has `width="100%"`, a fixed pixel `height` and
+no `viewBox`. Marks are laid out in percentages of that width; text sits at pixel positions and keeps
+its pixel size at any width. A page sizes a chart through its container; nothing re-renders on
+resize. Every chart has a fixed height for given data.
 
 Input rules shared by every chart:
 - A non-finite number (`NaN`, `±Infinity`) throws `TypeError`; `null` is accepted only where a shape
@@ -101,8 +109,7 @@ Input rules shared by every chart:
 - Every caller string (`label`, `display`, `title`, `desc`, legend entries) must be a string; `options`, when
   given, an object; `classPrefix` a string matching `[A-Za-z_][A-Za-z0-9_-]*` — it lands in ids and
   `aria-labelledby`, where a space or a quote would break the accessible name or the markup;
-  `brand` a `#rrggbb` hex; `theme` `light` or `dark`; `width` a positive finite number; an unknown
-  `form` throws.
+  `brand` a `#rrggbb` hex; `theme` `light` or `dark`; an unknown `form` throws.
 - Every input error is a `TypeError` whose message starts with `charts-lite:`.
 
 **What the library computes, and what it never does.** It derives **positions**: scale domains, nice
@@ -150,7 +157,7 @@ interface FunnelOptions extends Common {
 ```
 
 - **One scale for the whole chart**, main steps and losses alike, so 40 cancellations next to 100
-  deposits look like 40 next to 100. Losses sit after a gap with their own heading row; a negative
+  deposits look like 40 next to 100. Losses sit after a gap marked by a hairline (no heading); a negative
   value (a cancellation) grows left of the zero line, a positive one (a rejected record — what would
   have been earned) grows right. The sign is never recomputed; `display` carries it.
 - **Base and earned** are a pair inside one step's row: the base bar (light) with the earned bar
@@ -159,12 +166,12 @@ interface FunnelOptions extends Common {
   about its parent's earned value.
 - Bars scale to the largest |value| on the chart, never to a sum; `part` steps never stack; a zero
   value draws a zero-length bar with its label; a step the caller omits is not drawn.
-- Forms: `bars` (default); `steps` — bars with the `rate` chips emphasised between rows (the drop-off
-  read); `shape` — the classic funnel as **centred rectangles** whose width is the value, separated by
-  surface gaps, labels outside. Trapezoids are not drawn: their slanted edges would show values that
-  do not exist.
-- Class hooks: `-bar`, `-bar-earned`, `-bar-part`, `-bar-loss`, `-rate`, plus the core's `-label`,
-  `-value`, `-legend`.
+- Forms: `bars` (default); `steps` — the `rate` chips emphasised and, behind each main bar, a faint
+  ghost of the previous main value (the drop-off read); `shape` — the classic funnel as **centred
+  rectangles** whose width is the value, labels and values on the label line. Trapezoids are not
+  drawn: their slanted edges would show values that do not exist. Row anatomy in pixels: ADR 010.
+- Class hooks: `-bar`, `-bar-earned`, `-bar-part`, `-bar-loss`, `-bar-ghost`, `-rate`, plus the core's
+  `-label`, `-value`, `-legend`, `-grid` (separators), `-axis` (the zero line).
 - Throws: no steps or no main step; `earned` without a two-string `legend`; a `rate` that is not a
   string, `null` or absent; a `part` step first or inside losses; a main step after
   a losses step; `gap` on a `part` step; `shape` with `earned`, `part`, losses or a negative value.
@@ -263,19 +270,19 @@ for the current value and the target.
 ### Core helpers
 
 - `Charts.init(el, svg)` — sets `el.innerHTML = svg`. No listeners, no resize logic.
-- `Charts.palette(brand, theme)` — the derived colours, so a page can style its table to match.
+- `Charts.palette(brand, theme)` → `{ solid, light, opacity }`: the derived colours (`#rrggbb`) and the
+  light mark's opacity, so a page can style its table to match. Throws like a chart on bad input.
 
-## Open questions — decide on the playground (M2)
+## Questions decided on the playground (M2)
 
-- **O1. Responsive text.** A fixed `viewBox` scaled to `width: 100%` shrinks text on phones (375 px).
-  Options: the caller passes the target pixel width and the library lays out for it; or marks scale
-  and text stays outside the scaled system. Decide by measurement at 375 and 1280 px.
-- **O2. Long labels.** Truncate with `…` (full text in `<title>`) or wrap to two lines.
-- **O3. Value placement.** Inside a bar needs text width, which a pure function cannot measure:
-  a character-count heuristic, or always outside.
-- **O4. Palette.** Default categorical order, sequential hue, diverging pair, ordinal ramp — derived
-  from `brand`, validated for colour-vision deficiency and contrast against light and dark surfaces;
-  the passing values recorded in an ADR.
+- **O1. Responsive text** → ADR 009: marks in percent of the page's width, text in pixels; no
+  `width` option; 375 px screens promised.
+- **O2. Long labels** → ADR 010: cut at 42 characters with `…`; the row's `<title>` keeps the whole label.
+- **O3. Value placement** → ADR 010: values on the label line, the row split onto two lines when a
+  conservative estimate says they may not fit at 343 px.
+- **O4. Palette** → ADR 011: OKLCH from `brand`, validated on three light and three dark surfaces;
+  `currentColor` for text, losses and chrome. The categorical, sequential and diverging palettes are
+  decided with the modules that need them (M6–M8).
 
 ## Milestones
 

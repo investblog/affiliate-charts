@@ -51,7 +51,6 @@
 		if (p != null && (typeof p !== 'string' || !/^[A-Za-z_][\w-]*$/.test(p))) fail('classPrefix must be a token like "chart"');
 		if (o.brand != null && !/^#[0-9a-fA-F]{6}$/.test(o.brand)) fail('brand must be a #rrggbb hex');
 		if (o.theme != null && o.theme !== 'light' && o.theme !== 'dark') fail('theme must be "light" or "dark"');
-		if (o.width != null && !(num(o.width, 'width') > 0)) fail('width must be positive');
 		return o;
 	}
 	// FNV-1a, 32-bit: ids derived from the input, so two charts on one page never collide (ADR 003)
@@ -63,9 +62,111 @@
 		}
 		return h.toString(36);
 	}
-	// the root element and its accessible name (ADR 006). `opts` has passed common(); `key` serialises
-	// the input fields the chart draws, so equal charts share ids and different ones do not.
-	function svg(opts, w, h, body, key) {
+	// ── colour: sRGB <-> OKLCH, only the parts a chart uses: parse a hex, move lightness until a contrast
+	// holds, write a hex. OKLCH, not the family's CIE LCh: lightening a blue in CIE LCh turns it violet
+	// (#0066ff → #5e7bff), in OKLCH it stays blue (ADR 011) ──
+	function rgb(hex) {
+		var v = parseInt(hex.slice(1), 16);
+		return [v >> 16 & 255, v >> 8 & 255, v & 255];
+	}
+	function toHex(c) {
+		return '#' + ((1 << 24) + (c[0] << 16) + (c[1] << 8) + c[2]).toString(16).slice(1);
+	}
+	function s2l(u) { u /= 255; return u <= 0.04045 ? u / 12.92 : Math.pow((u + 0.055) / 1.055, 2.4); }
+	function l2s(u) { return 255 * (u <= 0.0031308 ? u * 12.92 : 1.055 * Math.pow(u, 1 / 2.4) - 0.055); }
+	function oklch(c) {
+		var r = s2l(c[0]), g = s2l(c[1]), b = s2l(c[2]), t = 1 / 3;
+		var l = Math.pow(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b, t);
+		var m = Math.pow(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b, t);
+		var s = Math.pow(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b, t);
+		var A = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
+		var B = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
+		return [0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s, Math.sqrt(A * A + B * B), Math.atan2(B, A)];
+	}
+	function lin(L, C, H) {
+		var A = C * Math.cos(H), B = C * Math.sin(H);
+		var l = Math.pow(L + 0.3963377774 * A + 0.2158037573 * B, 3);
+		var m = Math.pow(L - 0.1055613458 * A - 0.0638541728 * B, 3);
+		var s = Math.pow(L - 0.0894841775 * A - 1.2914855480 * B, 3);
+		return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+			-0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s];
+	}
+	function inGamut(v) {
+		for (var i = 0; i < 3; i++) if (v[i] < -0.0005 || v[i] > 1.0005) return false;
+		return true;
+	}
+	// gamut policy: hold L and H, reduce C until inside sRGB — clipping a channel would shift the hue
+	function fromOklch(L, C, H) {
+		var v = lin(L, C, H), lo = 0, hi = C, i;
+		if (!inGamut(v)) {
+			for (i = 0; i < 20; i++) {
+				var mid = (lo + hi) / 2;
+				if (inGamut(lin(L, mid, H))) lo = mid; else hi = mid;
+			}
+			v = lin(L, lo, H);
+		}
+		return [clamp255(l2s(v[0])), clamp255(l2s(v[1])), clamp255(l2s(v[2]))];
+	}
+	function clamp255(v) { return Math.max(0, Math.min(255, Math.round(v))); }
+	function lum(c) { return 0.2126 * s2l(c[0]) + 0.7152 * s2l(c[1]) + 0.0722 * s2l(c[2]); }
+	function contrast(a, b) {
+		var x = lum(a), y = lum(b);
+		return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+	}
+	// repair by shifting lightness only, toward white on dark and toward black on light: hue and chroma
+	// are the brand's
+	function ensureContrast(c, bg, min, dir) {
+		var o = oklch(c);
+		for (var L = o[0]; contrast(c, bg) < min && L > 0 && L < 1; L += dir * 0.01) c = fromOklch(L, o[1], o[2]);
+		return c;
+	}
+	// reference surfaces per theme; a page's own surface is close to one of them
+	// and the OKLCH lightness band a mark may take on that surface (the dataviz checks, 0.005 inside each
+	// edge so that rounding to 8-bit channels cannot carry a colour out)
+	var SURFACE = { light: '#fcfcfb', dark: '#1a1a19' }, BAND = { light: [0.435, 0.765], dark: [0.485, 0.665] }, LIGHT = 0.6;
+	// The solid mark: the brand's lightness held inside the band, then moved until it clears 4.5:1 on
+	// the surface, so the light mark (the solid at LIGHT opacity over the page) still clears 2:1 on the
+	// sample surfaces — measured in ADR 011. Hue and chroma are the brand's.
+	function palette(brand, theme) {
+		var t = theme === 'dark' ? 'dark' : 'light', bg = rgb(SURFACE[t]), o = oklch(rgb(brand || '#2563eb'));
+		var solid = fromOklch(Math.min(BAND[t][1], Math.max(BAND[t][0], o[0])), o[1], o[2]);
+		solid = ensureContrast(solid, bg, 4.5, t === 'dark' ? 1 : -1);
+		var light = [0, 1, 2].map(function (i) { return clamp255(solid[i] * LIGHT + bg[i] * (1 - LIGHT)); });
+		return { solid: toHex(solid), light: toHex(light), opacity: LIGHT };
+	}
+
+	// ── marks ──
+
+	function pct(v) {
+		return n(v, 3) + '%';
+	}
+	// a bar laid out in percent (ADR 009) with a 4px rounded data end and a square baseline end: a
+	// nested <svg> clips a rounded rect and a square that covers the baseline side. `toLeft` — the
+	// bar grows left of zero, so its baseline is on the right. Group opacity, so the overlap of the
+	// two rects is not darker.
+	function bar(x, w, y, h, fill, opacity, cls, toLeft, title) {
+		var r = Math.min(4, h / 2);
+		return el('svg', ['class', cls, 'x', pct(x), 'y', n(y, 2), 'width', pct(w), 'height', n(h, 2),
+			'fill', fill, 'opacity', opacity],
+		(title || '') + el('rect', ['width', '100%', 'height', n(h, 2), 'rx', n(r, 2)]) +
+			el('rect', toLeft ? ['x', '100%', 'width', n(r, 2), 'height', n(h, 2), 'transform', 'translate(-' + n(r, 2) + ')']
+				: ['width', n(r, 2), 'height', n(h, 2)]));
+	}
+	// a legend one entry per line, so it needs no text width; entries are [label, fill, opacity]
+	function legend(p, entries, y) {
+		var s = '';
+		for (var i = 0; i < entries.length; i++) {
+			var e = entries[i], top = y + i * 18;
+			s += el('rect', ['x', 0, 'y', top + 3, 'width', 10, 'height', 10, 'rx', 2, 'fill', e[1], 'opacity', e[2]]) +
+				el('text', ['x', 16, 'y', top + 12], esc(e[0]));
+		}
+		return { svg: el('g', ['class', p + '-legend'], s), h: entries.length * 18 };
+	}
+
+	// the root element and its accessible name (ADR 006). Width comes from the page, height is fixed
+	// (ADR 009); text inherits the page's font and colour (ADR 004, 011). `opts` has passed common();
+	// `key` serialises the input fields the chart draws, so equal charts share ids and different ones do not.
+	function svg(opts, h, body, key) {
 		var p = opts.classPrefix || 'chart', id = p + '-' + hash(key), head = '', label = null;
 		if (opts.title != null) {
 			head = el('title', ['id', id + '-t'], esc(opts.title));
@@ -77,8 +178,11 @@
 		}
 		return el('svg', [
 			'xmlns', 'http://www.w3.org/2000/svg',
-			'viewBox', '0 0 ' + n(w, 2) + ' ' + n(h, 2),
+			'width', '100%',
+			'height', n(h, 2),
 			'class', p,
+			'font-size', 13,
+			'fill', 'currentColor',
 			'role', label ? 'img' : null,
 			'aria-labelledby', label,
 			'aria-hidden', label ? null : 'true'
@@ -89,5 +193,12 @@
 		target.innerHTML = markup;
 	}
 
-	return { init: init, _: { n: n, esc: esc, el: el, fail: fail, num: num, str: str, common: common, svg: svg } };
+	return {
+		init: init,
+		palette: function (brand, theme) {
+			return palette(common({ brand: brand, theme: theme }).brand, theme);
+		},
+		_: { n: n, esc: esc, el: el, fail: fail, num: num, str: str, common: common, svg: svg, palette: palette,
+			pct: pct, bar: bar, legend: legend }
+	};
 });

@@ -18,3 +18,6 @@ context → decision → consequences.
 - [006 — accessibility is part of the contract](006-accessibility.md)
 - [007 — the funnel: units per call, base and earned on one scale, three forms](007-funnel.md)
 - [008 — a core plus one file per chart](008-core-and-modules.md)
+- [009 — width from the page: marks in percent, text in pixels](009-percent-layout.md)
+- [010 — the funnel row: labels, values, rates, truncation](010-funnel-anatomy.md)
+- [011 — the palette: OKLCH from `brand`, `currentColor` for everything else](011-palette.md)

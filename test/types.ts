@@ -13,6 +13,12 @@ const svg: string = Charts.funnel(steps, { title: 'Money', legend: ['base', 'ear
 Charts.init(document.body, svg);
 Core.init(document.body, svg);
 
+const pal: Core.Palette = Core.palette('#0066ff', 'dark');
+const solid: string = Charts.palette().solid;
+void pal; void solid;
+// @ts-expect-error — the theme is a closed set
+Core.palette('#0066ff', 'sepia');
+
 // the core alone does not know about the funnel
 // @ts-expect-error
 Core.funnel(steps);

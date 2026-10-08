@@ -51,10 +51,93 @@
 		return key;
 	}
 
+	// Row anatomy in px (ADR 010): [rate line] label line [value line] base bar [gap earned bar] padding.
+	// Bars are laid out in percent of the page's width; text stays in px (ADR 009).
+	var LINE = 18, RATE = 16, BAR = 12, PART = 8, SHAPE = 20, PAD = 10, BLOCK = 16, INDENT = 12;
+	// the narrowest content width the layout promises (a 375px screen less 16px gutters) and an
+	// average glyph width at 13px — a row whose label and values may not share a line at that width
+	// puts its values on their own line, at every width, so the bytes never depend on the page (ADR 010)
+	var NARROW = 343, GLYPH = 8;
+	var DASH = '—', DOWN = '↓ ';
+
+	function draw(steps, opts) {
+		var p = opts.classPrefix || 'chart', form = opts.form || 'bars', pal = _.palette(opts.brand, opts.theme);
+		var lo = 0, hi = 0, prev = null, y = 0, out = '', marks = '', i, s;
+		for (i = 0; i < steps.length; i++) {
+			s = steps[i];
+			lo = Math.min(lo, s.value, s.earned ? s.earned.value : 0);
+			hi = Math.max(hi, s.value, s.earned ? s.earned.value : 0);
+		}
+		var range = hi - lo || 1, z = -lo / range * 100;
+		if (opts.legend && steps.some(function (st) { return st.earned; })) {
+			var lg = _.legend(p, [[opts.legend[0], pal.solid, pal.opacity], [opts.legend[1], pal.solid, 1]], 0);
+			out += lg.svg;
+			y = lg.h + 8;
+		}
+		for (i = 0; i < steps.length; i++) {
+			s = steps[i];
+			var loss = s.group === 'losses', firstLoss = loss && !(i && steps[i - 1].group === 'losses');
+			if (i && (s.gap || firstLoss)) {
+				out += _.el('line', ['class', p + '-grid', 'x1', 0, 'x2', '100%', 'y1', y + BLOCK / 2, 'y2', y + BLOCK / 2,
+					'stroke', 'currentColor', 'stroke-opacity', 0.2]);
+				y += BLOCK;
+			}
+			var row = '', tip = s.label + ': ' + s.display + (s.earned ? ' / ' + s.earned.display : '');
+			if (s.rate !== undefined) {
+				var rate = s.rate === null ? DASH : s.rate;
+				tip += ' (' + rate + ')';
+				row += _.el('text', ['class', p + '-rate', 'x', s.part ? INDENT : 0, 'y', y + 12, 'fill-opacity', 0.7,
+					'font-size', form === 'steps' ? 13 : 12, 'font-weight', form === 'steps' ? 600 : null], _.esc(DOWN + rate));
+				y += form === 'steps' ? RATE + 4 : RATE;
+			}
+			var valText = s.earned ? _.el('tspan', ['fill-opacity', 0.75], _.esc(s.display)) + ' · ' +
+				_.el('tspan', ['font-weight', 600], _.esc(s.earned.display)) : _.esc(s.display);
+			var chars = s.label.length + (s.part ? 2 : 0) + s.display.length + (s.earned ? s.earned.display.length + 3 : 0) + 2;
+			// a label longer than the narrow width holds is cut with an ellipsis; the row's <title> keeps it whole
+			var max = Math.floor(NARROW / GLYPH) - (s.part ? 2 : 0);
+			var label = s.label.length > max ? s.label.slice(0, max - 1) + '…' : s.label;
+			row += _.el('text', ['class', p + '-label', 'x', s.part ? INDENT : 0, 'y', y + 13], _.esc(label));
+			if (chars * GLYPH > NARROW) y += LINE;
+			row += _.el('text', ['class', p + '-value', 'x', '100%', 'y', y + 13, 'text-anchor', 'end'], valText);
+			y += LINE + 2;
+			var h = form === 'shape' ? SHAPE : s.part ? PART : BAR, top = y;
+			var cls = p + (loss ? '-bar-loss' : s.part ? '-bar-part' : '-bar');
+			var fill = loss ? 'currentColor' : pal.solid;
+			if (form === 'steps' && prev && !s.part && !loss) {
+				row += _.bar(z, Math.max(prev.value, 0) / range * 100, y, h, 'currentColor', 0.12, p + '-bar-ghost', false);
+			}
+			row += mark(s.value, y, h, fill, loss ? 0.35 : s.earned ? pal.opacity : 1, cls);
+			y += h;
+			if (s.earned) {
+				y += 2;
+				row += mark(s.earned.value, y, h, fill, loss ? 0.7 : 1, p + '-bar-earned');
+				y += h;
+			}
+			// the zero line, when the chart has a negative value: a hairline beside this row's bars only,
+			// so it never runs through a label
+			if (lo < 0) {
+				row += _.el('line', ['class', p + '-axis', 'x1', _.pct(z), 'x2', _.pct(z), 'y1', top - 2, 'y2', y + 2,
+					'stroke', 'currentColor', 'stroke-opacity', 0.35]);
+			}
+			y += PAD;
+			if (!s.part && !loss) prev = s;
+			marks += _.el('g', [], _.el('title', [], _.esc(tip)) + row);
+		}
+		return { body: out + marks, h: y - PAD };
+
+		function mark(v, top, h, fill, op, c) {
+			var w = Math.abs(v) / range * 100;
+			if (!w) return '';
+			if (form === 'shape') return _.bar(50 - w / 2, w, top, h, fill, op, c, false);
+			return _.bar(v < 0 ? z - w : z, w, top, h, fill, op, c, v < 0);
+		}
+	}
+
 	return function funnel(steps, options) {
 		var opts = _.common(options);
 		var key = check(steps, opts);
-		key.push([opts.form || 'bars', opts.legend || null, opts.title, opts.desc, opts.brand, opts.theme, opts.width]);
-		return _.svg(opts, 640, 0, '', JSON.stringify(key));
+		key.push([opts.form || 'bars', opts.legend || null, opts.title, opts.desc, opts.brand, opts.theme]);
+		var d = draw(steps, opts);
+		return _.svg(opts, d.h, d.body, JSON.stringify(key));
 	};
 });
