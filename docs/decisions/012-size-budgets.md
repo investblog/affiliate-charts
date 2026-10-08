@@ -3,7 +3,7 @@ type: decision
 status: accepted
 date: 2026-10-08
 tags: [size, budget]
-project: charts-lite
+project: affiliate-charts
 ---
 
 # 012 — size budgets, frozen per file for 0.1.0

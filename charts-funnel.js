@@ -1,12 +1,12 @@
 /*!
- * charts-lite / funnel — needs charts.js loaded first.
+ * affiliate-charts / funnel — needs charts.js loaded first.
  * MIT © 301ST (https://301.st)
  */
 // The funnel (ADR 007). M1: the contract — input rules and the accessible root; the bars are drawn at M3.
 (function (root, factory) {
 	var cjs = typeof module === 'object' && module.exports;
 	var core = cjs ? require('./charts.js') : root.Charts;
-	if (!core || !core._) throw new Error('charts-lite: load charts.js before charts-funnel.js');
+	if (!core || !core._) throw new Error('affiliate-charts: load charts.js before charts-funnel.js');
 	core.funnel = factory(core._);
 	if (cjs) module.exports = core;
 })(typeof self !== 'undefined' ? self : this, function (_) {

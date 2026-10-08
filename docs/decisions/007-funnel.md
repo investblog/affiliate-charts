@@ -3,7 +3,7 @@ type: decision
 status: accepted
 date: 2026-10-08
 tags: [api, funnel, dataviz]
-project: charts-lite
+project: affiliate-charts
 ---
 
 # 007 — the funnel: units per call, base and earned on one scale, three forms

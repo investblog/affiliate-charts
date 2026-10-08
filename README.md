@@ -1,4 +1,4 @@
-# charts-lite
+# affiliate-charts
 
 Charts for affiliate programmes, as SVG strings. The first chart is the **funnel**: clicks to first
 deposits in counts, and deposits to revenue in money — the base of each event beside what the partner
@@ -16,14 +16,14 @@ earned from it, with cancellations and rejected records on the same scale.
 ## Install
 
 ```sh
-npm install charts-lite
+npm install affiliate-charts
 ```
 
 ```js
-import Charts from 'charts-lite/charts-funnel.js'; // the core plus the funnel
+import Charts from 'affiliate-charts/charts-funnel.js'; // the core plus the funnel
 ```
 
-CommonJS: `require('charts-lite/charts-funnel.js')`. In a page, load the core first:
+CommonJS: `require('affiliate-charts/charts-funnel.js')`. In a page, load the core first:
 
 ```html
 <script src="charts.min.js"></script>
@@ -72,7 +72,7 @@ your data table next to it), `form` (`'bars'`, `'steps'` with a ghost of the ste
 the classic centred funnel), `legend`, `brand` (`#rrggbb`), `theme` (`'light'` | `'dark'`) and
 `classPrefix`.
 
-Bad input throws a `TypeError` starting with `charts-lite:` — the library never repairs data.
+Bad input throws a `TypeError` starting with `affiliate-charts:` — the library never repairs data.
 
 ## Colour and size
 

@@ -2,7 +2,7 @@
 type: note
 status: active
 tags: [backlog]
-project: charts-lite
+project: affiliate-charts
 ---
 
 # Backlog

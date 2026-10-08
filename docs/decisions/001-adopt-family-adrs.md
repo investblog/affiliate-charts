@@ -3,7 +3,7 @@ type: decision
 status: accepted
 date: 2026-10-08
 tags: [process]
-project: charts-lite
+project: affiliate-charts
 ---
 
 # 001 — adopt the family ADRs

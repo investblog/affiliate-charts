@@ -80,7 +80,7 @@ async function verify(pw, engine, port, width) {
 		await page.goto(`http://127.0.0.1:${port}/test/verify.html`);
 		// the page sets its title to PASS or FAIL when done; a suite that dies leaves the original
 		// title, the third outcome, which must read as neither
-		await page.waitForFunction(() => document.title !== 'charts-lite — verify', null, { timeout: 30000 });
+		await page.waitForFunction(() => document.title !== 'affiliate-charts — verify', null, { timeout: 30000 });
 		/* global document -- the lines below run inside the page */
 		return await page.evaluate(() => ({
 			verdict: document.getElementById('verdict').textContent,

@@ -3,7 +3,7 @@ type: decision
 status: accepted
 date: 2026-10-08
 tags: [a11y]
-project: charts-lite
+project: affiliate-charts
 ---
 
 # 006 — accessibility is part of the contract

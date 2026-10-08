@@ -1,5 +1,5 @@
-// Types for the charts-lite core. Each chart module ships its own `.d.ts` next to its file (ADR 008):
-// importing `charts-lite/charts-funnel.js` types `funnel`, and nothing that is not loaded. For the page
+// Types for the affiliate-charts core. Each chart module ships its own `.d.ts` next to its file (ADR 008):
+// importing `affiliate-charts/charts-funnel.js` types `funnel`, and nothing that is not loaded. For the page
 // global, the `Charts` interface below is extended by each module's file through declaration merging.
 
 declare namespace Charts {

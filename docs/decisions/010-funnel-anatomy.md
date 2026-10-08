@@ -3,7 +3,7 @@ type: decision
 status: accepted
 date: 2026-10-08
 tags: [layout, text, funnel, a11y]
-project: charts-lite
+project: affiliate-charts
 ---
 
 # 010 — the funnel row: labels, values, rates, truncation

@@ -3,7 +3,7 @@ type: decision
 status: accepted
 date: 2026-10-08
 tags: [layout, responsive, svg]
-project: charts-lite
+project: affiliate-charts
 ---
 
 # 009 — width from the page: marks in percent, text in pixels

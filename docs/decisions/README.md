@@ -2,7 +2,7 @@
 type: note
 status: active
 tags: [decisions]
-project: charts-lite
+project: affiliate-charts
 ---
 
 # Decisions (ADRs)
@@ -22,3 +22,4 @@ context → decision → consequences.
 - [010 — the funnel row: labels, values, rates, truncation](010-funnel-anatomy.md)
 - [011 — the palette: OKLCH from `brand`, `currentColor` for everything else](011-palette.md)
 - [012 — size budgets, frozen per file for 0.1.0](012-size-budgets.md)
+- [013 — the package is `affiliate-charts`](013-package-name.md)

@@ -3,7 +3,7 @@ type: decision
 status: accepted
 date: 2026-10-08
 tags: [colour, csp]
-project: charts-lite
+project: affiliate-charts
 ---
 
 # 005 — colour through presentation attributes and class hooks

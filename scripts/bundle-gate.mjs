@@ -11,7 +11,7 @@ import { build } from 'vite';
 
 const root = new URL('..', import.meta.url);
 const pkg = JSON.parse(readFileSync(new URL('package.json', root), 'utf8'));
-const dir = mkdtempSync(join(tmpdir(), 'charts-lite-bundle-'));
+const dir = mkdtempSync(join(tmpdir(), 'affiliate-charts-bundle-'));
 let code = 1;
 try {
 	const lib = join(dir, 'node_modules', pkg.name);

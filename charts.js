@@ -1,5 +1,5 @@
 /*!
- * charts-lite — charts for affiliate programmes as SVG strings.
+ * affiliate-charts — charts for affiliate programmes as SVG strings.
  * MIT © 301ST (https://301.st)
  */
 // The core (ADR 008): helpers every chart module shares, handed to modules as `Charts._`, which is
@@ -29,7 +29,7 @@
 		return inner == null ? s + '/>' : s + '>' + inner + '</' + tag + '>';
 	}
 	function fail(msg) {
-		throw new TypeError('charts-lite: ' + msg);
+		throw new TypeError('affiliate-charts: ' + msg);
 	}
 	// a number the caller passed; NaN and ±Infinity are a bug upstream, never drawn
 	function num(v, what) {

@@ -29,7 +29,7 @@ const MUTATIONS = [
 	[C, T, 'options may be a string', "if (typeof o !== 'object') fail('options must be an object');", ''],
 	[C, T, 'title may be a number', "if (o.title != null) str(o.title, 'title');", ''],
 	[C, T, 'any caller string accepted', "if (typeof v !== 'string') fail(what + ' must be a string');", ''],
-	[F, T, 'module without core does not throw', "if (!core || !core._) throw new Error('charts-lite: load charts.js before charts-funnel.js');", 'if (!core) return;'],
+	[F, T, 'module without core does not throw', "if (!core || !core._) throw new Error('affiliate-charts: load charts.js before charts-funnel.js');", 'if (!core) return;'],
 	[F, T, 'module exports the function', 'if (cjs) module.exports = core;', 'if (cjs) module.exports = core.funnel;'],
 	[F, T, 'steps may be any object', "if (!Array.isArray(steps)) fail('`steps` must be an array');", ''],
 	[F, T, 'a null step reaches the engine', 'var s = steps[i] || {}', 'var s = steps[i]'],

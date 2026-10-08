@@ -1,7 +1,7 @@
 {
-  "name": "charts-lite",
+  "name": "affiliate-charts",
   "version": "0.1.0",
-  "description": "Charts for affiliate programmes as SVG strings: funnels, and later money waterfalls, daily dynamics, breakdowns and cohorts. No inline styles, so it renders under a strict style-src 'self' CSP. A core plus one file per chart; zero dependencies; Node and the browser.",
+  "description": "Affiliate dashboard charts as SVG strings: conversion funnels in counts and money (deposits, GGR, partner commission), with more forms to come. No inline styles, so it renders under a strict CSP. A core plus one file per chart; zero dependencies; Node and the browser.",
   "main": "charts.js",
   "types": "charts.d.ts",
   "files": [
@@ -42,17 +42,22 @@
     "dataviz",
     "ssr",
     "zero-dependencies",
-    "vanilla-js"
+    "vanilla-js",
+    "ggr",
+    "revenue-share",
+    "cpa",
+    "conversion-funnel",
+    "partner-dashboard"
   ],
   "author": "301st (https://301.st)",
   "license": "MIT",
-  "homepage": "https://github.com/investblog/charts-lite#readme",
+  "homepage": "https://github.com/investblog/affiliate-charts#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/investblog/charts-lite.git"
+    "url": "git+https://github.com/investblog/affiliate-charts.git"
   },
   "bugs": {
-    "url": "https://github.com/investblog/charts-lite/issues"
+    "url": "https://github.com/investblog/affiliate-charts/issues"
   },
   "devDependencies": {
     "eslint": "^10.12.0",

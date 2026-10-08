@@ -62,11 +62,11 @@ const throwsCases = [
 ];
 for (const [name, steps, opts] of throwsCases) {
 	// the library's own error, not an engine error that a broken check would also raise
-	test(`throws: ${name}`, () => assert.throws(() => Charts.funnel(steps, opts), { name: 'TypeError', message: /^charts-lite: / }));
+	test(`throws: ${name}`, () => assert.throws(() => Charts.funnel(steps, opts), { name: 'TypeError', message: /^affiliate-charts: / }));
 }
 
 test('a non-finite value is named as such, not caught later as a scale overflow', () => {
-	assert.throws(() => Charts.funnel([S('a', 1), S('b', Infinity)]), /^TypeError: charts-lite: step 1 value must be a finite number$/u);
+	assert.throws(() => Charts.funnel([S('a', 1), S('b', Infinity)]), /^TypeError: affiliate-charts: step 1 value must be a finite number$/u);
 	assert.throws(() => Charts.funnel([S('a', 1, { earned: { value: -Infinity, display: '' } })], { legend }),
 		/step 0 earned value must be a finite number/u);
 });

@@ -3,7 +3,7 @@ type: decision
 status: accepted
 date: 2026-10-08
 tags: [colour, dataviz, a11y]
-project: charts-lite
+project: affiliate-charts
 ---
 
 # 011 — the palette: OKLCH from `brand`, `currentColor` for everything else

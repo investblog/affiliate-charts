@@ -3,7 +3,7 @@ type: decision
 status: accepted
 date: 2026-10-08
 tags: [process, dataviz]
-project: charts-lite
+project: affiliate-charts
 ---
 
 # 002 — a hand-written chart library, not a general package rendered elsewhere

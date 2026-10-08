@@ -3,7 +3,7 @@ type: decision
 status: accepted
 date: 2026-10-08
 tags: [packaging, size, module-format, types]
-project: charts-lite
+project: affiliate-charts
 ---
 
 # 008 — a core plus one file per chart

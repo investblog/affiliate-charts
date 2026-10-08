@@ -3,7 +3,7 @@ type: decision
 status: accepted
 date: 2026-10-08
 tags: [api, stability]
-project: charts-lite
+project: affiliate-charts
 ---
 
 # 003 — input is data, not a seed

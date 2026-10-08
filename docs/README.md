@@ -2,10 +2,10 @@
 type: note
 status: active
 tags: [architecture, overview, spec]
-project: charts-lite
+project: affiliate-charts
 ---
 
-# charts-lite — spec / dev source of truth
+# affiliate-charts — spec / dev source of truth
 
 Docs for developers and agents. `index.html` is the playground, `test/verify.html` the browser
 gate, `test/*.test.mjs` the Node gate. Contract-first: change the doc here **before** the code.
@@ -78,8 +78,8 @@ charts-waterfall.js / …
 ```
 
 - A module takes the core from `require('./charts.js')` (CommonJS) or `root.Charts` (browser), throws
-  `Error('charts-lite: load charts.js before charts-<form>.js')` without it, adds its function to the
-  core object and **exports that core object** — `require('charts-lite/charts-funnel.js').funnel`.
+  `Error('affiliate-charts: load charts.js before charts-<form>.js')` without it, adds its function to the
+  core object and **exports that core object** — `require('affiliate-charts/charts-funnel.js').funnel`.
 - Registration is a side effect: `package.json` never declares `sideEffects: false`.
 - Every chart is a pure function `(data, options) → string`. Size budgets are per file.
 
@@ -111,7 +111,7 @@ Input rules shared by every chart:
   given, an object; `classPrefix` a string matching `[A-Za-z_][A-Za-z0-9_-]*` — it lands in ids and
   `aria-labelledby`, where a space or a quote would break the accessible name or the markup;
   `brand` a `#rrggbb` hex; `theme` `light` or `dark`; an unknown `form` throws.
-- Every input error is a `TypeError` whose message starts with `charts-lite:`.
+- Every input error is a `TypeError` whose message starts with `affiliate-charts:`.
 
 **What the library computes, and what it never does.** It derives **positions**: scale domains, nice
 tick values, running offsets in a waterfall, segment widths in a part-to-whole bar. It never derives
@@ -301,7 +301,7 @@ catalog.
 | M2 | playground `index.html`; O1–O4 decided | ADRs merged; layout options leave `@unstable` |
 | M3 | core drawing + `funnel` (three forms) | gates green → 0.1.0 |
 | M4 | first consumer: the two funnels above their tables, imported from npm through a bundler (Vite: default import of the UMD file via CJS interop), CSP unchanged (`script-src 'self'`, `style-src 'self'`), both themes, 375/1280 px | screenshots + review |
-| M5 | package-name ADR, public repo, Pages playground, first publish, Trusted Publisher, release from `v*` tags | published |
+| M5 | package-name ADR (done: ADR 013), public repo, Pages playground, first publish, Trusted Publisher, release from `v*` tags | published |
 | M6 | `waterfall`, then Group B: `series` (daily first), `spark`/`tile` | gates green → 0.2.0 |
 | M7 | Group C: `rank`, `share`, `heatmap` | → 0.3.0 |
 | M8 | Group D: cohort, `meter`, `sankey` (*provisional budget 4096 B*) | → 0.4.0, then v1.0 |

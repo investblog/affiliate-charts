@@ -3,7 +3,7 @@ type: decision
 status: accepted
 date: 2026-10-08
 tags: [api, text, i18n]
-project: charts-lite
+project: affiliate-charts
 ---
 
 # 004 — text in the output; values from the caller, ticks through a callback
