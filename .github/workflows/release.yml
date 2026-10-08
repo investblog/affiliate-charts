@@ -1,0 +1,85 @@
+name: Release
+
+# Publishes the package to npm with PROVENANCE via OIDC Trusted Publishing — no tokens, no OTP.
+# One-time setup on npmjs.com is required (RELEASING.md): package → Settings → Trusted Publisher →
+# GitHub Actions → investblog / affiliate-charts / release.yml.
+#
+# Release flow: npm version minor → CHANGELOG → git push && git push --tags.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # OIDC token for npm trusted publishing + provenance
+
+jobs:
+  publish:
+    # Only ever from a v* tag: dispatched on a branch it must not publish whatever main carries.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+          # no dependency cache in a publishing job: a poisoned cache runs next to the credentials
+          package-manager-cache: false
+
+      # Trusted publishing / provenance needs npm >= 11.5.1
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
+      - name: Install
+        run: npm ci
+
+      - name: Verify tag matches package version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Tag v$TAG does not match package version $PKG"
+            exit 1
+          fi
+
+      # Idempotence: the version the bootstrap published exits green here instead of failing.
+      - name: Skip if version already published
+        id: dupe
+        run: |
+          NAME="$(node -p "require('./package.json').name")"
+          PKG="$(node -p "require('./package.json').version")"
+          if npm view "$NAME@$PKG" version > /dev/null 2>&1; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "$NAME@$PKG is already on the registry — nothing to do."
+          fi
+
+      # A tag can point at any commit: re-run every gate rather than trusting main's CI.
+      - name: Gates
+        if: steps.dupe.outputs.already != 'true'
+        run: |
+          npm run lint
+          npm run typecheck
+          npm run build
+          npm test
+          npm run -s size
+          npm run -s gate:bundle
+
+      # The minified files are gitignored yet shipped: a broken prepack would publish without them.
+      - name: Verify the tarball
+        if: steps.dupe.outputs.already != 'true'
+        run: |
+          TARBALL="$(npm pack --silent)"
+          tar -tzf "$TARBALL" | sed 's|^package/||' | sort
+          for f in charts.js charts.min.js charts.d.ts charts-funnel.js charts-funnel.min.js charts-funnel.d.ts package.json README.md LICENSE CHANGELOG.md; do
+            tar -tzf "$TARBALL" | grep -qx "package/$f" || { echo "::error::$f missing from the published tarball"; exit 1; }
+          done
+          rm -f "$TARBALL"
+
+      # No NODE_AUTH_TOKEN: npm exchanges the GitHub OIDC token for a short-lived publish token.
+      - name: Publish (provenance via OIDC)
+        if: steps.dupe.outputs.already != 'true'
+        run: npm publish --provenance --access public
