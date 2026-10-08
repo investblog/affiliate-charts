@@ -1,6 +1,6 @@
 {
   "name": "charts-lite",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Charts for affiliate programmes as SVG strings: funnels, and later money waterfalls, daily dynamics, breakdowns and cohorts. No inline styles, so it renders under a strict style-src 'self' CSP. A core plus one file per chart; zero dependencies; Node and the browser.",
   "main": "charts.js",
   "types": "charts.d.ts",
