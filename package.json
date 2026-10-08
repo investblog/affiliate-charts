@@ -22,7 +22,8 @@
     "typecheck": "tsc -p tsconfig.json",
     "mutate": "node scripts/mutate.mjs",
     "gate:bundle": "node scripts/bundle-gate.mjs",
-    "gate:browser": "node scripts/browser-gate.mjs"
+    "gate:browser": "node scripts/browser-gate.mjs",
+    "preview": "node scripts/preview.mjs"
   },
   "config": {
     "sizeBudget": {

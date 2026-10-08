@@ -2,35 +2,75 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>affiliate-charts — playground</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>affiliate-charts — live demo</title>
+<meta name="description" content="Affiliate dashboard charts as SVG strings: conversion funnels in counts and money, base and partner commission, losses and negative GGR, under a strict CSP.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 <style>
-	:root { --light-bg: #f3f5f6; --light-ink: #11171c; --dark-bg: #1f262c; --dark-ink: #e6e6e6; }
-	body { margin: 0; padding: 16px; font: 14px/1.4 Montserrat, system-ui, sans-serif; background: #fff; color: #11171c; }
-	h1 { font-size: 18px; margin: 0 0 4px; }
-	h2 { font-size: 14px; margin: 24px 0 8px; font-weight: 600; }
-	p { margin: 0 0 12px; max-width: 70ch; }
-	.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
-	.card { padding: 16px; border-radius: 8px; }
-	.card.light { background: var(--light-bg); color: var(--light-ink); }
-	.card.dark { background: var(--dark-bg); color: var(--dark-ink); }
+	:root { --bg: #111318; --panel: #1a1d24; --text: #e6e6e6; --muted: #9aa0aa; --line: #2b2f38; --accent: #4d8dff;
+		--card: #1f262c; --card-ink: #e6e6e6; }
+	body.light { --bg: #f4f5f8; --panel: #ffffff; --text: #1d2026; --muted: #5d6470; --line: #dfe2e8; --accent: #0066ff;
+		--card: #f3f5f6; --card-ink: #11171c; }
+	* { box-sizing: border-box; }
+	body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, sans-serif; }
+	main { display: grid; grid-template-columns: 18rem 1fr; min-height: 100vh; }
+	aside { padding: 16px; background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+	h1 { font-size: 16px; margin: 0; }
+	label, .field { display: grid; grid-template-columns: 5.5rem 1fr; align-items: center; gap: 8px; color: var(--muted); }
+	input[type=text], select { width: 100%; padding: 4px 6px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 4px; }
+	input[type=range] { width: 100%; }
+	.row { display: flex; gap: 6px; align-items: center; }
+	.brand input { width: 2.2rem; height: 1.6rem; padding: 0; border: 0; background: none; }
+	.meta { color: var(--muted); font-size: 12px; margin: 0; }
+	pre { margin: 0; padding: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; font: 11px/1.45 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-word; color: var(--muted); }
+	footer { margin-top: auto; color: var(--muted); font-size: 12px; }
+	a { color: var(--accent); }
+	#stage { padding: 24px; display: grid; justify-items: center; align-content: start; gap: 16px; }
+	/* the chart takes its container's width (ADR 009): the width control sizes this box, nothing else */
+	.card { width: 100%; padding: 20px; border-radius: 10px; background: var(--card); color: var(--card-ink);
+		font-family: Montserrat, system-ui, sans-serif; }
 	.card svg { display: block; }
-	.note { font-size: 12px; opacity: .7; margin-top: 8px; }
-	#report { font: 12px/1.4 ui-monospace, monospace; white-space: pre-wrap; }
+	.card h2 { font-size: 13px; font-weight: 600; margin: 0 0 12px; opacity: .7; }
+	.error { color: #e66a67; font: 12px/1.4 ui-monospace, Consolas, monospace; }
+	#stage.sheet { grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); align-items: start; justify-items: stretch; }
+	@media (max-width: 48rem) { main { grid-template-columns: 1fr; } aside { border-right: 0; border-bottom: 1px solid var(--line); } #stage { padding: 16px; } }
 </style>
 </head>
 <body>
-<h1>affiliate-charts playground</h1>
-<p>Generic affiliate data. Each chart is drawn twice, on a sample light and a sample dark surface. Resize the
-window: bars follow the width, text keeps its size.</p>
-<div id="charts"></div>
-<h2>Overlap report</h2>
-<div id="report">running…</div>
+<main>
+	<aside>
+		<h1>affiliate-charts</h1>
+		<p class="meta">Funnels for partner cabinets, drawn as SVG strings. Every control below is an option of one call.</p>
+		<label>show <select id="show">
+			<option value="one">one example</option>
+			<option value="sheet">every example</option>
+		</select></label>
+		<label>example <select id="example">
+			<option value="counts">counts: clicks → FTD</option>
+			<option value="money" selected>money: base and earned</option>
+			<option value="negative">a period players won</option>
+			<option value="fresh">a new campaign, zeros</option>
+		</select></label>
+		<label>form <select id="form"><option>bars</option><option>steps</option><option>shape</option></select></label>
+		<label>theme <select id="theme"><option>dark</option><option>light</option></select></label>
+		<label class="brand">brand <span class="row"><input type="color" id="brand" value="#0066ff"><span class="meta" id="brandHex">#0066ff</span></span></label>
+		<label>width <input type="range" id="width" min="320" max="1100" step="10" value="720"></label>
+		<label>title <span class="row"><input type="checkbox" id="titled" checked><span class="meta">off = aria-hidden</span></span></label>
+		<p class="meta" id="bytes"></p>
+		<pre id="code"></pre>
+		<footer>
+			<a href="https://www.npmjs.com/package/affiliate-charts">npm</a> ·
+			<a href="https://github.com/investblog/affiliate-charts">GitHub</a> ·
+			Made in <a href="https://301.st">301</a> · for <a href="https://spintax.net">spintax.net</a>
+		</footer>
+	</aside>
+	<section id="stage"></section>
+</main>
 
 <script>
-// cache-bust the library, so a stale copy never fakes a result; file:// falls back to the plain path
+// cache-bust the library, so a stale copy never shows an old picture (AGENTS.md); file:// loads plain
 (function () {
 	var bust = location.protocol === 'file:' ? '' : '?ts=' + Date.now();
 	var files = ['charts.js', 'charts-funnel.js'], i = 0;
@@ -39,85 +79,98 @@ window: bars follow the width, text keeps its size.</p>
 		var s = document.createElement('script');
 		s.src = files[i++] + bust;
 		s.onload = next;
-		s.onerror = function () { document.getElementById('report').textContent = 'FAIL: could not load ' + s.src; };
+		s.onerror = function () { document.getElementById('stage').textContent = 'could not load ' + s.src; };
 		document.head.appendChild(s);
 	})();
 })();
 
 function app() {
-	var counts = [
-		{ label: 'Clicks', value: 18400, display: '18 400' },
-		{ label: 'Unique clicks', value: 12100, display: '12 100', part: true },
-		{ label: 'Registrations', value: 3120, display: '3 120', rate: '17.0%' },
-		{ label: 'First deposits', value: 410, display: '410', rate: '13.1%' },
-	];
-	var countsRu = [
-		{ label: 'Переходы', value: 18400, display: '18 400' },
-		{ label: 'уникальные', value: 12100, display: '12 100', part: true },
-		{ label: 'Регистрации', value: 0, display: '0', rate: '0%' },
-		{ label: 'Первые депозиты', value: 0, display: '0', rate: null },
-	];
-	var money = [
-		{ label: 'Deposits — sum topped up', value: 124000, display: '124 000.00', earned: { value: 18600, display: '18 600.00' } },
-		{ label: '2nd deposits', value: 41000, display: '41 000.00', part: true, earned: { value: 6150, display: '6 150.00' } },
-		{ label: '3rd deposits', value: 22000, display: '22 000.00', part: true, earned: { value: 3300, display: '3 300.00' } },
-		{ label: 'Later deposits', value: 9000, display: '9 000.00', part: true, earned: { value: 1350, display: '1 350.00' } },
-		{ label: 'First deposits', value: 41000, display: '41 000.00', earned: { value: 20500, display: '20 500.00' } },
-		{ label: 'Revenue — GGR', value: -18200, display: '−18 200.00', gap: true, earned: { value: -4550, display: '−4 550.00' } },
-		{ label: 'Cancellations', value: -9600, display: '−9 600.00', group: 'losses', earned: { value: -1440, display: '−1 440.00' } },
-		{ label: 'Отклонённые записи (фрод, запрещённый источник)', value: 5400, display: '5 400.00', group: 'losses', earned: { value: 810, display: '810.00' } },
-	];
-	var shape = [
-		{ label: 'Clicks', value: 18400, display: '18 400' },
-		{ label: 'Registrations', value: 3120, display: '3 120' },
-		{ label: 'First deposits', value: 410, display: '410' },
-	];
-	var cases = [
-		['Counts — bars', counts, { title: 'Funnel, counts' }],
-		['Counts, Cyrillic, zeros and a null rate — bars', countsRu, { title: 'Воронка, штуки' }],
-		['Counts — steps', counts, { title: 'Funnel, counts', form: 'steps' }],
-		['Money — base and earned, negative GGR after a gap, losses', money,
-			{ title: 'Funnel, money', desc: 'The bases differ per step', legend: ['base of the event', 'earned by the partner'] }],
-		['Counts — shape', shape, { title: 'Funnel', form: 'shape' }],
-	];
-	var root = document.getElementById('charts');
-	cases.forEach(function (c) {
-		var h = document.createElement('h2');
-		h.textContent = c[0];
-		root.appendChild(h);
-		var pair = document.createElement('div');
-		pair.className = 'pair';
-		['light', 'dark'].forEach(function (t) {
-			var card = document.createElement('div');
-			card.className = 'card ' + t;
-			var opts = Object.assign({ theme: t, brand: '#0066ff' }, c[2]);
-			Charts.init(card, Charts.funnel(c[1], opts));
-			pair.appendChild(card);
-		});
-		root.appendChild(pair);
+	var S = function (label, value, display, extra) {
+		var o = { label: label, value: value, display: display };
+		for (var k in extra) o[k] = extra[k];
+		return o;
+	};
+	var E = function (value, display) { return { value: value, display: display }; };
+	var LEGEND = ['base of the event', 'earned by the partner'];
+	// example data: a generic affiliate programme, values already formatted by the caller
+	var EXAMPLES = {
+		counts: { name: 'Counts: clicks → first deposits', steps: [
+			S('Clicks', 18400, '18 400'),
+			S('Unique clicks', 12100, '12 100', { part: true }),
+			S('Registrations', 3120, '3 120', { rate: '17.0%' }),
+			S('First deposits', 410, '410', { rate: '13.1%' }),
+		] },
+		money: { name: 'Money: base and earned', legend: true, steps: [
+			S('Deposits — sum topped up', 124000, '124 000.00', { earned: E(18600, '18 600.00') }),
+			S('2nd deposits', 41000, '41 000.00', { part: true, earned: E(6150, '6 150.00') }),
+			S('3rd deposits', 22000, '22 000.00', { part: true, earned: E(3300, '3 300.00') }),
+			S('First deposits', 41000, '41 000.00', { earned: E(20500, '20 500.00') }),
+			S('Revenue — GGR', 52000, '52 000.00', { gap: true, earned: E(13000, '13 000.00') }),
+			S('Cancellations', -9600, '−9 600.00', { group: 'losses', earned: E(-1440, '−1 440.00') }),
+			S('Rejected', 5400, '5 400.00', { group: 'losses', earned: E(810, '810.00') }),
+		] },
+		negative: { name: 'A period players won', legend: true, steps: [
+			S('Deposits — sum topped up', 64000, '64 000.00', { earned: E(9600, '9 600.00') }),
+			S('Revenue — GGR', -18200, '−18 200.00', { gap: true, earned: E(-4550, '−4 550.00') }),
+			S('Cancellations', -3100, '−3 100.00', { group: 'losses' }),
+		] },
+		fresh: { name: 'A new campaign', steps: [
+			S('Clicks', 2400, '2 400'),
+			S('Unique clicks', 1900, '1 900', { part: true }),
+			S('Registrations', 0, '0', { rate: '0%' }),
+			S('First deposits', 0, '0', { rate: null }),
+		] },
+	};
+	var $ = function (id) { return document.getElementById(id); };
+	var stage = $('stage');
+
+	function options(ex) {
+		var o = { form: $('form').value, theme: $('theme').value, brand: $('brand').value };
+		if ($('titled').checked) o.title = ex.name;
+		if (ex.legend) o.legend = LEGEND;
+		return o;
+	}
+	function card(key) {
+		var ex = EXAMPLES[key], box = document.createElement('div'), h = document.createElement('h2'), host = document.createElement('div');
+		box.className = 'card';
+		h.textContent = ex.name;
+		box.appendChild(h);
+		box.appendChild(host);
+		var svg = '';
+		try {
+			svg = Charts.funnel(ex.steps, options(ex));
+			Charts.init(host, svg);
+		} catch (e) {
+			// the library refuses what it cannot draw honestly (shape with earned or losses): show why
+			host.className = 'error';
+			host.textContent = e.message;
+		}
+		return { el: box, svg: svg };
+	}
+	function draw() {
+		document.body.className = $('theme').value === 'light' ? 'light' : '';
+		$('brandHex').textContent = $('brand').value;
+		stage.innerHTML = '';
+		var sheet = $('show').value === 'sheet';
+		stage.className = sheet ? 'sheet' : '';
+		$('example').disabled = sheet;
+		if (sheet) {
+			Object.keys(EXAMPLES).forEach(function (k) { stage.appendChild(card(k).el); });
+			$('bytes').textContent = '';
+		} else {
+			var c = card($('example').value);
+			c.el.style.maxWidth = $('width').value + 'px';
+			stage.appendChild(c.el);
+			$('bytes').textContent = c.svg ? c.svg.length + ' bytes of SVG · width ' + $('width').value + 'px' : '';
+		}
+		var o = options(EXAMPLES[$('example').value]);
+		$('code').textContent = "import Charts from 'affiliate-charts/charts-funnel.js';\n\nconst svg = Charts.funnel(steps, " +
+			JSON.stringify(o, null, 1).replace(/\n\s*/g, ' ') + ');\nCharts.init(el, svg);';
+	}
+	['show', 'example', 'form', 'theme', 'brand', 'width', 'titled'].forEach(function (id) {
+		$(id).addEventListener('input', draw);
 	});
-	// overlap report: any two text boxes in one chart that intersect, or text that leaves the chart —
-	// with 2-3px of slack, because Firefox measures text by the font's full box and side bearings;
-	// and the widest glyph average seen, which the layout's row-splitting estimate must cover
-	var overlaps = [], glyph = 0;
-	document.querySelectorAll('.card > svg').forEach(function (svg, k) {
-		var boxes = [].map.call(svg.querySelectorAll('text'), function (t) { return [t.textContent, t.getBoundingClientRect()]; });
-		var sr = svg.getBoundingClientRect();
-		boxes.forEach(function (a, i) {
-			if (a[0].length > 3) glyph = Math.max(glyph, a[1].width / a[0].length);
-			if (a[1].right > sr.right + 2 || a[1].left < sr.left - 2) overlaps.push('chart ' + k + ': "' + a[0] + '" leaves the chart');
-			boxes.slice(i + 1).forEach(function (b) {
-				var x = a[1], y = b[1];
-				if (x.left < y.right - 2 && y.left < x.right - 2 && x.top < y.bottom - 3 && y.top < x.bottom - 3) {
-					overlaps.push('chart ' + k + ': "' + a[0] + '" × "' + b[0] + '"');
-				}
-			});
-		});
-	});
-	window.__report = { width: innerWidth, overlaps: overlaps, glyph: Math.round(glyph * 100) / 100,
-		font: getComputedStyle(document.querySelector('.card > svg text')).fontFamily };
-	document.getElementById('report').textContent = (overlaps.length ? overlaps.join('\n') : 'no text overlaps at ' + innerWidth + 'px') +
-		'\nwidest average glyph: ' + window.__report.glyph + 'px';
+	draw();
 }
 </script>
 </body>

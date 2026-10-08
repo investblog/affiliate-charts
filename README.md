@@ -2,7 +2,16 @@
 
 Charts for affiliate programmes, as SVG strings. The first chart is the **funnel**: clicks to first
 deposits in counts, and deposits to revenue in money — the base of each event beside what the partner
-earned from it, with cancellations and rejected records on the same scale.
+earned from it, with cancellations and rejected records on the same scale. Zero dependencies, 4.3 KB
+gzipped for the core and the funnel.
+
+[![npm](https://img.shields.io/npm/v/affiliate-charts.svg)](https://www.npmjs.com/package/affiliate-charts)
+[![license](https://img.shields.io/npm/l/affiliate-charts.svg)](LICENSE)
+
+**[Live demo →](https://investblog.github.io/affiliate-charts/)** — every option wired to a control,
+four example funnels, light and dark, and a width slider to watch the bars follow their container.
+
+[![A money funnel on a light card and a counts funnel on a dark one, drawn by affiliate-charts](https://investblog.github.io/affiliate-charts/docs/preview.svg)](https://investblog.github.io/affiliate-charts/)
 
 - **Renders under a strict CSP.** No `style=""`, no `<style>`, no `<script>`, no `data:` — it works
   under `default-src 'self'`, where most chart libraries break.
@@ -23,12 +32,15 @@ npm install affiliate-charts
 import Charts from 'affiliate-charts/charts-funnel.js'; // the core plus the funnel
 ```
 
-CommonJS: `require('affiliate-charts/charts-funnel.js')`. In a page, load the core first:
+CommonJS: `require('affiliate-charts/charts-funnel.js')`. Or from a CDN, no build step — the core first,
+then the chart; the page gets the global `Charts`:
 
 ```html
-<script src="charts.min.js"></script>
-<script src="charts-funnel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/affiliate-charts@0.1/charts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/affiliate-charts@0.1/charts-funnel.min.js"></script>
 ```
+
+A cabinet that ships `script-src 'self'` installs from npm and bundles instead.
 
 TypeScript before 7 needs `esModuleInterop` (or `allowSyntheticDefaultImports`) for the default import.
 
