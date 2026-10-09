@@ -64,3 +64,14 @@ with an axis, two forms of mark and x-label placement; measured as built, no tri
 | `charts-series.js` | 2831 B | **2944 B** |
 
 A page that draws the series alone pays 5365 B gzipped; the funnel and the series 7235 B.
+
+## Addendum (M6, the sparkline and the tile, 2026-10-09)
+
+The module carries its own copy of ADR 015's line code (runs, lone dots, the end dot); the core is
+untouched. Sharing it was not measured yet — the next module that draws a line decides.
+
+| File | Measured | Frozen |
+|---|---|---|
+| `charts-spark.js` | 1630 B | **1792 B** |
+
+A page of KPI tiles pays 4164 B gzipped; tiles with the series 6995 B.

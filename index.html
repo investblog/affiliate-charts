@@ -42,7 +42,7 @@
 <main>
 	<aside>
 		<h1>affiliate-charts</h1>
-		<p class="meta">Funnels, money waterfalls and daily series for partner cabinets, drawn as SVG strings. Every control below is an option of one call.</p>
+		<p class="meta">Funnels, money waterfalls, daily series and KPI tiles for partner cabinets, drawn as SVG strings. Every control below is an option of one call.</p>
 		<label>show <select id="show">
 			<option value="one">one example</option>
 			<option value="sheet">every example</option>
@@ -51,6 +51,7 @@
 			<option value="funnel">funnel</option>
 			<option value="waterfall">waterfall</option>
 			<option value="series">daily series</option>
+			<option value="tile">KPI tiles</option>
 		</select></label>
 		<label>example <select id="example"></select></label>
 		<label>form <select id="form"></select></label>
@@ -76,7 +77,7 @@
 // cache-bust the library, so a stale copy never shows an old picture (AGENTS.md); file:// loads plain
 (function () {
 	var bust = location.protocol === 'file:' ? '' : '?ts=' + Date.now();
-	var files = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js'], i = 0;
+	var files = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js'], i = 0;
 	(function next() {
 		if (i === files.length) return app();
 		var s = document.createElement('script');
@@ -169,13 +170,24 @@ function app() {
 		deposits: { option: 'deposits by weekday', name: 'First and repeat deposits by weekday', names: ['First deposits', 'Repeat deposits'],
 			points: week, stacked: true },
 	};
-	var FORMS = { funnel: ['bars', 'steps', 'shape'], waterfall: [], series: ['line', 'area', 'columns'] };
+	// KPI tiles: whether a change is good is the caller's call — a falling CPA is
+	var trend = function (k) { return clicks.slice(18).map(function (p, i) { return p.values[0] * k + (i % 3) * 7; }); };
+	var TILES = {
+		epc: { option: 'EPC, up and good', name: 'Earnings per click', tile: { label: 'EPC', value: '0.42',
+			delta: { display: '+8.2% vs Sep', direction: 'up', good: true }, trend: trend(1) } },
+		cpa: { option: 'CPA, down and good', name: 'Cost per acquisition', tile: { label: 'CPA', value: '41.20',
+			delta: { display: '−3.1% vs Sep', direction: 'down', good: true }, trend: trend(-1) } },
+		cr: { option: 'CR, down and bad', name: 'Registration to deposit', tile: { label: 'Registrations → FTD', value: '13.1%',
+			delta: { display: '−1.4 pp', direction: 'down', good: false }, trend: trend(1).reverse() } },
+		ftd: { option: 'FTD, flat', name: 'First deposits', tile: { label: 'First deposits', value: '410', delta: { display: '0%', direction: 'flat' } } },
+	};
+	var FORMS = { funnel: ['bars', 'steps', 'shape'], waterfall: [], series: ['line', 'area', 'columns'], tile: [] };
 
 	var $ = function (id) { return document.getElementById(id); };
 	var stage = $('stage');
 	var chart = function () { return $('chart').value; };
 	var flowChart = function () { return chart() === 'waterfall'; };
-	var examples = function () { return { funnel: FUNNELS, waterfall: FLOWS, series: DAYS }[chart()]; };
+	var examples = function () { return { funnel: FUNNELS, waterfall: FLOWS, series: DAYS, tile: TILES }[chart()]; };
 	// the example and form lists follow the chart; a choice survives as long as the chart has it
 	var shown = null;
 	function fillExamples() {
@@ -225,6 +237,9 @@ function app() {
 		} else if (chart() === 'series') {
 			svg = Charts.series(ex.points, options(ex));
 			Charts.init(host, svg);
+		} else if (chart() === 'tile') {
+			svg = Charts.tile(ex.tile, options(ex));
+			Charts.init(host, svg);
 		} else if (ex.money && $('form').value === 'shape') {
 			// the library refuses a shape it cannot draw honestly (ADR 007): say so instead of drawing
 			host.className = 'note';
@@ -245,8 +260,8 @@ function app() {
 		var sheet = $('show').value === 'sheet', flow = flowChart(), funnel = chart() === 'funnel';
 		stage.className = sheet ? 'sheet' : '';
 		$('example').disabled = sheet;
-		// the waterfall has one form
-		$('form').disabled = flow;
+		// the waterfall and the tile have one form
+		$('form').disabled = !FORMS[chart()].length;
 		// one money example on stage: the shape is not offered, and a chosen shape falls back to bars
 		var money = funnel && !sheet && FUNNELS[$('example').value].money;
 		if (funnel) $('form').querySelector('option[value=shape]').disabled = !!money;
@@ -266,7 +281,8 @@ function app() {
 		}
 		var o = options(examples()[$('example').value]), fn = chart();
 		if (o.previous) o.previous = '{ name, values, display }';
-		$('code').textContent = "import Charts from 'affiliate-charts/charts-" + fn + ".js';\n\nconst svg = Charts." + fn + '(' + (fn === 'series' ? 'points' : 'steps') + ', ' +
+		$('code').textContent = "import Charts from 'affiliate-charts/charts-" + (fn === 'tile' ? 'spark' : fn) + ".js';\n\nconst svg = Charts." + fn + '(' +
+			({ series: 'points', tile: 'tile' }[fn] || 'steps') + ', ' +
 			JSON.stringify(o, null, 1).replace(/\n\s*/g, ' ') + ');\nCharts.init(el, svg);';
 	}
 	['show', 'chart', 'example', 'form', 'theme', 'brand', 'width', 'titled'].forEach(function (id) {

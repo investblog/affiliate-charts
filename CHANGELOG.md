@@ -10,7 +10,9 @@
 - The daily series (`charts-series.js`): lines, an area or columns (grouped or stacked) at band centres,
   `null` as a break, a comparison period, one value axis with nice ticks through `format`, at most two
   series — the brand and its opposite hue (ADR 015).
-- The demo picks the chart: funnel, waterfall or daily series.
+- Sparklines and KPI tiles (`charts-spark.js`): a 32 px sparkline on its own min and max; a tile of label,
+  value, a change coloured by direction × good with its arrow, and a trend (ADR 016).
+- The demo picks the chart: funnel, waterfall, daily series or KPI tiles.
 
 ## 0.1.1 — 2026-10-08
 

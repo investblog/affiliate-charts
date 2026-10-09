@@ -8,7 +8,7 @@
 	document.addEventListener('securitypolicyviolation', function (e) { violations.push(e.violatedDirective + ' ' + e.blockedURI); });
 
 	// cache-bust: a stale library fakes a result either way (AGENTS.md)
-	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js', '../charts-waterfall.js', '../charts-series.js'], i = 0;
+	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js', '../charts-waterfall.js', '../charts-series.js', '../charts-spark.js'], i = 0;
 	(function next() {
 		if (i === files.length) return setTimeout(run, 50);
 		var s = document.createElement('script');
@@ -62,16 +62,25 @@
 			previous: { name: 'September', values: prior, display: prior.map(function (n) { return n === null ? null : String(n); }) } }],
 	];
 
+	// the tile at its promised 160px (ADR 016): a 20-character label and a 9-character value; a sparkline
+	var TILES = [
+		['tile', { label: 'Registrations → FTD rate', value: '18 400.00', delta: { display: '+8.2% vs Sep', direction: 'up', good: true },
+			trend: [3, 4, 2, null, 5, 6, 5, 8] }, { title: 'Tile' }, 'tile'],
+		['tiledark', { label: 'CPA', value: '41.20', delta: { display: '+3.1%', direction: 'up', good: false } }, { title: 'Tile, dark', theme: 'dark' }, 'tile'],
+		['spark', [10, 30, 20, 40], { title: 'Spark' }, 'spark'],
+	];
+
 	function run() {
 		var root = document.getElementById('charts'), markup = {}, results = [];
 		if (!window.Charts || typeof window.Charts.funnel !== 'function') return finish(['Charts.funnel is not loaded']);
 		if (typeof window.Charts.waterfall !== 'function') return finish(['Charts.waterfall is not loaded']);
 		if (typeof window.Charts.series !== 'function') return finish(['Charts.series is not loaded']);
-		FIXTURES.concat(FLOWS, SERIES).forEach(function (f) {
+		if (typeof window.Charts.tile !== 'function') return finish(['Charts.tile is not loaded']);
+		FIXTURES.concat(FLOWS, SERIES, TILES).forEach(function (f) {
 			var card = document.createElement('div');
-			card.className = 'card ' + (f[2].theme === 'dark' ? 'dark' : 'light');
+			card.className = 'card ' + (f[2].theme === 'dark' ? 'dark' : 'light') + (f[3] === 'tile' ? ' narrow' : '');
 			card.id = 'card-' + f[0];
-			markup[f[0]] = window.Charts[f[2].names ? 'series' : f[1][0].kind ? 'waterfall' : 'funnel'](f[1], f[2]);
+			markup[f[0]] = window.Charts[f[3] || (f[2].names ? 'series' : f[1][0].kind ? 'waterfall' : 'funnel')](f[1], f[2]);
 			window.Charts.init(card, markup[f[0]]);
 			root.appendChild(card);
 		});
@@ -98,7 +107,7 @@
 		});
 		check('ids are unique across charts on one page', function () {
 			var ids = [].map.call(document.querySelectorAll('#charts svg [id]'), function (e) { return e.id; });
-			return ids.length === 11 && new Set(ids).size === ids.length;
+			return ids.length === 14 && new Set(ids).size === ids.length;
 		});
 		check('aria-labelledby resolves inside its own chart', function () {
 			return [].every.call(document.querySelectorAll('#charts svg[aria-labelledby]'), function (s) {
@@ -126,7 +135,7 @@
 					return getComputedStyle(t).fontSize === px && Math.abs(t.getBoundingClientRect().width - t.getBBox().width) <= 3;
 				});
 			};
-			return unscaled('#charts .chart-label', '13px') && unscaled('#charts .chart-value', '13px') &&
+			return unscaled('#charts .chart-label', '13px') && unscaled('#charts .card:not(.narrow) .chart-value', '13px') && unscaled('#charts .narrow .chart-value', '26px') &&
 				unscaled('#card-counts .chart-rate', '12px') && unscaled('#card-steps .chart-rate', '13px');
 		});
 		check('a part row is indented 12px', function () {
@@ -264,6 +273,27 @@
 			return hex(getComputedStyle(l[0]).stroke) === window.Charts._.palette('#e11d48', 'light').solid &&
 				hex(getComputedStyle(l[3]).stroke) === window.Charts._.palette('#e11d48', 'light', Math.PI).solid &&
 				hex(prev.stroke) === '#e6e6e6' && prev.strokeOpacity === '0.35';
+		});
+		// the sparkline and the tile (ADR 016)
+		check('tile: at 160px a 20-character label, the value and the change stay inside', function () {
+			var s = svg('tile'), r = box(s), t = s.querySelectorAll('text');
+			return near(r.width, 160) && t.length === 3 && [].every.call(t, function (e) { return glyphs(e).right <= r.right + 2; }) &&
+				/…$/.test(t[0].lastChild.textContent) && t[0].querySelector('title').textContent === 'Registrations → FTD rate';
+		});
+		check('tile: the value is 26px semibold, the change carries its arrow and the good colour', function () {
+			var v = getComputedStyle(svg('tile').querySelector('.chart-value')), d = svg('tile').querySelector('.chart-delta');
+			var hex = function (c) { return '#' + c.match(/\d+/g).slice(0, 3).map(function (n) { return (+n + 256).toString(16).slice(1); }).join(''); };
+			var bad = svg('tiledark').querySelector('.chart-delta');
+			return v.fontSize === '26px' && v.fontWeight === '600' && /^▲ /.test(d.textContent) &&
+				hex(getComputedStyle(d).fill) === window.Charts._.palette('#0ca30c', 'light').solid &&
+				hex(getComputedStyle(bad).fill) === window.Charts._.palette('#d03b3b', 'dark').solid && /^▲ /.test(bad.textContent);
+		});
+		check('spark: its own min and max fill the box; the end dot on the last point', function () {
+			// 10, 30, 20, 40: the last is the maximum, at the box's top, 6px inside the 32px chart
+			var s = svg('spark'), r = box(s), d = box(s.querySelector('.chart-dot'));
+			var low = s.querySelector('.chart-line').points.getItem(0);
+			return near(r.height, 32) && near((d.top + d.bottom) / 2, r.top + 6, 1) && near((d.left + d.right) / 2, r.left + r.width * 0.875, 1.5) &&
+				near(low.y, 20, 0.01);
 		});
 		// last, after every chart has been in the document: CSP reports arrive asynchronously
 		// the palette in this engine against the bytes Node computed (test/fixtures/palette.json): float

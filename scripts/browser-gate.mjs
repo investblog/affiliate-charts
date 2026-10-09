@@ -24,7 +24,7 @@ import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const FILES = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js'];
+const FILES = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js'];
 const MUTATE = process.argv.includes('--mutate');
 const WIDTHS = [375, 1280];
 const CSP = "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self'; base-uri 'none'; object-src 'none'";
@@ -92,7 +92,8 @@ async function demo(pw, port) {
 		// the waterfall has one form: its form control is disabled, and is not touched
 		const charts = { funnel: [['counts', 'money', 'negative', 'fresh'], ['bars', 'steps', 'shape'], '.chart-bar'],
 			waterfall: [['flow', 'losing'], [null], '.chart-bar-total'],
-			series: [['money', 'clicks', 'deposits'], ['line', 'area', 'columns'], '.chart-hit'] };
+			series: [['money', 'clicks', 'deposits'], ['line', 'area', 'columns'], '.chart-hit'],
+			tile: [['epc', 'cpa', 'cr', 'ftd'], [null], '.chart-value'] };
 		for (const [chart, [examples, forms, mark]] of Object.entries(charts)) {
 			await page.selectOption('#chart', chart);
 			for (const show of ['one', 'sheet']) {
@@ -182,6 +183,11 @@ const MUTATIONS = [
 	{ label: 'hover bands that take no pointer', file: 'charts-series.js', edits: [["'height', PLOT, 'fill', 'transparent'", "'height', PLOT, 'fill', 'none'"]] },
 	{ label: 'series 2 in the brand hue', file: 'charts-series.js', edits: [['_.palette(o.brand, o.theme, Math.PI).solid', '_.palette(o.brand, o.theme).solid']] },
 	{ label: 'series tick text under the marks', file: 'charts-series.js', edits: [["'overflow', 'visible'], box) + dots + tickText;", "'overflow', 'visible'], tickText + box) + dots;"]] },
+	{ label: 'the tile is not registered', file: 'charts-spark.js', edits: [['core.tile = api.tile;', '']] },
+	{ label: 'tile labels cut at 30', file: 'charts-spark.js', edits: [['LABEL = 20', 'LABEL = 30']] },
+	{ label: 'the tile value small', file: 'charts-spark.js', edits: [["'font-size', 26, 'font-weight', 600", "'font-size', 20, 'font-weight', 600"]] },
+	{ label: 'a change coloured by its direction', file: 'charts-spark.js', edits: [['_.palette(d.good ? GOOD : BAD, o.theme)', "_.palette(d.direction === 'up' ? GOOD : BAD, o.theme)"]] },
+	{ label: 'the spark scale from zero', file: 'charts-spark.js', edits: [['return hi > lo ? (hi - v) / (hi - lo) * h : h / 2;', 'return hi > 0 ? (hi - v) / hi * h : h / 2;']] },
 	{ label: 'the last x label past the edge', file: 'charts-series.js', edits: [["out += xl(i, end ? '100%' : 0, end ? 'end' : 'start');", "out += xl(i, end ? '100%' : 0, 'start');"]] },
 ];
 

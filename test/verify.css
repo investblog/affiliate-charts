@@ -4,3 +4,4 @@ body { margin: 0; padding: 16px; font: 14px/1.4 system-ui, sans-serif; }
 .card.dark { background: #1f262c; color: #e6e6e6; }
 .card svg { display: block; }
 #out li.fail { color: #a33330; }
+.card.narrow { max-width: 160px; }
