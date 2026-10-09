@@ -240,23 +240,46 @@ network, and its caller label should say so neutrally. Layout and colour: ADR 01
 ```ts
 interface SeriesPoint { x: string; values: (number | null)[]; display: (string | null)[] }  // x: formatted label
 interface SeriesOptions extends Common {
-  form?: 'line' | 'area' | 'columns';
-  names: string[];                 // series names for the legend; length = values.length
+  form?: 'line' | 'area' | 'columns';   // default 'line'
+  names: string[];                 // one or two series names, for the key; length = values.length
   stacked?: boolean;               // columns only; the caller asserts the parts are additive
-  previous?: (number | null)[];    // comparison period for a single series, same length as points
+  previous?: {                     // comparison period for a single series, one entry per point
+    name: string; values: (number | null)[]; display: (string | null)[];
+  };
 }
 ```
 
-- `line`: 2px lines, round joins; `null` breaks the line (no data ≠ zero). End-dot ≥ 8px with a 2px
-  surface ring; the last value is the one direct label.
-- `area`: a single series only (a ~10% wash under a 2px line).
-- `columns`: **grouped** by default — GGR / NGR / commission are nested amounts, not parts of a whole,
-  and a stack would count the same money twice. `stacked: true` is for genuinely additive parts
-  (deposits by payment method) and is the caller's assertion.
-- `previous`: the comparison period as a de-emphasis gray line under a **single** series, never dashed,
-  never a second axis.
-- Throws: `area` or `previous` with more than one series; `stacked` outside `columns`; arrays of
-  mismatched length.
+Layout and colour: ADR 015. In short:
+
+- **Anatomy, top to bottom:** the key — one line per series and one for `previous`: a swatch, the name,
+  the last point's `display` end-anchored (an em dash when the last point has no data); the plot,
+  gridlines carrying their tick text above them at the left; the x labels.
+- **Points at band centres.** `null` is no data: a line breaks, a column is not drawn, a lone point
+  is a dot. Never zero.
+- `line`: 2 px lines, round joins; the last point with data of each series gets an 8 px dot with a 2 px
+  ring of the theme surface.
+- `area`: a single series only, a 0.1 wash between the line and zero.
+- `columns`: **grouped** by default — GGR and commission are nested amounts, not parts of a whole, and a
+  stack would count the same money twice. `stacked: true` is for genuinely additive parts (first and
+  repeat deposits) and is the caller's assertion.
+- `previous`: the comparison period as a `currentColor` line at 0.35 under a **single** series, never
+  dashed, never a second axis.
+- **Colours:** series 1 the brand's solid mark, series 2 its opposite hue. At most two series: no
+  third colour from one brand passes the checks (ADR 015) — more measures are more charts.
+- **Scale:** zero and every value drawn, widened to nice steps (1, 2, 5 × 10ⁿ, about four intervals);
+  tick text through `format`, default `n(v, 6)`. All values zero or `null`: one tick, 0.
+- **x labels:** the first and the last always — under their point when the label fits in one band at
+  343 px, else at the chart's edge; between them every k-th, k from the longest label at 343 px (8 px a
+  character, a 12 px gap), skipping any that would touch the first or the last.
+- **Hover:** a transparent band per point with a `<title>`: `x: name display`, one entry per series,
+  `previous` last. No script.
+- Class hooks: `-line`, `-area`, `-bar`, `-dot`, `-prev`, `-grid`, `-tick`, `-x`, `-hit`, `-key`, plus the
+  core's `-label`, `-value`.
+- Throws: `points` not an array, or empty; `names` not an array of one or two strings; a point whose
+  `values` or `display` length differs from `names`; a value `null` whose `display` is not, or the
+  reverse; `area` or `previous` with two series; `stacked` outside `columns`; a negative value in a
+  stack; `previous` arrays of a length other than the points'; `format` that is not a function or
+  returns something other than a string; values whose range overflows a number.
 
 **`Charts.spark(values, options)` and `Charts.tile(tile, options)`** — `charts-spark.js`
 

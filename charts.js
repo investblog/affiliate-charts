@@ -217,6 +217,6 @@
 			return palette(common({ brand: brand, theme: theme }).brand, theme);
 		},
 		_: { n: n, esc: esc, el: el, fail: fail, num: num, str: str, common: common, svg: svg, palette: palette,
-			pct: pct, bar: bar, labelLine: labelLine, legend: legend }
+			pct: pct, bar: bar, labelLine: labelLine, legend: legend, SURFACE: SURFACE }
 	};
 });

@@ -3,6 +3,7 @@
 import Charts from '../charts-funnel.js';
 import Core from '../charts.js';
 import Charts2 from '../charts-waterfall.js';
+import Charts3 from '../charts-series.js';
 
 const steps: Charts.FunnelStep[] = [
 	{ label: 'Clicks', value: 1840, display: '1 840' },
@@ -47,6 +48,29 @@ Charts2.waterfall(flow, { form: 'bars' });
 // @ts-expect-error — the waterfall module does not type the funnel
 Charts2.funnel(steps);
 
+// the series module types its own chart
+const days: Charts3.SeriesPoint[] = [
+	{ x: '1 Oct', values: [120, 30], display: ['120.00', '30.00'] },
+	{ x: '2 Oct', values: [null, -5], display: [null, '−5.00'] },
+];
+const sr: string = Charts3.series(days, { names: ['GGR', 'Commission'], form: 'columns', format: (v) => String(v) });
+const one: string = Charts3.series([{ x: 'a', values: [1], display: ['1'] }],
+	{ names: ['Clicks'], form: 'area', previous: { name: 'Last month', values: [2], display: ['2'] } });
+void sr; void one;
+// @ts-expect-error — names are required
+Charts3.series(days, {});
+// @ts-expect-error — at most two series
+Charts3.series(days, { names: ['a', 'b', 'c'] });
+// @ts-expect-error — form is a closed set
+Charts3.series(days, { names: ['a'], form: 'pie' });
+// @ts-expect-error — previous is an object with a name, not a bare array
+Charts3.series(days, { names: ['a'], previous: [1, 2] });
+// @ts-expect-error — format returns a string
+Charts3.series(days, { names: ['a'], format: (v: number) => v });
+// @ts-expect-error — the series module does not type the waterfall
+Charts3.waterfall(flow);
+
 // the page global, merged from every declaration file
-const viaGlobal: string = globalThis.Charts.funnel(steps) + globalThis.Charts.waterfall(flow);
+const viaGlobal: string = globalThis.Charts.funnel(steps) + globalThis.Charts.waterfall(flow) +
+	globalThis.Charts.series(days, { names: ['GGR'] });
 void viaGlobal;
