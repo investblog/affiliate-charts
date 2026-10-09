@@ -10,7 +10,7 @@ import { spawnSync } from 'node:child_process';
 const TEST = [process.execPath, ['--test', 'test/*.test.mjs']];
 const TYPES = [process.execPath, ['node_modules/typescript/bin/tsc', '-p', 'tsconfig.json']];
 const BUNDLE = [process.execPath, ['scripts/bundle-gate.mjs']];
-const T = TEST, C = 'charts.js', F = 'charts-funnel.js', W = 'charts-waterfall.js', S = 'charts-series.js', K = 'charts-spark.js';
+const T = TEST, C = 'charts.js', F = 'charts-funnel.js', W = 'charts-waterfall.js', S = 'charts-series.js', K = 'charts-spark.js', RK = 'charts-rank.js';
 
 const MUTATIONS = [
 	[C, T, 'esc leaves the apostrophe', ".replace(/'/g, '&#39;')", ''],
@@ -252,6 +252,31 @@ const MUTATIONS = [
 	['charts-spark.d.ts', TYPES, 'the value may be a number', 'value: string;', 'value: string | number;'],
 	['charts-spark.d.ts', TYPES, 'spark takes anything', 'spark(values: (number | null)[], options?: Spark.Options): string;', 'spark(values: unknown[], options?: Spark.Options): string;'],
 	['charts-spark.d.ts', TYPES, 'spark global not merged', 'interface ChartsGlobal extends SparkApi {}', ''],
+	// the ranking (M7 Group C)
+	[RK, T, 'rank without core does not throw', "if (!core || !core._) throw new Error('affiliate-charts: load charts.js before charts-rank.js');", 'if (!core) return;'],
+	[RK, BUNDLE, 'bundled: rank exports the function', 'if (cjs) module.exports = core;', 'if (cjs) module.exports = core.rank;'],
+	[RK, T, 'rank rows may be any object', "if (!Array.isArray(rows)) fail('`rows` must be an array');", ''],
+	[RK, T, 'an empty ranking accepted', "if (!rows.length) fail('no rows');", ''],
+	[RK, T, 'a null row reaches the engine', 'r = rows[i] || {};', 'r = rows[i];'],
+	[RK, T, 'rank labels unchecked', "_.str(r.label, 'row ' + i + ' label');", ''],
+	[RK, T, 'rank overflow drawn as nothing', "if (!isFinite(hi - lo)) fail('values too far apart to share a scale');", ''],
+	[RK, T, 'highlight unchecked', "if (h != null && !(typeof h === 'number' && h >= 0 && h < rows.length && h % 1 === 0)) fail('`highlight` must be the index of a row');", ''],
+	[RK, T, 'a string highlight accepted', "typeof h === 'number' && ", ''],
+	[RK, T, 'a highlight past the rows accepted', 'h < rows.length', 'h <= rows.length'],
+	[RK, T, 'rank scale to the top only', 'range = hi - lo || 1', 'range = hi || 1'],
+	[RK, T, 'rank negatives grow right', 'r.value < 0 ? z - w : z', 'z'],
+	[RK, T, 'a zero rank value draws a bar', 'if (r.value) {', 'if (true) {'],
+	[RK, T, 'highlight index 0 ignored', 'muted = h != null && h !== i', 'muted = !!h && h !== i'],
+	[RK, T, 'muted bars at full strength', "muted ? 0.35 : 1,", '1,'],
+	[RK, T, 'muted bars in the brand', "muted ? 'currentColor' : solid", 'solid'],
+	[RK, T, 'rank zero line without negatives', 'if (lo < 0) {', 'if (lo <= 0) {'],
+	[RK, T, 'rank row without a title', "_.el('title', [], _.esc(r.label + ': ' + r.display))", "''"],
+	[RK, T, 'rank chars ignore the value', 'r.label.length + r.display.length + 2', 'r.label.length + 2'],
+	[RK, T, 'rank bar height', 'var BAR = 12, PAD = 10;', 'var BAR = 14, PAD = 10;'],
+	[RK, T, 'rank ids ignore what is drawn', 'JSON.stringify([o.title, o.desc, out])', 'JSON.stringify([o.title, o.desc])'],
+	['charts-rank.d.ts', TYPES, 'highlight any', 'highlight?: number;', 'highlight?: number | string;'],
+	['charts-rank.d.ts', TYPES, 'display optional', '\t\tdisplay: string;', '\t\tdisplay?: string;'],
+	['charts-rank.d.ts', TYPES, 'rank global not merged', 'interface ChartsGlobal extends RankApi {}', ''],
 	[F, BUNDLE, 'bundled: module exports the function', 'if (cjs) module.exports = core;', 'if (cjs) module.exports = core.funnel;'],
 	[F, BUNDLE, 'bundled: the core taken from a global', "var core = cjs ? require('./charts.js') : root.Charts;", 'var core = root.Charts;'],
 	['charts-funnel.d.ts', TYPES, 'form is open', "form?: 'bars' | 'steps' | 'shape';", 'form?: string;'],

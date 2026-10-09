@@ -12,7 +12,9 @@
   series — the brand and its opposite hue (ADR 015).
 - Sparklines and KPI tiles (`charts-spark.js`): a 32 px sparkline on its own min and max; a tile of label,
   value, a change coloured by direction × good with its arrow, and a trend (ADR 016).
-- The demo picks the chart: funnel, waterfall, daily series or KPI tiles.
+- Rankings (`charts-rank.js`): one bar a row in the caller's order, negatives left of zero, one colour,
+  an optional `highlight` with the rest in grey.
+- The demo picks the chart: funnel, waterfall, daily series, KPI tiles or ranking.
 
 ## 0.1.1 — 2026-10-08
 

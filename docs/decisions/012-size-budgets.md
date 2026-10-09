@@ -75,3 +75,13 @@ untouched. Sharing it was not measured yet — the next module that draws a line
 | `charts-spark.js` | 1630 B | **1792 B** |
 
 A page of KPI tiles pays 4164 B gzipped; tiles with the series 6995 B.
+
+## Addendum (M7, the ranking, 2026-10-09)
+
+The ranking is rows of the core's `bar` and `labelLine`; it adds nothing to the core.
+
+| File | Measured | Frozen |
+|---|---|---|
+| `charts-rank.js` | 915 B | **1024 B** |
+
+A page with a ranking alone pays 3449 B gzipped.

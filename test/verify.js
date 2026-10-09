@@ -8,7 +8,7 @@
 	document.addEventListener('securitypolicyviolation', function (e) { violations.push(e.violatedDirective + ' ' + e.blockedURI); });
 
 	// cache-bust: a stale library fakes a result either way (AGENTS.md)
-	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js', '../charts-waterfall.js', '../charts-series.js', '../charts-spark.js'], i = 0;
+	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js', '../charts-waterfall.js', '../charts-series.js', '../charts-spark.js', '../charts-rank.js'], i = 0;
 	(function next() {
 		if (i === files.length) return setTimeout(run, 50);
 		var s = document.createElement('script');
@@ -68,6 +68,9 @@
 			trend: [3, 4, 2, null, 5, 6, 5, 8] }, { title: 'Tile' }, 'tile'],
 		['tiledark', { label: 'CPA', value: '41.20', delta: { display: '+3.1%', direction: 'up', good: false } }, { title: 'Tile, dark', theme: 'dark' }, 'tile'],
 		['spark', [10, 30, 20, 40], { title: 'Spark' }, 'spark'],
+		// the ranking: a source where players won, the third row emphasised
+		['rank', [{ label: 'sub-1', value: 300, display: '300' }, { label: 'sub-2', value: 150, display: '150' },
+			{ label: 'sub-3', value: -100, display: '−100' }], { title: 'Rank', highlight: 1, theme: 'dark' }, 'rank'],
 	];
 
 	function run() {
@@ -76,6 +79,7 @@
 		if (typeof window.Charts.waterfall !== 'function') return finish(['Charts.waterfall is not loaded']);
 		if (typeof window.Charts.series !== 'function') return finish(['Charts.series is not loaded']);
 		if (typeof window.Charts.tile !== 'function') return finish(['Charts.tile is not loaded']);
+		if (typeof window.Charts.rank !== 'function') return finish(['Charts.rank is not loaded']);
 		FIXTURES.concat(FLOWS, SERIES, TILES).forEach(function (f) {
 			var card = document.createElement('div');
 			card.className = 'card ' + (f[2].theme === 'dark' ? 'dark' : 'light') + (f[3] === 'tile' ? ' narrow' : '');
@@ -107,7 +111,7 @@
 		});
 		check('ids are unique across charts on one page', function () {
 			var ids = [].map.call(document.querySelectorAll('#charts svg [id]'), function (e) { return e.id; });
-			return ids.length === 14 && new Set(ids).size === ids.length;
+			return ids.length === 15 && new Set(ids).size === ids.length;
 		});
 		check('aria-labelledby resolves inside its own chart', function () {
 			return [].every.call(document.querySelectorAll('#charts svg[aria-labelledby]'), function (s) {
@@ -119,7 +123,7 @@
 		});
 		check('every row is a group whose first child is its <title>', function () {
 			var rows = document.querySelectorAll('#charts svg > g:not([class])');
-			return rows.length === 21 && [].every.call(rows, function (g) { return g.firstElementChild.tagName === 'title'; });
+			return rows.length === 24 && [].every.call(rows, function (g) { return g.firstElementChild.tagName === 'title'; });
 		});
 		check('bars follow the page width: 50% of the value is 50% of the chart', function () {
 			var s = svg('counts'), w = s.getBoundingClientRect().width;
@@ -294,6 +298,20 @@
 			var low = s.querySelector('.chart-line').points.getItem(0);
 			return near(r.height, 32) && near((d.top + d.bottom) / 2, r.top + 6, 1) && near((d.left + d.right) / 2, r.left + r.width * 0.875, 1.5) &&
 				near(low.y, 20, 0.01);
+		});
+		// the ranking
+		check('rank: one scale over zero and every value, negatives left of the zero line', function () {
+			// 300, 150, −100: range 400, zero at 25%
+			var s = svg('rank'), r = box(s), b = [].map.call(s.querySelectorAll('.chart-bar, .chart-bar-muted'), box);
+			var line = box(s.querySelector('.chart-axis'));
+			return b.length === 3 && near(line.left, r.left + r.width * 0.25, 1.5) && near(b[0].left, line.left, 1.5) && near(b[0].right, r.right) &&
+				near(b[1].width, r.width * 0.375, 1.5) && near(b[2].left, r.left) && near(b[2].right, line.left, 1.5);
+		});
+		check('rank: the highlighted row in the brand, the others grey', function () {
+			var s = svg('rank'), hex = function (c) { return '#' + c.match(/\d+/g).slice(0, 3).map(function (n) { return (+n + 256).toString(16).slice(1); }).join(''); };
+			var on = s.querySelectorAll('.chart-bar'), off = s.querySelectorAll('.chart-bar-muted');
+			return on.length === 1 && off.length === 2 && hex(getComputedStyle(on[0].querySelector('rect')).fill) === window.Charts._.palette(null, 'dark').solid &&
+				[].every.call(off, function (m) { return getComputedStyle(m).opacity === '0.35' && hex(getComputedStyle(m.querySelector('rect')).fill) === '#e6e6e6'; });
 		});
 		// last, after every chart has been in the document: CSP reports arrive asynchronously
 		// the palette in this engine against the bytes Node computed (test/fixtures/palette.json): float

@@ -4,7 +4,7 @@ Charts for affiliate programmes, as SVG strings. The **funnel**: clicks to first
 and deposits to revenue in money — the base of each event beside what the partner earned from it, with
 cancellations and rejected records on the same scale. The **waterfall**: GGR to the partner's
 commission, step by step. The **daily series**: lines, areas and columns over days. **KPI tiles** and
-sparklines. Zero dependencies,
+sparklines. **Rankings** by source. Zero dependencies,
 4.4 KB gzipped for the core and the funnel.
 
 [![npm](https://img.shields.io/npm/v/affiliate-charts.svg)](https://www.npmjs.com/package/affiliate-charts)
@@ -14,7 +14,7 @@ Made by [301](https://301.st) for the [OktagonBet partner programme](https://okt
 first user and sponsor.
 
 **[Live demo →](https://investblog.github.io/affiliate-charts/)** — every option wired to a control,
-four example funnels, two waterfalls, three daily series and four KPI tiles, light and dark, and a width slider to watch the bars follow their container.
+four example funnels, two waterfalls, three daily series, four KPI tiles and two rankings, light and dark, and a width slider to watch the bars follow their container.
 
 [![A money funnel on a light card and a counts funnel on a dark one, drawn by affiliate-charts](https://investblog.github.io/affiliate-charts/docs/preview.svg)](https://investblog.github.io/affiliate-charts/)
 
@@ -22,7 +22,7 @@ four example funnels, two waterfalls, three daily series and four KPI tiles, lig
   under `default-src 'self'`, where most chart libraries break.
 - **Zero dependencies.** One call returns markup, in Node at build time or in the browser.
 - **Small.** A core plus one file per chart: the core and the funnel are 4.4 KB gzipped together, the
-  waterfall adds 1.1 KB, the daily series 2.8 KB, sparklines and KPI tiles 1.6 KB.
+  waterfall adds 1.1 KB, the daily series 2.8 KB, sparklines and KPI tiles 1.6 KB, rankings 0.9 KB.
 - **Reads on a phone.** Bars follow the width of their container; text keeps its pixel size.
 - **Honest by construction.** Steps are never summed, money and counts never share an axis, a missing
   rate is a dash and never `0%`, and the library never formats or computes a number it shows: every
@@ -164,6 +164,23 @@ A change is green when `good`, red when not, whichever way it moves, and always 
 `direction: 'flat'` has neither. A tile is laid out for 160 px and up: two a row on a phone. Labels past
 20 characters are cut; the value is your string and is never cut — keep it to about 10 characters.
 
+## Rankings
+
+*The next release, too.*
+
+```js
+import Charts from 'affiliate-charts/charts-rank.js';
+
+const top = Charts.rank([
+  { label: 'sub-id: spring-promo', value: 18400, display: '18 400.00' },
+  { label: 'sub-id: push-test', value: -2300, display: '−2 300.00' },   // players won: left of zero
+  { label: 'Other (14 sub-ids)', value: 3900, display: '3 900.00' },
+], { title: 'GGR by sub-id', highlight: 0 });
+```
+
+One bar a row in your order — sort and fold the tail yourself. Every bar is your `brand`; with
+`highlight`, that row keeps it and the rest turn grey.
+
 ## Colour and size
 
 - Bars are your `brand`, fitted for contrast on a light or a dark surface. Text, losses and lines use
@@ -172,7 +189,7 @@ A change is green when `good`, red when not, whichever way it moves, and always 
   `chart-bar-total`, `chart-bar-up`, `chart-bar-down`, `chart-label`, `chart-value`, `chart-rate`,
   `chart-legend`, `chart-grid`, `chart-axis`, and for the series `chart-line`, `chart-area`, `chart-dot`,
   `chart-prev`, `chart-tick`, `chart-x`, `chart-key`, `chart-hit`, and for the tile `chart-delta`,
-  `chart-delta-good`, `chart-delta-bad`, `chart-trend`); a stylesheet can recolour any of them.
+  `chart-delta-good`, `chart-delta-bad`, `chart-trend`, and `chart-bar-muted` in a ranking); a stylesheet can recolour any of them.
 - `Charts.palette(brand, theme)` returns `{ solid, light, opacity }` to paint your table to match.
 - The chart takes the width of its container. Text is laid out for 13 px and screens from 375 px.
 - The same input gives the same bytes within a minor version: pin the exact version.

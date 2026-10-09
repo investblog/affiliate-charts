@@ -317,6 +317,23 @@ Layout and colour: ADR 016. In short:
 campaign; one colour for every bar (no value ramp on nominal categories); optional `highlight` index
 for the emphasis form. `rows: { label, value, display }[]`; the caller sorts and folds the tail.
 
+```ts
+interface RankRow { label: string; value: number; display: string }
+interface RankOptions extends Common { highlight?: number }   // a row index
+```
+
+- Rows as the funnel's and the waterfall's (ADR 010): label line, a 12 px bar after 2 px, 10 px padding;
+  the same label cut and value split. One scale over zero and every value; a negative value (GGR by a
+  source where players won) grows left of a per-row zero line, never clamped. A zero value keeps its
+  row and label, and draws no bar.
+- Colour: every bar the brand's solid mark. With `highlight`, that row stays solid and every other bar
+  is `currentColor` at 0.35 — the de-emphasis grey of losses and `previous`. Identity never rests on
+  colour: each row is labelled.
+- Each row is a `<g>` with a `<title>`: `label: display`. Class hooks: `-bar`, `-bar-muted`, plus the
+  core's `-label`, `-value`, `-axis`.
+- Throws: `rows` not an array, or empty; a row whose `label` or `display` is not a string or whose
+  `value` is not finite; `highlight` that is not an integer index of a row; values whose range overflows.
+
 **`Charts.share(parts, options)`** — `charts-share.js`. Part-to-whole (device, geo). Default form is a
 **100% stacked bar**; `form: 'donut'` is allowed with a **hard cap of 6 segments** (throws above it —
 fold into "Other"); segment labels follow O3. Never for comparing close values. Categorical hues in

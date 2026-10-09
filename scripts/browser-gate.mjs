@@ -24,7 +24,7 @@ import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const FILES = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js'];
+const FILES = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js'];
 const MUTATE = process.argv.includes('--mutate');
 const WIDTHS = [375, 1280];
 const CSP = "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self'; base-uri 'none'; object-src 'none'";
@@ -93,7 +93,8 @@ async function demo(pw, port) {
 		const charts = { funnel: [['counts', 'money', 'negative', 'fresh'], ['bars', 'steps', 'shape'], '.chart-bar'],
 			waterfall: [['flow', 'losing'], [null], '.chart-bar-total'],
 			series: [['money', 'clicks', 'deposits'], ['line', 'area', 'columns'], '.chart-hit'],
-			tile: [['epc', 'cpa', 'cr', 'ftd'], [null], '.chart-value'] };
+			tile: [['epc', 'cpa', 'cr', 'ftd'], [null], '.chart-value'],
+			rank: [['sources', 'focus'], [null], '.chart-bar'] };
 		for (const [chart, [examples, forms, mark]] of Object.entries(charts)) {
 			await page.selectOption('#chart', chart);
 			for (const show of ['one', 'sheet']) {
@@ -188,6 +189,9 @@ const MUTATIONS = [
 	{ label: 'the tile value small', file: 'charts-spark.js', edits: [["'font-size', 26, 'font-weight', 600", "'font-size', 20, 'font-weight', 600"]] },
 	{ label: 'a change coloured by its direction', file: 'charts-spark.js', edits: [['_.palette(d.good ? GOOD : BAD, o.theme)', "_.palette(d.direction === 'up' ? GOOD : BAD, o.theme)"]] },
 	{ label: 'the spark scale from zero', file: 'charts-spark.js', edits: [['return hi > lo ? (hi - v) / (hi - lo) * h : h / 2;', 'return hi > 0 ? (hi - v) / hi * h : h / 2;']] },
+	{ label: 'the rank is not registered', file: 'charts-rank.js', edits: [['core.rank = factory(core._);', 'factory(core._);']] },
+	{ label: 'rank negatives grow right', file: 'charts-rank.js', edits: [['r.value < 0 ? z - w : z', 'z']] },
+	{ label: 'muted rank bars in the brand', file: 'charts-rank.js', edits: [["muted ? 'currentColor' : solid", 'solid']] },
 	{ label: 'the last x label past the edge', file: 'charts-series.js', edits: [["out += xl(i, end ? '100%' : 0, end ? 'end' : 'start');", "out += xl(i, end ? '100%' : 0, 'start');"]] },
 ];
 

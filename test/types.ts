@@ -5,6 +5,7 @@ import Core from '../charts.js';
 import Charts2 from '../charts-waterfall.js';
 import Charts3 from '../charts-series.js';
 import Charts4 from '../charts-spark.js';
+import Charts5 from '../charts-rank.js';
 
 const steps: Charts.FunnelStep[] = [
 	{ label: 'Clicks', value: 1840, display: '1 840' },
@@ -87,7 +88,18 @@ Charts4.spark(['1']);
 // @ts-expect-error — the spark module does not type the series
 Charts4.series([], { names: ['a'] });
 
+// the rank module types the ranking
+const sources: Charts5.RankRow[] = [{ label: 'sub-1', value: 120, display: '120' }, { label: 'sub-2', value: -30, display: '−30' }];
+const rk: string = Charts5.rank(sources, { highlight: 0, theme: 'dark' });
+void rk;
+// @ts-expect-error — highlight is an index, not a label
+Charts5.rank(sources, { highlight: 'sub-1' });
+// @ts-expect-error — a row needs its display
+Charts5.rank([{ label: 'a', value: 1 }]);
+// @ts-expect-error — the rank module does not type the tile
+Charts5.tile(kpi);
+
 // the page global, merged from every declaration file
 const viaGlobal: string = globalThis.Charts.funnel(steps) + globalThis.Charts.waterfall(flow) +
-	globalThis.Charts.series(days, { names: ['GGR'] }) + globalThis.Charts.spark([1, 2]) + globalThis.Charts.tile(kpi);
+	globalThis.Charts.series(days, { names: ['GGR'] }) + globalThis.Charts.spark([1, 2]) + globalThis.Charts.tile(kpi) + globalThis.Charts.rank(sources);
 void viaGlobal;

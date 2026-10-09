@@ -20,6 +20,9 @@
     "charts-spark.js",
     "charts-spark.min.js",
     "charts-spark.d.ts",
+    "charts-rank.js",
+    "charts-rank.min.js",
+    "charts-rank.d.ts",
     "CHANGELOG.md"
   ],
   "scripts": {
@@ -40,7 +43,8 @@
       "charts-funnel.js": 2176,
       "charts-waterfall.js": 1152,
       "charts-series.js": 2944,
-      "charts-spark.js": 1792
+      "charts-spark.js": 1792,
+      "charts-rank.js": 1024
     }
   },
   "keywords": [

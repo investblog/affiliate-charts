@@ -42,7 +42,7 @@
 <main>
 	<aside>
 		<h1>affiliate-charts</h1>
-		<p class="meta">Funnels, money waterfalls, daily series and KPI tiles for partner cabinets, drawn as SVG strings. Every control below is an option of one call.</p>
+		<p class="meta">Funnels, money waterfalls, daily series, KPI tiles and rankings for partner cabinets, drawn as SVG strings. Every control below is an option of one call.</p>
 		<label>show <select id="show">
 			<option value="one">one example</option>
 			<option value="sheet">every example</option>
@@ -52,6 +52,7 @@
 			<option value="waterfall">waterfall</option>
 			<option value="series">daily series</option>
 			<option value="tile">KPI tiles</option>
+			<option value="rank">ranking</option>
 		</select></label>
 		<label>example <select id="example"></select></label>
 		<label>form <select id="form"></select></label>
@@ -77,7 +78,7 @@
 // cache-bust the library, so a stale copy never shows an old picture (AGENTS.md); file:// loads plain
 (function () {
 	var bust = location.protocol === 'file:' ? '' : '?ts=' + Date.now();
-	var files = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js'], i = 0;
+	var files = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js'], i = 0;
 	(function next() {
 		if (i === files.length) return app();
 		var s = document.createElement('script');
@@ -181,13 +182,21 @@ function app() {
 			delta: { display: '−1.4 pp', direction: 'down', good: false }, trend: trend(1).reverse() } },
 		ftd: { option: 'FTD, flat', name: 'First deposits', tile: { label: 'First deposits', value: '410', delta: { display: '0%', direction: 'flat' } } },
 	};
-	var FORMS = { funnel: ['bars', 'steps', 'shape'], waterfall: [], series: ['line', 'area', 'columns'], tile: [] };
+	// rankings: the caller sorts and folds the tail into "Other"
+	var Rk = function (label, value) { return { label: label, value: value, display: money(value) }; };
+	var sources = [Rk('sub-id: spring-promo', 18400), Rk('sub-id: tg-channel', 11250), Rk('sub-id: seo-reviews', 6120),
+		Rk('sub-id: push-test', -2300), Rk('Other (14 sub-ids)', 3900)];
+	var RANKS = {
+		sources: { option: 'GGR by sub-id', name: 'GGR by sub-id, October', rows: sources },
+		focus: { option: 'one sub-id emphasised', name: 'Where tg-channel stands', rows: sources, highlight: 1 },
+	};
+	var FORMS = { funnel: ['bars', 'steps', 'shape'], waterfall: [], series: ['line', 'area', 'columns'], tile: [], rank: [] };
 
 	var $ = function (id) { return document.getElementById(id); };
 	var stage = $('stage');
 	var chart = function () { return $('chart').value; };
 	var flowChart = function () { return chart() === 'waterfall'; };
-	var examples = function () { return { funnel: FUNNELS, waterfall: FLOWS, series: DAYS, tile: TILES }[chart()]; };
+	var examples = function () { return { funnel: FUNNELS, waterfall: FLOWS, series: DAYS, tile: TILES, rank: RANKS }[chart()]; };
 	// the example and form lists follow the chart; a choice survives as long as the chart has it
 	var shown = null;
 	function fillExamples() {
@@ -222,6 +231,7 @@ function app() {
 		o.brand = $('brand').value;
 		if ($('titled').checked) o.title = ex.name;
 		if (ex.legend) o.legend = LEGEND;
+		if (ex.highlight != null) o.highlight = ex.highlight;
 		return o;
 	}
 	function card(key) {
@@ -239,6 +249,9 @@ function app() {
 			Charts.init(host, svg);
 		} else if (chart() === 'tile') {
 			svg = Charts.tile(ex.tile, options(ex));
+			Charts.init(host, svg);
+		} else if (chart() === 'rank') {
+			svg = Charts.rank(ex.rows, options(ex));
 			Charts.init(host, svg);
 		} else if (ex.money && $('form').value === 'shape') {
 			// the library refuses a shape it cannot draw honestly (ADR 007): say so instead of drawing
@@ -282,7 +295,7 @@ function app() {
 		var o = options(examples()[$('example').value]), fn = chart();
 		if (o.previous) o.previous = '{ name, values, display }';
 		$('code').textContent = "import Charts from 'affiliate-charts/charts-" + (fn === 'tile' ? 'spark' : fn) + ".js';\n\nconst svg = Charts." + fn + '(' +
-			({ series: 'points', tile: 'tile' }[fn] || 'steps') + ', ' +
+			({ series: 'points', tile: 'tile', rank: 'rows' }[fn] || 'steps') + ', ' +
 			JSON.stringify(o, null, 1).replace(/\n\s*/g, ' ') + ');\nCharts.init(el, svg);';
 	}
 	['show', 'chart', 'example', 'form', 'theme', 'brand', 'width', 'titled'].forEach(function (id) {
