@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- The waterfall (`charts-waterfall.js`): totals from zero, deltas floating from the running total with a
+  ghost of it behind them; totals in the brand, an increase in its lighter mark, a decrease in the
+  opposite hue (ADR 014).
+- The core: the row's label line is shared by the funnel and the waterfall (the funnel's bytes are
+  unchanged); its palette can turn the brand's hue. Size budgets re-frozen (ADR 012).
+- The demo picks the chart, funnel or waterfall.
+
 ## 0.1.1 — 2026-10-08
 
 - Documentation only; the library's bytes are unchanged. The README gains npm and licence badges, the

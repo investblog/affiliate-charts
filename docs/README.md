@@ -16,7 +16,8 @@ funnel (three forms, base and earned, losses, negative values, gaps) passes the 
 typecheck, the Vite bundle gate and the browser gate (Chromium, Firefox, WebKit under
 `default-src 'self'`); every check has been seen red under mutation. Budgets frozen (ADR 012). M5 is
 done: releases run from `v*` tags through the Trusted Publisher (0.1.1 was the first). M6 in progress:
-the waterfall (contract and ADR 014 written; not drawn yet). Scope:
+the waterfall is drawn and passes every gate (Node, mutations, Vite, three engines, the demo; ADR 014),
+unreleased; Group B is next. Scope:
 **a chart library for affiliate programmes** — the forms a partner cabinet uses to show traffic,
 conversions and money to a partner. Numbers marked *provisional* are forecasts, not measurements;
 each names the milestone that replaces it. Keep this line true at every milestone.
@@ -77,7 +78,8 @@ and a per-mark `<title>`, and is meant to sit **above** a data table, not to rep
 ```
 charts.js / charts.d.ts                 core — global `Charts`
 charts-funnel.js / charts-funnel.d.ts   one module per chart, each with its own types
-charts-waterfall.js / …
+charts-waterfall.js / charts-waterfall.d.ts
+…
 ```
 
 - A module takes the core from `require('./charts.js')` (CommonJS) or `root.Charts` (browser), throws

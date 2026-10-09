@@ -1,9 +1,9 @@
 # affiliate-charts
 
-Charts for affiliate programmes, as SVG strings. The first chart is the **funnel**: clicks to first
-deposits in counts, and deposits to revenue in money — the base of each event beside what the partner
-earned from it, with cancellations and rejected records on the same scale. Zero dependencies, 4.3 KB
-gzipped for the core and the funnel.
+Charts for affiliate programmes, as SVG strings. The **funnel**: clicks to first deposits in counts,
+and deposits to revenue in money — the base of each event beside what the partner earned from it, with
+cancellations and rejected records on the same scale. The **waterfall**: GGR to the partner's
+commission, step by step. Zero dependencies, 4.3 KB gzipped for the core and the funnel.
 
 [![npm](https://img.shields.io/npm/v/affiliate-charts.svg)](https://www.npmjs.com/package/affiliate-charts)
 [![license](https://img.shields.io/npm/l/affiliate-charts.svg)](LICENSE)
@@ -12,14 +12,15 @@ Made by [301](https://301.st) for the [OktagonBet partner programme](https://okt
 first user and sponsor.
 
 **[Live demo →](https://investblog.github.io/affiliate-charts/)** — every option wired to a control,
-four example funnels, light and dark, and a width slider to watch the bars follow their container.
+four example funnels and two waterfalls, light and dark, and a width slider to watch the bars follow their container.
 
 [![A money funnel on a light card and a counts funnel on a dark one, drawn by affiliate-charts](https://investblog.github.io/affiliate-charts/docs/preview.svg)](https://investblog.github.io/affiliate-charts/)
 
 - **Renders under a strict CSP.** No `style=""`, no `<style>`, no `<script>`, no `data:` — it works
   under `default-src 'self'`, where most chart libraries break.
 - **Zero dependencies.** One call returns markup, in Node at build time or in the browser.
-- **Small.** A core plus one file per chart: the core and the funnel are 4.3 KB gzipped together.
+- **Small.** A core plus one file per chart: the core and the funnel are 4.3 KB gzipped together, the
+  waterfall adds 1.1 KB.
 - **Reads on a phone.** Bars follow the width of their container; text keeps its pixel size.
 - **Honest by construction.** Steps are never summed, money and counts never share an axis, a missing
   rate is a dash and never `0%`, and the library never formats or computes a number it shows: every
@@ -89,13 +90,36 @@ the classic centred funnel), `legend`, `brand` (`#rrggbb`), `theme` (`'light'` |
 
 Bad input throws a `TypeError` starting with `affiliate-charts:` — the library never repairs data.
 
+## The waterfall
+
+From GGR to the partner's commission: totals stand on zero, each delta floats from where the running
+total stands, with a faint ghost of that running total behind it.
+
+```js
+import Charts from 'affiliate-charts/charts-waterfall.js';
+
+const flow = Charts.waterfall([
+  { label: 'Revenue — GGR', value: 52000, display: '52 000.00', kind: 'total' },
+  { label: 'Bonuses', value: -7800, display: '−7 800.00', kind: 'delta' },
+  { label: 'NGR', value: 44200, display: '44 200.00', kind: 'total' },
+  { label: 'Stays with the platform and the network', value: -33150, display: '−33 150.00', kind: 'delta' },
+  { label: 'Partner commission', value: 11050, display: '11 050.00', kind: 'total' },
+], { title: 'Money flow' });
+```
+
+The first step is a total. The library adds the deltas only to place the bars; it never checks a total
+against them, and shows only your strings. Totals are your `brand`, an increase its lighter mark, a
+decrease the opposite hue. Name a deduction that is not an expense neutrally, as above. Options: `title`,
+`desc`, `brand`, `theme`, `classPrefix`. Both modules can sit on one page; each import returns the same
+`Charts`.
+
 ## Colour and size
 
 - Bars are your `brand`, fitted for contrast on a light or a dark surface. Text, losses and lines use
   `currentColor`, so they follow your page.
 - Every mark has a class (`chart-bar`, `chart-bar-earned`, `chart-bar-part`, `chart-bar-loss`, `chart-bar-ghost`,
-  `chart-label`, `chart-value`, `chart-rate`, `chart-legend`, `chart-grid`, `chart-axis`); a stylesheet
-  can recolour any of them.
+  `chart-bar-total`, `chart-bar-up`, `chart-bar-down`, `chart-label`, `chart-value`, `chart-rate`,
+  `chart-legend`, `chart-grid`, `chart-axis`); a stylesheet can recolour any of them.
 - `Charts.palette(brand, theme)` returns `{ solid, light, opacity }` to paint your table to match.
 - The chart takes the width of its container. Text is laid out for 13 px and screens from 375 px.
 - The same input gives the same bytes within a minor version: pin the exact version.

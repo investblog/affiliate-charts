@@ -8,7 +8,7 @@
 	document.addEventListener('securitypolicyviolation', function (e) { violations.push(e.violatedDirective + ' ' + e.blockedURI); });
 
 	// cache-bust: a stale library fakes a result either way (AGENTS.md)
-	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js'], i = 0;
+	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js', '../charts-waterfall.js'], i = 0;
 	(function next() {
 		if (i === files.length) return setTimeout(run, 50);
 		var s = document.createElement('script');
@@ -34,15 +34,24 @@
 		['steps', [S('a', 1000), S('b', 400, { rate: '40%' })], { title: 'Steps', form: 'steps' }],
 		['shape', [S('a', 1000), S('b', 500)], { title: 'Shape', form: 'shape' }],
 	];
+	// the waterfall (ADR 014): GGR to commission with a long neutral label, and a negative start crossing zero
+	var T = function (label, value) { return { label: label, value: value, display: String(value), kind: 'total' }; };
+	var D = function (label, value) { return { label: label, value: value, display: String(value), kind: 'delta' }; };
+	var FLOWS = [
+		['flow', [T('Revenue — GGR', 1000), D('Bonuses', -200), D('Fees', -100), T('NGR', 700),
+			D('Stays with the platform and the network, by the agreement', -490), T('Commission', 210)], { title: 'Flow', brand: '#e11d48' }],
+		['flowneg', [T('GGR', -200), D('Recovered', 500), T('Result', 300)], { title: 'Flow, negative', theme: 'dark' }],
+	];
 
 	function run() {
 		var root = document.getElementById('charts'), markup = {}, results = [];
 		if (!window.Charts || typeof window.Charts.funnel !== 'function') return finish(['Charts.funnel is not loaded']);
-		FIXTURES.forEach(function (f) {
+		if (typeof window.Charts.waterfall !== 'function') return finish(['Charts.waterfall is not loaded']);
+		FIXTURES.concat(FLOWS).forEach(function (f) {
 			var card = document.createElement('div');
 			card.className = 'card ' + (f[2].theme === 'dark' ? 'dark' : 'light');
 			card.id = 'card-' + f[0];
-			markup[f[0]] = window.Charts.funnel(f[1], f[2]);
+			markup[f[0]] = window.Charts[f[1][0].kind ? 'waterfall' : 'funnel'](f[1], f[2]);
 			window.Charts.init(card, markup[f[0]]);
 			root.appendChild(card);
 		});
@@ -62,7 +71,7 @@
 		});
 		check('ids are unique across charts on one page', function () {
 			var ids = [].map.call(document.querySelectorAll('#charts svg [id]'), function (e) { return e.id; });
-			return ids.length === 5 && new Set(ids).size === ids.length;
+			return ids.length === 7 && new Set(ids).size === ids.length;
 		});
 		check('aria-labelledby resolves inside its own chart', function () {
 			return [].every.call(document.querySelectorAll('#charts svg[aria-labelledby]'), function (s) {
@@ -74,7 +83,7 @@
 		});
 		check('every row is a group whose first child is its <title>', function () {
 			var rows = document.querySelectorAll('#charts svg > g:not([class])');
-			return rows.length === 12 && [].every.call(rows, function (g) { return g.firstElementChild.tagName === 'title'; });
+			return rows.length === 21 && [].every.call(rows, function (g) { return g.firstElementChild.tagName === 'title'; });
 		});
 		check('bars follow the page width: 50% of the value is 50% of the chart', function () {
 			var s = svg('counts'), w = s.getBoundingClientRect().width;
@@ -127,6 +136,36 @@
 		check('the shape form is centred', function () {
 			var s = svg('shape'), r = s.getBoundingClientRect(), b = s.querySelectorAll('.chart-bar')[1].getBoundingClientRect();
 			return near((b.left + b.right) / 2, (r.left + r.right) / 2, 1.5);
+		});
+		// the waterfall's bars in row order, ghosts apart: [total, down, down, total, down, total] for 'flow'
+		var flowBars = function (name, cls) {
+			return [].map.call(svg(name).querySelectorAll(cls || '.chart-bar-total, .chart-bar-up, .chart-bar-down'), function (b) { return b.getBoundingClientRect(); });
+		};
+		check('waterfall: each bar starts where the one above it ends', function () {
+			// totals from zero, deltas from the running total; the totals here match the running sums
+			var b = flowBars('flow'), r = svg('flow').getBoundingClientRect();
+			return b.length === 6 && near(b[0].left, r.left) && near(b[0].right, r.right) &&
+				near(b[1].right, b[0].right, 1.5) && near(b[2].right, b[1].left, 1.5) && near(b[3].right, b[2].left, 1.5) &&
+				near(b[4].right, b[3].right, 1.5) && near(b[5].right, b[4].left, 1.5) && near(b[5].width, r.width * 0.21, 1.5);
+		});
+		check('waterfall: behind each delta a ghost from zero to the running total', function () {
+			var g = flowBars('flow', '.chart-bar-ghost'), b = flowBars('flow'), r = svg('flow').getBoundingClientRect();
+			return g.length === 3 && g.every(function (x) { return near(x.left, r.left); }) &&
+				near(g[0].right, b[0].right, 1.5) && near(g[1].right, b[1].left, 1.5) && near(g[2].right, b[3].right, 1.5);
+		});
+		check('waterfall: a negative total ends at the zero line, a delta crosses it', function () {
+			var s = svg('flowneg'), line = s.querySelector('.chart-axis').getBoundingClientRect(), b = flowBars('flowneg'), r = s.getBoundingClientRect();
+			// range 500, zero at 40%
+			return b.length === 3 && near(line.left, r.left + r.width * 0.4, 1.5) && near(b[0].right, line.left, 1.5) &&
+				near(b[0].left, r.left) && near(b[1].left, r.left) && near(b[1].right, r.right) && near(b[2].left, line.left, 1.5);
+		});
+		check('waterfall colours: totals the solid, an increase lighter, a decrease the opposite hue', function () {
+			var hex = function (c) { return '#' + c.match(/\d+/g).slice(0, 3).map(function (v) { return (+v + 256).toString(16).slice(1); }).join(''); };
+			var fill = function (name, cls) { return hex(getComputedStyle(svg(name).querySelector(cls + ' rect')).fill); };
+			var light = window.Charts._.palette('#e11d48', 'light'), dark = window.Charts._.palette(null, 'dark');
+			return fill('flow', '.chart-bar-total') === light.solid && fill('flow', '.chart-bar-down') === window.Charts._.palette('#e11d48', 'light', Math.PI).solid &&
+				fill('flowneg', '.chart-bar-up') === dark.solid && svg('flowneg').querySelector('.chart-bar-up').getAttribute('opacity') === '0.6' &&
+				light.solid !== window.Charts._.palette('#e11d48', 'light', Math.PI).solid;
 		});
 		// last, after every chart has been in the document: CSP reports arrive asynchronously
 		// the palette in this engine against the bytes Node computed (test/fixtures/palette.json): float

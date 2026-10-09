@@ -42,17 +42,16 @@
 <main>
 	<aside>
 		<h1>affiliate-charts</h1>
-		<p class="meta">Funnels for partner cabinets, drawn as SVG strings. Every control below is an option of one call.</p>
+		<p class="meta">Funnels and money waterfalls for partner cabinets, drawn as SVG strings. Every control below is an option of one call.</p>
 		<label>show <select id="show">
 			<option value="one">one example</option>
 			<option value="sheet">every example</option>
 		</select></label>
-		<label>example <select id="example">
-			<option value="counts">counts: clicks → FTD</option>
-			<option value="money" selected>money: base and earned</option>
-			<option value="negative">a period players won</option>
-			<option value="fresh">a new campaign, zeros</option>
+		<label>chart <select id="chart">
+			<option value="funnel">funnel</option>
+			<option value="waterfall">waterfall</option>
 		</select></label>
+		<label>example <select id="example"></select></label>
 		<label>form <select id="form"><option>bars</option><option>steps</option><option id="shapeOpt">shape</option></select></label>
 		<p class="meta" id="formNote" hidden>The classic shape draws one positive series: counts only. Money funnels have two bars a step, losses and negatives.</p>
 		<p class="meta" id="partNote" hidden>The shape leaves out part steps such as unique clicks: they are subsets, not stages.</p>
@@ -75,7 +74,7 @@
 // cache-bust the library, so a stale copy never shows an old picture (AGENTS.md); file:// loads plain
 (function () {
 	var bust = location.protocol === 'file:' ? '' : '?ts=' + Date.now();
-	var files = ['charts.js', 'charts-funnel.js'], i = 0;
+	var files = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js'], i = 0;
 	(function next() {
 		if (i === files.length) return app();
 		var s = document.createElement('script');
@@ -95,14 +94,14 @@ function app() {
 	var E = function (value, display) { return { value: value, display: display }; };
 	var LEGEND = ['base of the event', 'earned by the partner'];
 	// example data: a generic affiliate programme, values already formatted by the caller
-	var EXAMPLES = {
-		counts: { name: 'Counts: clicks → first deposits', steps: [
+	var FUNNELS = {
+		counts: { option: 'counts: clicks → FTD', name: 'Counts: clicks → first deposits', steps: [
 			S('Clicks', 18400, '18 400'),
 			S('Unique clicks', 12100, '12 100', { part: true }),
 			S('Registrations', 3120, '3 120', { rate: '17.0%' }),
 			S('First deposits', 410, '410', { rate: '13.1%' }),
 		] },
-		money: { name: 'Money: base and earned', legend: true, money: true, steps: [
+		money: { option: 'money: base and earned', name: 'Money: base and earned', legend: true, money: true, steps: [
 			S('Deposits — sum topped up', 124000, '124 000.00', { earned: E(18600, '18 600.00') }),
 			S('2nd deposits', 41000, '41 000.00', { part: true, earned: E(6150, '6 150.00') }),
 			S('3rd deposits', 22000, '22 000.00', { part: true, earned: E(3300, '3 300.00') }),
@@ -111,35 +110,78 @@ function app() {
 			S('Cancellations', -9600, '−9 600.00', { group: 'losses', earned: E(-1440, '−1 440.00') }),
 			S('Rejected', 5400, '5 400.00', { group: 'losses', earned: E(810, '810.00') }),
 		] },
-		negative: { name: 'A period players won', legend: true, money: true, steps: [
+		negative: { option: 'a period players won', name: 'A period players won', legend: true, money: true, steps: [
 			S('Deposits — sum topped up', 64000, '64 000.00', { earned: E(9600, '9 600.00') }),
 			S('Revenue — GGR', -18200, '−18 200.00', { gap: true, earned: E(-4550, '−4 550.00') }),
 			S('Cancellations', -3100, '−3 100.00', { group: 'losses' }),
 		] },
-		fresh: { name: 'A new campaign', steps: [
+		fresh: { option: 'a new campaign, zeros', name: 'A new campaign', steps: [
 			S('Clicks', 2400, '2 400'),
 			S('Unique clicks', 1900, '1 900', { part: true }),
 			S('Registrations', 0, '0', { rate: '0%' }),
 			S('First deposits', 0, '0', { rate: null }),
 		] },
 	};
+	// waterfalls: totals from zero, deltas from the running total; the platform's share named neutrally
+	var T = function (label, value, display) { return { label: label, value: value, display: display, kind: 'total' }; };
+	var D = function (label, value, display) { return { label: label, value: value, display: display, kind: 'delta' }; };
+	var FLOWS = {
+		flow: { option: 'GGR → commission', name: 'Money flow: GGR to commission', steps: [
+			T('Revenue — GGR', 52000, '52 000.00'),
+			D('Bonuses', -7800, '−7 800.00'),
+			D('Payment fees', -1300, '−1 300.00'),
+			T('NGR', 42900, '42 900.00'),
+			D('Stays with the platform and the network', -32175, '−32 175.00'),
+			D('Bonus clawback', 1200, '+1 200.00'),
+			T('Partner commission', 11925, '11 925.00'),
+		] },
+		losing: { option: 'a month players won', name: 'A month players won', steps: [
+			T('Revenue — GGR', -18200, '−18 200.00'),
+			D('Bonuses', -2100, '−2 100.00'),
+			T('NGR', -20300, '−20 300.00'),
+			D('Carried over from last month', 26000, '+26 000.00'),
+			T('Balance', 5700, '5 700.00'),
+		] },
+	};
 	var $ = function (id) { return document.getElementById(id); };
 	var stage = $('stage');
+	var flowChart = function () { return $('chart').value === 'waterfall'; };
+	var examples = function () { return flowChart() ? FLOWS : FUNNELS; };
+	// the example list follows the chart; a choice survives as long as the chart has it
+	var shown = null;
+	function fillExamples() {
+		if (shown === $('chart').value) return;
+		shown = $('chart').value;
+		var set = examples(), sel = $('example');
+		sel.innerHTML = '';
+		Object.keys(set).forEach(function (k) {
+			var o = document.createElement('option');
+			o.value = k;
+			o.textContent = set[k].option;
+			sel.appendChild(o);
+		});
+		sel.value = flowChart() ? 'flow' : 'money';
+	}
 
 	function options(ex) {
-		var o = { form: $('form').value, theme: $('theme').value, brand: $('brand').value };
+		var o = flowChart() ? {} : { form: $('form').value };
+		o.theme = $('theme').value;
+		o.brand = $('brand').value;
 		if ($('titled').checked) o.title = ex.name;
 		if (ex.legend) o.legend = LEGEND;
 		return o;
 	}
 	function card(key) {
-		var ex = EXAMPLES[key], box = document.createElement('div'), h = document.createElement('h2'), host = document.createElement('div');
+		var ex = examples()[key], box = document.createElement('div'), h = document.createElement('h2'), host = document.createElement('div');
 		box.className = 'card';
 		h.textContent = ex.name;
 		box.appendChild(h);
 		box.appendChild(host);
 		var svg = '';
-		if (ex.money && $('form').value === 'shape') {
+		if (flowChart()) {
+			svg = Charts.waterfall(ex.steps, options(ex));
+			Charts.init(host, svg);
+		} else if (ex.money && $('form').value === 'shape') {
 			// the library refuses a shape it cannot draw honestly (ADR 007): say so instead of drawing
 			host.className = 'note';
 			host.textContent = 'The classic shape draws one positive series, so a money funnel stays in bars or steps.';
@@ -155,17 +197,20 @@ function app() {
 		document.body.className = $('theme').value === 'light' ? 'light' : '';
 		$('brandHex').textContent = $('brand').value;
 		stage.innerHTML = '';
-		var sheet = $('show').value === 'sheet';
+		fillExamples();
+		var sheet = $('show').value === 'sheet', flow = flowChart();
 		stage.className = sheet ? 'sheet' : '';
 		$('example').disabled = sheet;
+		// the waterfall has one form
+		$('form').disabled = flow;
 		// one money example on stage: the shape is not offered, and a chosen shape falls back to bars
-		var money = !sheet && EXAMPLES[$('example').value].money;
+		var money = !flow && !sheet && FUNNELS[$('example').value].money;
 		$('shapeOpt').disabled = !!money;
 		if (money && $('form').value === 'shape') $('form').value = 'bars';
 		$('formNote').hidden = !money;
-		$('partNote').hidden = $('form').value !== 'shape';
+		$('partNote').hidden = flow || $('form').value !== 'shape';
 		if (sheet) {
-			Object.keys(EXAMPLES).forEach(function (k) { stage.appendChild(card(k).el); });
+			Object.keys(examples()).forEach(function (k) { stage.appendChild(card(k).el); });
 			$('bytes').textContent = '';
 		} else {
 			var c = card($('example').value);
@@ -173,11 +218,11 @@ function app() {
 			stage.appendChild(c.el);
 			$('bytes').textContent = c.svg ? c.svg.length + ' bytes of SVG · width ' + $('width').value + 'px' : '';
 		}
-		var o = options(EXAMPLES[$('example').value]);
-		$('code').textContent = "import Charts from 'affiliate-charts/charts-funnel.js';\n\nconst svg = Charts.funnel(steps, " +
+		var o = options(examples()[$('example').value]), fn = flow ? 'waterfall' : 'funnel';
+		$('code').textContent = "import Charts from 'affiliate-charts/charts-" + fn + ".js';\n\nconst svg = Charts." + fn + '(steps, ' +
 			JSON.stringify(o, null, 1).replace(/\n\s*/g, ' ') + ');\nCharts.init(el, svg);';
 	}
-	['show', 'example', 'form', 'theme', 'brand', 'width', 'titled'].forEach(function (id) {
+	['show', 'chart', 'example', 'form', 'theme', 'brand', 'width', 'titled'].forEach(function (id) {
 		$(id).addEventListener('input', draw);
 	});
 	draw();

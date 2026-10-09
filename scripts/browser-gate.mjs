@@ -8,7 +8,7 @@
 // Ported from slots-lite (itself from cards-lite) with its guards; the CSP header, the widths and the
 // two-file mutations are this library's.
 //
-// **It writes to charts.js and charts-funnel.js.** The original bytes are taken once, before anything
+// **It writes to charts.js and the chart modules.** The original bytes are taken once, before anything
 // is written, and put back from memory — never with `git checkout`, which restores the index and
 // would discard uncommitted work. Restoration is wired to SIGINT, SIGTERM, SIGHUP and exit as well as
 // to the finally block.
@@ -24,7 +24,7 @@ import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const FILES = ['charts.js', 'charts-funnel.js'];
+const FILES = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js'];
 const MUTATE = process.argv.includes('--mutate');
 const WIDTHS = [375, 1280];
 const CSP = "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self'; base-uri 'none'; object-src 'none'";
@@ -89,20 +89,33 @@ async function demo(pw, port) {
 		await page.goto(`http://127.0.0.1:${port}/index.html`);
 		await page.waitForSelector('#stage .card');
 		let combos = 0;
-		for (const show of ['one', 'sheet']) {
-			for (const example of ['counts', 'money', 'negative', 'fresh']) {
-				for (const form of ['bars', 'steps', 'shape']) {
-					for (const theme of ['dark', 'light']) {
-						await page.selectOption('#show', show);
-						if (show === 'one') await page.selectOption('#example', example);
-						// a disabled option is the demo's answer for that example; selecting it must not throw
-						await page.selectOption('#form', form).catch(() => {});
-						await page.selectOption('#theme', theme);
-						/* global document -- runs in the page */
-						const empty = await page.evaluate(() => [...document.querySelectorAll('#stage .card')]
-							.filter((c) => !c.querySelector('svg') && !c.querySelector('.note')).length);
-						if (empty) problems.push(`${show}/${example}/${form}/${theme}: ${empty} card(s) with neither a chart nor a note`);
-						combos++;
+		// the waterfall has one form: its form control is disabled, and is not touched
+		const charts = { funnel: [['counts', 'money', 'negative', 'fresh'], ['bars', 'steps', 'shape'], '.chart-bar'],
+			waterfall: [['flow', 'losing'], [null], '.chart-bar-total'] };
+		for (const [chart, [examples, forms, mark]] of Object.entries(charts)) {
+			await page.selectOption('#chart', chart);
+			for (const show of ['one', 'sheet']) {
+				for (const example of examples) {
+					for (const form of forms) {
+						for (const theme of ['dark', 'light']) {
+							await page.selectOption('#show', show);
+							if (show === 'one') await page.selectOption('#example', example);
+							// a disabled option is the demo's answer for that example; selecting it must not throw
+							if (form) await page.selectOption('#form', form).catch(() => {});
+							await page.selectOption('#theme', theme);
+							/* global document -- runs in the page */
+							const [cards, empty, drawn] = await page.evaluate((m) => {
+								const all = [...document.querySelectorAll('#stage .card')];
+								return [all.length, all.filter((c) => !c.querySelector('svg') && !c.querySelector('.note')).length,
+									all.filter((c) => c.querySelector('svg ' + m)).length];
+							}, mark);
+							const at = `${chart}/${show}/${example}/${form || '-'}/${theme}`;
+							if (!cards) problems.push(`${at}: no card`);
+							if (empty) problems.push(`${at}: ${empty} card(s) with neither a chart nor a note`);
+							// the chart chosen is the chart drawn: a waterfall card carries total bars
+							if (chart === 'waterfall' && drawn !== cards) problems.push(`${at}: ${cards - drawn} card(s) without a waterfall`);
+							combos++;
+						}
 					}
 				}
 			}
@@ -140,13 +153,20 @@ const MUTATIONS = [
 	{ label: 'text scaled with the chart', file: 'charts.js', edits: [["'width', '100%',\n\t\t\t'height', n(h, 2),", "'viewBox', '0 0 300 ' + n(h, 2),\n\t\t\t'width', '100%',"]] },
 	{ label: 'text in a fixed colour', file: 'charts.js', edits: [["'fill', 'currentColor',\n\t\t\t'role'", "'fill', '#808080',\n\t\t\t'role'"]] },
 	{ label: 'negatives grow right', file: 'charts-funnel.js', edits: [['return _.bar(v < 0 ? z - w : z,', 'return _.bar(z,']] },
-	{ label: 'labels never cut, rows never split', file: 'charts-funnel.js', edits: [['NARROW = 343, GLYPH = 8;', 'NARROW = 343, GLYPH = 2;']] },
+	{ label: 'labels never cut, rows never split', file: 'charts.js', edits: [['NARROW = 343, GLYPH = 8;', 'NARROW = 343, GLYPH = 2;']] },
 	{ label: 'shape not centred', file: 'charts-funnel.js', edits: [['return _.bar(50 - w / 2, w,', 'return _.bar(0, w,']] },
 	{ label: 'an inline style on the root', file: 'charts.js', edits: [["'font-size', 13,", "'style', 'font-size:13px',"]] },
 	{ label: 'part rows not indented', file: 'charts-funnel.js', edits: [['INDENT = 12', 'INDENT = 0']] },
 	{ label: 'no ghost in the steps form', file: 'charts-funnel.js', edits: [["if (form === 'steps' && prev && prev.value > 0", "if (form === 'step' && prev && prev.value > 0"]] },
 	{ label: 'a smaller rate chip', file: 'charts-funnel.js', edits: [["'font-size', form === 'steps' ? 13 : 12,", "'font-size', form === 'steps' ? 13 : 11,"]] },
 	{ label: 'a palette off by a contrast step', file: 'charts.js', edits: [['bg, 4.5, t ===', 'bg, 4.6, t ===']] },
+	{ label: 'the waterfall is not registered', file: 'charts-waterfall.js', edits: [['core.waterfall = factory(core._);', 'factory(core._);']] },
+	{ label: 'waterfall deltas from zero', file: 'charts-waterfall.js', edits: [['from = total ? 0 : run', 'from = 0']] },
+	{ label: 'waterfall without ghosts', file: 'charts-waterfall.js', edits: [['if (!total && run) row += span(', 'if (false) row += span(']] },
+	{ label: 'waterfall negatives grow right', file: 'charts-waterfall.js', edits: [['z + Math.min(a, b) / range * 100', 'z + Math.abs(Math.min(a, b)) / range * 100']] },
+	{ label: 'waterfall decrease in the brand hue', file: 'charts-waterfall.js', edits: [['Math.PI).solid', '0).solid']] },
+	{ label: 'waterfall increase solid', file: 'charts-waterfall.js', edits: [['pal.solid, pal.opacity, p', 'pal.solid, 1, p']] },
+	{ label: 'waterfall rows lose their title', file: 'charts-waterfall.js', edits: [["_.el('title', [], _.esc(s.label + ': ' + s.display))", "''"]] },
 ];
 
 async function main() {

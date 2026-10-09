@@ -15,6 +15,6 @@ The milestone table is in
 - [x] M3 — core drawing + `funnel` (bars, steps, shape) → 0.1.0; Node + browser gates seen red
 - [x] M4 — first consumer: both funnels above their tables, npm + Vite default import, CSP unchanged (consumer branch; merges after the npm version)
 - [x] M5 — package-name ADR, public repo, playground on Pages, first publish (2026-10-08); Trusted Publisher, first OIDC release 0.1.1 (2026-10-09)
-- [ ] M6 — `waterfall`, then Group B: `series` (line, area, columns, previous period), `spark` / `tile`
+- [ ] M6 — `waterfall` (drawn and gated 2026-10-09, unreleased), then Group B: `series` (line, area, columns, previous period), `spark` / `tile`
 - [ ] M7 — Group C: `rank`, `share` (100% bar, donut ≤ 6), `heatmap` (hour × weekday)
 - [ ] M8 — Group D: cohort heatmap, `meter`, `sankey` → v1.0
