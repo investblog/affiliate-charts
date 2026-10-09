@@ -10,7 +10,7 @@ import { spawnSync } from 'node:child_process';
 const TEST = [process.execPath, ['--test', 'test/*.test.mjs']];
 const TYPES = [process.execPath, ['node_modules/typescript/bin/tsc', '-p', 'tsconfig.json']];
 const BUNDLE = [process.execPath, ['scripts/bundle-gate.mjs']];
-const T = TEST, C = 'charts.js', F = 'charts-funnel.js', W = 'charts-waterfall.js', S = 'charts-series.js', K = 'charts-spark.js', RK = 'charts-rank.js', SH = 'charts-share.js', HM = 'charts-heatmap.js';
+const T = TEST, C = 'charts.js', F = 'charts-funnel.js', W = 'charts-waterfall.js', S = 'charts-series.js', K = 'charts-spark.js', RK = 'charts-rank.js', SH = 'charts-share.js', HM = 'charts-heatmap.js', MT = 'charts-meter.js';
 
 const MUTATIONS = [
 	[C, T, 'esc leaves the apostrophe', ".replace(/'/g, '&#39;')", ''],
@@ -353,6 +353,31 @@ const MUTATIONS = [
 	['charts-heatmap.d.ts', TYPES, 'heatmap form open', "form?: 'grid' | 'cohort';", 'form?: string;'],
 	['charts-heatmap.d.ts', TYPES, 'heatmap display optional', 'display: (string | null)[][];', 'display?: (string | null)[][];'],
 	['charts-heatmap.d.ts', TYPES, 'heatmap global not merged', 'interface ChartsGlobal extends HeatmapApi {}', ''],
+	// the meter (M8 Group D)
+	[MT, T, 'meter without core does not throw', "if (!core || !core._) throw new Error('affiliate-charts: load charts.js before charts-meter.js');", 'if (!core) return;'],
+	[MT, BUNDLE, 'bundled: meter exports the function', 'if (cjs) module.exports = core;', 'if (cjs) module.exports = core.meter;'],
+	[MT, T, 'a meter may be a string', "if (!m || typeof m !== 'object') fail('the meter must be an object');", "if (!m) fail('the meter must be an object');"],
+	[MT, T, 'the target display unchecked', "td = _.str(m.targetDisplay, 'targetDisplay')", 'td = m.targetDisplay'],
+	[MT, T, 'a negative value accepted', "if (_.num(m.value, 'value') < 0) fail('`value` cannot be negative');", "_.num(m.value, 'value');"],
+	[MT, T, 'a zero target accepted', "if (!(_.num(m.target, 'target') > 0)) fail('`target` must be above zero');", "_.num(m.target, 'target');"],
+	[MT, T, 'marks may be any object', "if (!Array.isArray(marks)) fail('`marks` must be an array');", ''],
+	[MT, T, 'a null mark reaches the engine', 'k = marks[i] || {};', 'k = marks[i];'],
+	[MT, T, 'mark labels unchecked', "_.str(k.label, 'mark ' + i + ' label');", ''],
+	[MT, T, 'a mark at zero accepted', "_.num(k.value, 'mark ' + i + ' value') > 0 &&", "_.num(k.value, 'mark ' + i + ' value') >= 0 &&"],
+	[MT, T, 'a mark past the target accepted', '&& k.value <= m.target)', ')'],
+	[MT, T, 'the fill past the track', 'Math.min(1, m.value / m.target) * 100', 'm.value / m.target * 100'],
+	[MT, T, 'a zero fill drawn', "(f ? _.bar(0, f, y, BAR, solid, 1, p + '-bar') : '')", "_.bar(0, f, y, BAR, solid, 1, p + '-bar')"],
+	[MT, T, 'the track at full strength', 'TRACK = 0.2', 'TRACK = 1'],
+	[MT, T, 'marks inside the bar only', "'y1', y - 3, 'y2', y + BAR + 3", "'y1', y, 'y2', y + BAR"],
+	[MT, T, 'marks at the value, not the target', 'marks[i].value / m.target * 100', 'marks[i].value / m.value * 100'],
+	[MT, T, 'a mark without its title', "_.el('title', [], _.esc(marks[i].label)));", "'');"],
+	[MT, T, 'the bar without its title', "_.el('title', [], _.esc(label + ': ' + display + ' / ' + td))", "''"],
+	[MT, T, 'the target unescaped', "'opacity', 0.7], _.esc(td));", "'opacity', 0.7], td);"],
+	[MT, T, 'meter chars ignore the value', 'label.length + display.length + 2', 'label.length + 2'],
+	[MT, T, 'meter ids ignore what is drawn', 'JSON.stringify([o.title, o.desc, out])', 'JSON.stringify([o.title, o.desc])'],
+	['charts-meter.d.ts', TYPES, 'target display optional', '\t\ttargetDisplay: string;', '\t\ttargetDisplay?: string;'],
+	['charts-meter.d.ts', TYPES, 'mark label optional', '\t\tlabel: string;\n\t}\n\n\tinterface Meter {', '\t\tlabel?: string;\n\t}\n\n\tinterface Meter {'],
+	['charts-meter.d.ts', TYPES, 'meter global not merged', 'interface ChartsGlobal extends MeterApi {}', ''],
 	[F, BUNDLE, 'bundled: module exports the function', 'if (cjs) module.exports = core;', 'if (cjs) module.exports = core.funnel;'],
 	[F, BUNDLE, 'bundled: the core taken from a global', "var core = cjs ? require('./charts.js') : root.Charts;", 'var core = root.Charts;'],
 	['charts-funnel.d.ts', TYPES, 'form is open', "form?: 'bars' | 'steps' | 'shape';", 'form?: string;'],

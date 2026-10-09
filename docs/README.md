@@ -403,6 +403,29 @@ of code in the library.
 CPA cap: a filled bar on a lighter track of the same ramp, tier marks as hairlines, caller strings
 for the current value and the target.
 
+```ts
+interface Meter {
+  label: string;
+  value: number; display: string;          // where the partner stands
+  target: number; targetDisplay: string;   // the next tier or the cap: the track's full length
+  marks?: { value: number; label: string }[];  // tiers on the way, as hairlines
+}
+```
+
+- Anatomy: ADR 010's label line (the label, the `display` end-anchored), a 12 px bar after 2 px, then
+  `targetDisplay` end-anchored under the bar's end on an 18 px line.
+- The track is the brand's solid at 0.2 over the full length; the fill is the solid from zero to
+  `value / target`. A value past the target fills the track and stops there — the `display` says by
+  how much; the library never shows a number of its own.
+- A mark is a 1 px `currentColor` hairline at `value / target` across the bar, 3 px beyond it on each
+  side, with a `<title>` of its label: tier names cannot be measured, so they are not written on the
+  bar.
+- The bar has a `<title>`: `label: display / targetDisplay`. Class hooks: `-track`, `-bar`, `-mark`,
+  `-target`, plus the core's `-label`, `-value`.
+- Throws: a meter that is not an object; `label`, `display` or `targetDisplay` not a string; a `value`
+  that is not finite or is negative; a `target` that is not finite or not above zero; `marks` not an
+  array, or a mark whose `label` is not a string or whose `value` is not inside `(0, target]`.
+
 ### Core helpers
 
 - `Charts.init(el, svg)` — sets `el.innerHTML = svg`. No listeners, no resize logic.

@@ -29,6 +29,9 @@
     "charts-heatmap.js",
     "charts-heatmap.min.js",
     "charts-heatmap.d.ts",
+    "charts-meter.js",
+    "charts-meter.min.js",
+    "charts-meter.d.ts",
     "CHANGELOG.md"
   ],
   "scripts": {
@@ -52,7 +55,8 @@
       "charts-spark.js": 1792,
       "charts-rank.js": 1024,
       "charts-share.js": 1408,
-      "charts-heatmap.js": 1920
+      "charts-heatmap.js": 1920,
+      "charts-meter.js": 1280
     }
   },
   "keywords": [

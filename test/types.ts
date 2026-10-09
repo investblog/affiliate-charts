@@ -8,6 +8,7 @@ import Charts4 from '../charts-spark.js';
 import Charts5 from '../charts-rank.js';
 import Charts6 from '../charts-share.js';
 import Charts7 from '../charts-heatmap.js';
+import Charts8 from '../charts-meter.js';
 
 const steps: Charts.FunnelStep[] = [
 	{ label: 'Clicks', value: 1840, display: '1 840' },
@@ -123,7 +124,18 @@ Charts7.heatmap({ rows: ['a'], cols: ['b'], values: [[1]] });
 // @ts-expect-error — the heatmap module does not type the share
 Charts7.share(devices);
 
+// the meter module types the meter
+const tier: Charts8.MeterInput = { label: 'Tier 3', value: 31, display: '31', target: 50, targetDisplay: '50', marks: [{ value: 20, label: 'Tier 2' }] };
+const mt: string = Charts8.meter(tier, { theme: 'dark' });
+void mt;
+// @ts-expect-error — the target's string is required
+Charts8.meter({ label: 'a', value: 1, display: '1', target: 2 });
+// @ts-expect-error — a mark needs its label
+Charts8.meter({ ...tier, marks: [{ value: 1 }] });
+// @ts-expect-error — the meter module does not type the heatmap
+Charts8.heatmap(week);
+
 // the page global, merged from every declaration file
 const viaGlobal: string = globalThis.Charts.funnel(steps) + globalThis.Charts.waterfall(flow) +
-	globalThis.Charts.series(days, { names: ['GGR'] }) + globalThis.Charts.spark([1, 2]) + globalThis.Charts.tile(kpi) + globalThis.Charts.rank(sources) + globalThis.Charts.share(devices) + globalThis.Charts.heatmap(week);
+	globalThis.Charts.series(days, { names: ['GGR'] }) + globalThis.Charts.spark([1, 2]) + globalThis.Charts.tile(kpi) + globalThis.Charts.rank(sources) + globalThis.Charts.share(devices) + globalThis.Charts.heatmap(week) + globalThis.Charts.meter(tier);
 void viaGlobal;

@@ -27,6 +27,8 @@ try {
 		`import Top from '${pkg.name}/charts-rank.js';`,
 		`import Part from '${pkg.name}/charts-share.js';`,
 		`import Heat from '${pkg.name}/charts-heatmap.js';`,
+		`import Gauge from '${pkg.name}/charts-meter.js';`,
+		`globalThis.gauge = Gauge.meter({ label: 'a', value: 1, display: '1', target: 2, targetDisplay: '2' }, { title: 't' });`,
 		`globalThis.heat = Heat.heatmap({ rows: ['a'], cols: ['b'], values: [[1]], display: [['1']] }, { title: 't' });`,
 		`globalThis.part = Part.share([{ label: 'a', value: 1, display: '1' }], { title: 't', form: 'donut' });`,
 		`globalThis.top = Top.rank([{ label: 'a', value: 1, display: '1' }], { title: 't' });`,
@@ -34,7 +36,7 @@ try {
 		`globalThis.out = Charts.funnel([{ label: 'a', value: 1, display: '1' }], { title: 't' });`,
 		`globalThis.flow = Flow.waterfall([{ label: 'a', value: 1, display: '1', kind: 'total' }], { title: 't' });`,
 		`globalThis.days = Days.series([{ x: 'a', values: [1], display: ['1'] }], { names: ['c'], title: 't' });`,
-		'globalThis.same = Charts === Flow && Flow === Days && Days === Kpi && Kpi === Top && Top === Part && Part === Heat;',
+		'globalThis.same = Charts === Flow && Flow === Days && Days === Kpi && Kpi === Top && Top === Part && Part === Heat && Heat === Gauge;',
 	].join('\n'));
 	const res = await build({
 		root: dir, logLevel: 'error', configFile: false,
@@ -50,6 +52,7 @@ try {
 	if (!/^<svg [^>]*role="img"/u.test(ctx.top || '')) throw new Error(`unexpected rank output: ${ctx.top}`);
 	if (!/^<svg [^>]*role="img"/u.test(ctx.part || '')) throw new Error(`unexpected share output: ${ctx.part}`);
 	if (!/^<svg [^>]*role="img"/u.test(ctx.heat || '')) throw new Error(`unexpected heatmap output: ${ctx.heat}`);
+	if (!/^<svg [^>]*role="img"/u.test(ctx.gauge || '')) throw new Error(`unexpected meter output: ${ctx.gauge}`);
 	if (ctx.same !== true) throw new Error('the modules exported different objects');
 	console.log('bundle gate: ok — the default imports through Vite draw, on one core');
 	code = 0;
