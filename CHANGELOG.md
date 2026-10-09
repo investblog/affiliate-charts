@@ -28,7 +28,8 @@
   the raw values in every chart — **every chart's ids change, the funnel's included**; columns are at
   most 24 px; flags (`part`, `gap`, `stacked`) must be booleans and `group` only `'losses'`; `brand` must
   be a string; values or flows too small or too large to scale throw instead of drawing `NaN`; tick text
-  never prints `Infinity`; every key line has a `<title>`; a sankey `short` tag is counted in characters.
+  never prints `Infinity`; every key line has a `<title>`; a sankey `short` tag is counted in characters;
+  `options: null` and `null` shared options throw (absent means `undefined`).
 
 ## 0.1.1 — 2026-10-08
 

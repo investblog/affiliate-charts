@@ -55,6 +55,9 @@ test('accessible root, determinism, ids from what is drawn, no inline style', ()
 	// M9 review: 1 of 4 and 2 of 8 with the same strings draw alike; the raw values keep them apart
 	const same = (v, t) => ({ label: 'a', value: v, display: 'x', target: t, targetDisplay: 'y' });
 	assert.notEqual(id(Charts.meter(same(1, 4), { title: 't' })), id(Charts.meter(same(2, 8), { title: 't' })));
+	// the second review: marks at 50 and 50.0000001 both round to 50% — their values keep them apart
+	const mark = (v) => ({ ...same(1, 100), marks: [{ value: v, label: 'm' }] });
+	assert.notEqual(id(Charts.meter(mark(50), { title: 't' })), id(Charts.meter(mark(50.0000001), { title: 't' })));
 	assert.doesNotMatch(a, /style|<script|data-|data:/u);
 	assert.match(Charts.meter(M(30, 120, { marks: [{ value: 60, label: 'm' }] }), { classPrefix: 'k' }), /class="k-label".*class="k-value".*class="k-track".*class="k-bar".*class="k-mark".*class="k-target"/su);
 });

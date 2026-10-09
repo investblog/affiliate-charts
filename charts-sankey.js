@@ -97,6 +97,9 @@
 			a = byId['#' + l.from];
 			b = byId['#' + l.to];
 			var h = l.value * k, x0 = _.n(x(a.c), 3), x1 = _.n(x(b.c), 3), xm = _.n((x(a.c) + x(b.c)) / 2, 3);
+			// a flow so far below the largest that its height underflows to zero cannot be drawn (M9 review); a node
+			// that underflows has only such flows, so this check covers it
+			if (!(h > 0)) fail('flows too far apart to draw');
 			var y0 = a.o, y1 = b.i;
 			a.o += h;
 			b.i += h;

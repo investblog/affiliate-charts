@@ -278,6 +278,13 @@ test('n() never prints Infinity: a value whose rounding overflows is printed as 
 	assert.equal(Charts._.n(-0.0000001, 6), '0');
 });
 
+test('absent means undefined: null options, or a null shared option, throw (the second review)', () => {
+	for (const options of [null, { title: null }, { desc: null }, { brand: null }, { theme: null }, { classPrefix: null }]) {
+		assert.throws(() => Charts.funnel([S('a', 1)], options), /^TypeError: affiliate-charts: /u, JSON.stringify(options));
+	}
+	assert.match(Charts.funnel([S('a', 1)], { title: undefined }), /^<svg /u, 'undefined is absent');
+});
+
 test('brand must be a string: an array, or an object with a hex toString, throws prefixed', () => {
 	for (const brand of [['#2563eb'], { toString: () => '#2563eb' }]) {
 		assert.throws(() => Charts.funnel([S('a', 1)], { brand }), /^TypeError: affiliate-charts: brand must be a #rrggbb hex$/u);

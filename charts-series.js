@@ -141,11 +141,13 @@
 
 		if (prev) box += line(prev.values, 'currentColor', 0.35, p + '-prev');
 		if (form === 'columns') {
-			// each point's columns in a viewport of 70% of its band, centred, COL px wide and 2px apart: the
-			// viewport clips them, so a column is as thick as the narrower of its share of the band and COL (M9
-			// review: a sparse series drew one column across 70% of the chart)
+			// each column in its own viewport — its share of 70% of the band, a 6% gap between two — centred and
+			// COL px wide: the viewport clips it, so a column is as thick as the narrower of its share and COL, and
+			// never vanishes however dense the series (M9 review: one point drew a column across 70% of the chart;
+			// a fixed 2px gap then hid both columns of a dense grouped series)
+			var g = S > 1 && !o.stacked ? 0.06 * w : 0, cw = o.stacked ? 0.7 * w : (0.7 * w - g) / S;
 			for (i = 0; i < N; i++) {
-				var base = 0, cols = '';
+				var base = 0, stack = '';
 				for (j = 0; j < S; j++) {
 					var v = points[i].values[j];
 					if (!v) continue;
@@ -154,13 +156,13 @@
 						var topmost = true;
 						for (var k = j + 1; k < S; k++) if (points[i].values[k]) topmost = false;
 						var b = at(base + v);
-						cols += col(-COL / 2, base ? Math.max(b, at(base) - 2) : at(base), b, colour[j], topmost);
+						stack += col(base ? Math.max(b, at(base) - 2) : at(base), b, colour[j], topmost);
 						base += v;
 					} else {
-						cols += col(S > 1 ? (j ? 1 : -COL - 1) : -COL / 2, z, at(v), colour[j], true);
+						out += view(i * w + 0.15 * w + j * (cw + g), col(z, at(v), colour[j], true));
 					}
 				}
-				if (cols) out += _.el('svg', ['x', _.pct(i * w + 0.15 * w), 'width', _.pct(0.7 * w)], cols);
+				if (stack) out += view(i * w + 0.15 * w, stack);
 			}
 		} else {
 			for (j = 0; j < S; j++) {
@@ -215,11 +217,15 @@
 		function xl(i, x, anchor) {
 			return _.el('text', ['class', p + '-x', 'x', x, 'y', ly, 'text-anchor', anchor === 'start' ? null : anchor], _.esc(points[i].x));
 		}
-		// a column dx px from its viewport's centre, from the baseline end a to the data end b (y in the plot,
+		// a column's viewport at x% of the chart, cw% wide: it clips the column it centres
+		function view(x, inner) {
+			return _.el('svg', ['x', _.pct(x), 'width', _.pct(cw)], inner);
+		}
+		// a COL px column centred in its viewport, from the baseline end a to the data end b (y in the plot,
 		// px); rounded at b
-		function col(dx, a, b, fill, round) {
+		function col(a, b, fill, round) {
 			var h = Math.abs(a - b), r = round ? Math.min(4, h / 2) : 0;
-			return _.el('g', ['transform', 'translate(' + dx + ')'], _.el('svg', ['class', p + '-bar', 'x', '50%', 'y', _.n(top + Math.min(a, b), 2),
+			return _.el('g', ['transform', 'translate(-' + COL / 2 + ')'], _.el('svg', ['class', p + '-bar', 'x', '50%', 'y', _.n(top + Math.min(a, b), 2),
 				'width', COL, 'height', _.n(h, 2), 'fill', fill],
 			_.el('rect', ['width', '100%', 'height', _.n(h, 2), 'rx', r ? _.n(r, 2) : null]) +
 				(r ? _.el('rect', ['y', b < a ? _.n(h - r, 2) : 0, 'width', '100%', 'height', _.n(r, 2)]) : '')));
@@ -229,9 +235,9 @@
 	return function series(points, options) {
 		var opts = _.common(options);
 		var ends = check(points, opts), tk = ticks(ends[0], ends[1]);
-		// a range near Number.MIN_VALUE underflows the step, one near the top overflows the widened ends (M9 review)
-		if (!tk.length) fail('values too small or too large to draw');
-		for (var i = 0; i < tk.length; i++) if (!isFinite(tk[i]) || i && !(tk[i] > tk[i - 1])) fail('values too small or too large to draw');
+		// a range near Number.MIN_VALUE underflows the step and leaves no tick; one near the top overflows the widened
+		// ends or their span: any of them leaves the span not finite (M9 review)
+		if (!isFinite(tk[tk.length - 1] - tk[0])) fail('values too small or too large to draw');
 		var d = draw(points, opts, tk);
 		// ids from what is drawn and the raw values: 1 and 10 can draw alike when their ticks read alike (ADR 003)
 		return _.svg(opts, d.h, d.body, JSON.stringify([opts.title, opts.desc, points.map(function (q) { return q.values; }), opts.previous && opts.previous.values, d.body]));

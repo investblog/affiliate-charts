@@ -44,15 +44,16 @@
 		return v;
 	}
 	// the options every chart shares; the prefix lands in ids and aria-labelledby, so it is a token
+	// Absent means undefined: `null` is accepted only where a shape says so (spec, input rules; M9 review).
 	function common(options) {
-		var o = options == null ? {} : options;
-		if (typeof o !== 'object') fail('options must be an object');
-		if (o.title != null) str(o.title, 'title');
-		if (o.desc != null) str(o.desc, 'desc');
+		var o = options === undefined ? {} : options;
+		if (!o || typeof o !== 'object') fail('options must be an object');
+		if (o.title !== undefined) str(o.title, 'title');
+		if (o.desc !== undefined) str(o.desc, 'desc');
 		var p = o.classPrefix;
-		if (p != null && (typeof p !== 'string' || !/^[A-Za-z_][\w-]*$/.test(p))) fail('classPrefix must be a token like "chart"');
-		if (o.brand != null && (typeof o.brand !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(o.brand))) fail('brand must be a #rrggbb hex');
-		if (o.theme != null && o.theme !== 'light' && o.theme !== 'dark') fail('theme must be "light" or "dark"');
+		if (p !== undefined && (typeof p !== 'string' || !/^[A-Za-z_][\w-]*$/.test(p))) fail('classPrefix must be a token like "chart"');
+		if (o.brand !== undefined && (typeof o.brand !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(o.brand))) fail('brand must be a #rrggbb hex');
+		if (o.theme !== undefined && o.theme !== 'light' && o.theme !== 'dark') fail('theme must be "light" or "dark"');
 		return o;
 	}
 	// FNV-1a twice, from two offsets: 64 bits of id derived from the input, so two different charts on one

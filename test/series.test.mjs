@@ -133,13 +133,12 @@ test('previous: a currentColor line at 0.35 under the series, in the key and in 
 	assert.match(svg, /<title>b: October 30, September —<\/title>/u);
 });
 
-test('columns: grouped in a viewport of 70% of their band, 24px each and 2px apart, from zero, rounded at the data end', () => {
+test('columns: grouped, each in its own viewport of its share of 70% of the band, 24px centred, from zero, rounded at the data end', () => {
 	const svg = Charts.series([P('a', 100, 50), P('b', -50, 0)], { names: ['GGR', 'Commission'], form: 'columns' });
-	// ticks −50…100 by 50 → y = (100 − v) / 150 × 160; band 50%, its viewport 70% of it, centred
+	// ticks −50…100 by 50 → y = (100 − v) / 150 × 160; band 50%, a 6% gap, two viewports of (35 − 3) / 2 = 16%
 	const c = cols(svg), y = (v) => +((100 - v) / 150 * 160).toFixed(2);
-	assert.deepEqual(views(svg), [[7.5, 35], [57.5, 35]]);
-	// series 1 left of the centre, series 2 right, 2px between; a lone series 1 keeps its side
-	assert.deepEqual(c.map((b) => b.dx), [-25, 1, -25]);
+	assert.deepEqual(views(svg), [[7.5, 16], [26.5, 16], [57.5, 16]], 'a lone series 1 keeps its place');
+	assert.deepEqual(c.map((b) => b.dx), [-12, -12, -12]);
 	assert.deepEqual(c.map((b) => [+(b.y - TOP - 20).toFixed(2), b.h]), [[0, y(0)], [y(50), +((100 / 150 - 50 / 150) * 160).toFixed(2)], [y(0), +(50 / 150 * 160).toFixed(2)]]);
 	// positive: the square sits at the foot; negative: at the top
 	assert.match(c[0].inner, /rx="4"\/><rect y="[\d.]+" width="100%" height="4"\/>/u);
@@ -157,6 +156,12 @@ test('stacked columns: parts on each other, 2px apart, only the top one rounded'
 	assert.deepEqual([+(c[1].y - TOP - 20).toFixed(2), +c[1].h.toFixed(2)], [+y(50).toFixed(2), +(y(30) - 2 - y(50)).toFixed(2)]);
 	assert.doesNotMatch(c[0].inner, /rx=/u);
 	assert.match(c[1].inner, /rx="4"/u);
+	// the second review: 133 points of two series — each column keeps its own share of the band, so none
+	// vanishes behind a fixed gap
+	const dense = Array.from({ length: 133 }, (_, i) => P(String(i), 1, 1));
+	const dv = views(Charts.series(dense, { names: ['a', 'b'], form: 'columns' }));
+	assert.equal(dv.length, 266);
+	assert.ok(dv.every(([, width]) => width === +((0.7 - 0.06) / 2 * 100 / 133).toFixed(3)), 'each viewport (70% − 6%) / 2 of a band');
 	// M9 review: one point of one series is a 24px column, not 70% of the chart
 	assert.deepEqual([views(Charts.series([P('a', 5)], { names: ['c'], form: 'columns' })), cols(Charts.series([P('a', 5)], { names: ['c'], form: 'columns' }))[0].dx], [[[15, 70]], -12]);
 	// the lower part is the top one when the upper has no value
@@ -238,6 +243,8 @@ const throwsCases = [
 	// M9 review: finite values whose ticks underflow or overflow must throw, never draw NaN
 	['a value of Number.MIN_VALUE', [P('a', Number.MIN_VALUE)], { names: ['c'] }, /values too small or too large to draw/u],
 	['a value of Number.MAX_VALUE', [P('a', Number.MAX_VALUE)], { names: ['c'] }, /values too small or too large to draw/u],
+	// the second review: every tick finite, but the span between the outer ones overflows
+	['a span of ticks that overflows', [P('a', -8e307), P('b', 8e307)], { names: ['c'] }, /values too small or too large to draw/u],
 ];
 for (const [name, points, options, msg] of throwsCases) {
 	test(`throws: ${name}`, () => {

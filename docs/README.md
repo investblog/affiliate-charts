@@ -117,7 +117,8 @@ Input rules shared by every chart:
 - Every caller string (`label`, `display`, `title`, `desc`, legend entries) must be a string; `options`, when
   given, an object; `classPrefix` a string matching `[A-Za-z_][A-Za-z0-9_-]*` — it lands in ids and
   `aria-labelledby`, where a space or a quote would break the accessible name or the markup;
-  `brand` a `#rrggbb` hex; `theme` `light` or `dark`; an unknown `form` throws.
+  `brand` a `#rrggbb` hex string; `theme` `light` or `dark`; an unknown `form` throws. An option is
+  absent when it is `undefined`; `options: null` or a shared option set to `null` throws (ADR 020).
 - Every input error is a `TypeError` whose message starts with `affiliate-charts:`.
 
 **What the library computes, and what it never does.** It derives **positions**: scale domains, nice
@@ -264,8 +265,9 @@ Layout and colour: ADR 015. In short:
 - `area`: a single series only, a 0.1 wash between the line and zero.
 - `columns`: **grouped** by default — GGR and commission are nested amounts, not parts of a whole, and a
   stack would count the same money twice. `stacked: true` is for genuinely additive parts (first and
-  repeat deposits) and is the caller's assertion. A column is 24 px wide, two of a point 2 px apart, in
-  a viewport of 70% of the point's band that clips them: as thick as the narrower of the two (ADR 020).
+  repeat deposits) and is the caller's assertion. A column is 24 px wide, centred in its own viewport —
+  its share of 70% of the point's band, a 6% gap between two — that clips it: as thick as the narrower
+  of the two, never gone however dense the series (ADR 020).
 - `previous`: the comparison period as a `currentColor` line at 0.35 under a **single** series, never
   dashed, never a second axis.
 - **Colours:** series 1 the brand's solid mark, series 2 its opposite hue. At most two series: no

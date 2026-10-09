@@ -145,6 +145,12 @@ const throwsCases = [
 	['flows that overflow', two, [L('a', 'b', 1.7e308), L('a', 'b', 1.7e308)], /overflow/u],
 	// M9 review: finite flows whose scale underflows or overflows must throw, never draw NaN
 	['a flow of Number.MIN_VALUE', two, [L('a', 'b', Number.MIN_VALUE)], /flows too small or too large to draw/u],
+	// the second review: a finite scale, but one flow so small beside another that its height underflows
+	['a flow too small beside the largest', [N('a', 0, 'a'), N('c', 0, 'c'), N('b', 1, 'b'), N('d', 1, 'd')],
+		[L('a', 'b', 1e308), L('c', 'd', Number.MIN_VALUE)], /flows too far apart to draw/u],
+	// … and a link that underflows between two nodes that do not: a → d is tiny, a and d are large
+	['a link too small between large nodes', [N('a', 0, 'a'), N('c', 0, 'c'), N('b', 1, 'b'), N('d', 1, 'd')],
+		[L('a', 'b', 1e307), L('a', 'd', Number.MIN_VALUE), L('c', 'd', 1e307)], /flows too far apart to draw/u],
 	['two columns that overflow their sum', [N('a', 0, 'a'), N('c', 0, 'c'), N('b', 1, 'b'), N('d', 1, 'd')],
 		[L('a', 'b', 1e308), L('c', 'd', 1e308)], /flows too small or too large to draw/u],
 ];
