@@ -41,6 +41,12 @@ partly) and found five more:
 | 15 | `meter` marks at 50 and 50.0000001 round to one percent and drew alike | the marks' values join the id key |
 | 16 | `options: null` and `null` shared options were treated as absent | absent means `undefined`; `null` throws |
 
+**The third pass** replayed 12–16 (all fixed), found the two removals sound, and one more:
+
+| # | Finding | Change |
+|---|---|---|
+| 17 | `series` of `±Number.MIN_VALUE`: the tick step is zero, the tick loop never ends and allocates until `RangeError` | `ticks` returns none for a step not above zero, and the span check throws; its mutation runs under a 128 MB heap, where the looping test dies in 0.6 s instead of taking the machine's memory |
+
 Found by the review and kept for later: the heatmap's rows pass an empty value to the core's label
 line, which emits an empty `<text class="-value">`; the x-label rule is repeated in `series` and
 `heatmap`. Both are bytes, not behaviour.

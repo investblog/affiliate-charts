@@ -10,6 +10,8 @@ import { spawnSync } from 'node:child_process';
 const TEST = [process.execPath, ['--test', 'test/*.test.mjs']];
 const TYPES = [process.execPath, ['node_modules/typescript/bin/tsc', '-p', 'tsconfig.json']];
 const BUNDLE = [process.execPath, ['scripts/bundle-gate.mjs']];
+// the series tests with a 128 MB heap: a mutation that loops while allocating dies fast instead of eating the machine
+const CAPPED = [process.execPath, ['--max-old-space-size=128', '--test', 'test/series.test.mjs']];
 const T = TEST, C = 'charts.js', F = 'charts-funnel.js', W = 'charts-waterfall.js', S = 'charts-series.js', K = 'charts-spark.js', RK = 'charts-rank.js', SH = 'charts-share.js', HM = 'charts-heatmap.js', MT = 'charts-meter.js', SK = 'charts-sankey.js';
 
 const MUTATIONS = [
@@ -202,6 +204,9 @@ const MUTATIONS = [
 	[S, T, 'grouped columns without a gap', 'g = S > 1 && !o.stacked ? 0.06 * w : 0', 'g = 0'],
 	[S, T, 'columns past 24px', 'GLYPH = 8, COL = 24;', 'GLYPH = 8, COL = 30;'],
 	[S, T, 'the column viewport the whole band', "return _.el('svg', ['x', _.pct(x), 'width', _.pct(cw)], inner);", "return _.el('svg', ['x', _.pct(x), 'width', _.pct(w)], inner);"],
+	// the zero-step guard: without it the tick loop pushes until the array overflows — tens of GB — so its gate
+	// caps the heap at 128 MB and the test process dies in under a second (measured)
+	[S, CAPPED, 'a zero step loops', 'if (!(step > 0)) return t;', 'if (step !== step) return t;'],
 	[S, T, 'a tick span that overflows drawn', 'if (!isFinite(tk[tk.length - 1] - tk[0])) fail', 'if (false) fail'],
 	[SK, T, 'an underflowing link drawn', "if (!(h > 0)) fail('flows too far apart to draw');", ''],
 	[MT, T, 'meter ids ignore the marks', 'marks.map(function (q) { return q.value; }), out', 'out'],
@@ -486,7 +491,7 @@ function run([cmd, args]) {
 	return r.status === 0 ? 'green' : r.status === 1 ? 'red' : `broken (${r.status ?? r.signal})`;
 }
 
-for (const gate of [TEST, TYPES, BUNDLE]) {
+for (const gate of [TEST, TYPES, BUNDLE, CAPPED]) {
 	if (run(gate) !== 'green') {
 		console.error(`the gate is not green before any mutation: ${gate[1].join(' ')}`);
 		process.exit(1);

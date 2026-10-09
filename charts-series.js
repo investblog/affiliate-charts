@@ -72,6 +72,9 @@
 		if (lo === hi) return [0];
 		var raw = (hi - lo) / 4, e = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10)), f = raw / e, t = [];
 		var step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * e;
+		// a range of ±Number.MIN_VALUE makes the step zero, and the loop below would never end: no ticks, and
+		// the caller's span check throws (M9 review, third pass)
+		if (!(step > 0)) return t;
 		for (var k = Math.floor(lo / step); k <= Math.ceil(hi / step); k++) t.push(+(k * step).toPrecision(12));
 		return t;
 	}

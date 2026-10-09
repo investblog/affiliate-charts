@@ -245,6 +245,8 @@ const throwsCases = [
 	['a value of Number.MAX_VALUE', [P('a', Number.MAX_VALUE)], { names: ['c'] }, /values too small or too large to draw/u],
 	// the second review: every tick finite, but the span between the outer ones overflows
 	['a span of ticks that overflows', [P('a', -8e307), P('b', 8e307)], { names: ['c'] }, /values too small or too large to draw/u],
+	// the third pass: ±Number.MIN_VALUE makes the step zero — throws at once, no endless loop
+	['a step that is zero', [P('a', -Number.MIN_VALUE), P('b', Number.MIN_VALUE)], { names: ['c'] }, /values too small or too large to draw/u],
 ];
 for (const [name, points, options, msg] of throwsCases) {
 	test(`throws: ${name}`, () => {

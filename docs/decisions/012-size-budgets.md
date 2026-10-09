@@ -142,10 +142,10 @@ key lines; the sankey's character count and scale guard — measured after:
 |---|---|---|---|
 | `charts.js` | 2561 B | 2617 B | 2688 B (unchanged) |
 | `charts-funnel.js` | 1870 B | 1935 B | 2176 B (unchanged) |
-| `charts-series.js` | 2831 B | 2961 B | **3072 B** (was 2944) |
+| `charts-series.js` | 2831 B | 2969 B | **3072 B** (was 2944) |
 | `charts-rank.js` | 915 B | 927 B | 1024 B (unchanged) |
 | `charts-share.js` | 1291 B | 1297 B | 1408 B (unchanged) |
 | `charts-meter.js` | 928 B | 946 B | 1024 B (unchanged) |
 | `charts-sankey.js` | 1755 B | 1863 B | 1920 B (unchanged) |
 
-After both review passes (ADR 020), the core and the funnel are 4552 B; the whole catalog 17 079 B.
+After the three review passes (ADR 020), the core and the funnel are 4552 B; the whole catalog 17 087 B.
