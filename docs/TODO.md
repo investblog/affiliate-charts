@@ -19,6 +19,7 @@ The milestone table is in
   series, ADR 015), `spark` / `tile` (ADR 016) — drawn and gated 2026-10-09, unreleased
 - [x] M7 — Group C: `rank`, `share` (100% bar, donut ≤ 6; ADR 017), `heatmap` (hour × weekday; ADR 018) —
   drawn and gated 2026-10-09, unreleased
-- [ ] M8 — Group D: cohort heatmap (done with the heatmap, `form: 'cohort'`, ADR 018), `meter`, `sankey`
+- [x] M8 — Group D: cohort heatmap (`form: 'cohort'`, ADR 018), `meter`, `sankey` (ADR 019) — drawn and
+  gated 2026-10-09, unreleased
 - [ ] M9 — independent review of the whole catalog (Codex), fixes, then one release (2026-10-09: no
   per-milestone releases)

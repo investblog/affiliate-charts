@@ -42,7 +42,7 @@
 <main>
 	<aside>
 		<h1>affiliate-charts</h1>
-		<p class="meta">Funnels, money waterfalls, daily series, KPI tiles, rankings, shares, heatmaps, cohorts and meters for partner cabinets, drawn as SVG strings. Every control below is an option of one call.</p>
+		<p class="meta">Funnels, money waterfalls, daily series, KPI tiles, rankings, shares, heatmaps, cohorts, meters and flows for partner cabinets, drawn as SVG strings. Every control below is an option of one call.</p>
 		<label>show <select id="show">
 			<option value="one">one example</option>
 			<option value="sheet">every example</option>
@@ -56,6 +56,7 @@
 			<option value="share">part to whole</option>
 			<option value="heatmap">heatmap and cohorts</option>
 			<option value="meter">meter</option>
+			<option value="sankey">flows (sankey)</option>
 		</select></label>
 		<label>example <select id="example"></select></label>
 		<label>form <select id="form"></select></label>
@@ -81,7 +82,7 @@
 // cache-bust the library, so a stale copy never shows an old picture (AGENTS.md); file:// loads plain
 (function () {
 	var bust = location.protocol === 'file:' ? '' : '?ts=' + Date.now();
-	var files = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js', 'charts-heatmap.js', 'charts-meter.js'], i = 0;
+	var files = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js', 'charts-heatmap.js', 'charts-meter.js', 'charts-sankey.js'], i = 0;
 	(function next() {
 		if (i === files.length) return app();
 		var s = document.createElement('script');
@@ -224,13 +225,29 @@ function app() {
 		cap: { option: 'CPA cap passed', name: 'CPA cap, October', meter: { label: 'First deposits paid as CPA', value: 118, display: '118 — 18 over the cap',
 			target: 100, targetDisplay: 'cap 100' } },
 	};
-	var FORMS = { funnel: ['bars', 'steps', 'shape'], waterfall: [], series: ['line', 'area', 'columns'], tile: [], rank: [], share: ['bar', 'donut'], heatmap: [], meter: [] };
+	// flows: short tags beside the nodes, the names and figures in the key under the diagram
+	var Sn = function (id, column, short, label, value) { return { id: id, column: column, short: short, label: label, display: count(value) }; };
+	var Sl = function (from, to, value) { return { from: from, to: to, value: value, display: count(value) }; };
+	var FLOWS3 = {
+		funnel: { option: 'sources → registration → deposit', name: 'From sources to first deposits', nodes: [
+			Sn('tg', 0, 'TG', 'sub-id: tg-channel', 9200), Sn('seo', 0, 'SEO', 'sub-id: seo-reviews', 5100), Sn('push', 0, 'PSH', 'sub-id: push-test', 1800),
+			Sn('reg', 1, 'REG', 'Registered', 2410), Sn('no', 1, 'NO', 'Not registered', 13690),
+			Sn('ftd', 2, 'FTD', 'First deposit', 388), Sn('nd', 2, 'ND', 'No deposit yet', 2022)],
+		links: [Sl('tg', 'reg', 1500), Sl('tg', 'no', 7700), Sl('seo', 'reg', 800), Sl('seo', 'no', 4300), Sl('push', 'reg', 110), Sl('push', 'no', 1690),
+			Sl('reg', 'ftd', 388), Sl('reg', 'nd', 2022)] },
+		geo: { option: 'country → device', name: 'Clicks: country to device', nodes: [
+			Sn('rs', 0, 'RS', 'Serbia', 8400), Sn('ba', 0, 'BA', 'Bosnia', 3100), Sn('me', 0, 'ME', 'Montenegro', 1500),
+			Sn('and', 1, 'AND', 'Android', 7900), Sn('ios', 1, 'iOS', 'iOS', 3400), Sn('pc', 1, 'PC', 'Desktop', 1700)],
+		links: [Sl('rs', 'and', 5100), Sl('rs', 'ios', 2200), Sl('rs', 'pc', 1100), Sl('ba', 'and', 2100), Sl('ba', 'ios', 700), Sl('ba', 'pc', 300),
+			Sl('me', 'and', 700), Sl('me', 'ios', 500), Sl('me', 'pc', 300)] },
+	};
+	var FORMS = { funnel: ['bars', 'steps', 'shape'], waterfall: [], series: ['line', 'area', 'columns'], tile: [], rank: [], share: ['bar', 'donut'], heatmap: [], meter: [], sankey: [] };
 
 	var $ = function (id) { return document.getElementById(id); };
 	var stage = $('stage');
 	var chart = function () { return $('chart').value; };
 	var flowChart = function () { return chart() === 'waterfall'; };
-	var examples = function () { return { funnel: FUNNELS, waterfall: FLOWS, series: DAYS, tile: TILES, rank: RANKS, share: SHARES, heatmap: HEATS, meter: METERS }[chart()]; };
+	var examples = function () { return { funnel: FUNNELS, waterfall: FLOWS, series: DAYS, tile: TILES, rank: RANKS, share: SHARES, heatmap: HEATS, meter: METERS, sankey: FLOWS3 }[chart()]; };
 	// the example and form lists follow the chart; a choice survives as long as the chart has it
 	var shown = null;
 	function fillExamples() {
@@ -284,6 +301,9 @@ function app() {
 			Charts.init(host, svg);
 		} else if (chart() === 'tile') {
 			svg = Charts.tile(ex.tile, options(ex));
+			Charts.init(host, svg);
+		} else if (chart() === 'sankey') {
+			svg = Charts.sankey(ex.nodes, ex.links, options(ex));
 			Charts.init(host, svg);
 		} else if (chart() === 'meter') {
 			svg = Charts.meter(ex.meter, options(ex));
@@ -339,7 +359,7 @@ function app() {
 		var o = options(examples()[$('example').value]), fn = chart();
 		if (o.previous) o.previous = '{ name, values, display }';
 		$('code').textContent = "import Charts from 'affiliate-charts/charts-" + (fn === 'tile' ? 'spark' : fn) + ".js';\n\nconst svg = Charts." + fn + '(' +
-			({ series: 'points', tile: 'tile', rank: 'rows', share: 'parts', heatmap: 'cells', meter: 'meter' }[fn] || 'steps') + ', ' +
+			({ series: 'points', tile: 'tile', rank: 'rows', share: 'parts', heatmap: 'cells', meter: 'meter', sankey: 'nodes, links' }[fn] || 'steps') + ', ' +
 			JSON.stringify(o, null, 1).replace(/\n\s*/g, ' ') + ');\nCharts.init(el, svg);';
 	}
 	['show', 'chart', 'example', 'form', 'theme', 'brand', 'width', 'titled'].forEach(function (id) {

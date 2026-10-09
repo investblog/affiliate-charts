@@ -60,7 +60,7 @@
       "charts-share.js": 1408,
       "charts-heatmap.js": 1920,
       "charts-meter.js": 1024,
-      "charts-sankey.js": 4096
+      "charts-sankey.js": 1920
     }
   },
   "keywords": [

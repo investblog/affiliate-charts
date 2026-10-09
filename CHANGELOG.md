@@ -21,8 +21,9 @@
   The core gains `shade` for the ramp.
 - Meters (`charts-meter.js`): progress to a tier or a cap, a fill on a lighter track of the brand, tier
   marks as hairlines named on hover.
-- The demo picks the chart: funnel, waterfall, daily series, KPI tiles, ranking, part to whole, heatmap or
-  meter.
+- Flows (`charts-sankey.js`): two to four columns of up to eight nodes, ribbons to the next column, short
+  tags beside the nodes and the names in a key, one colour (ADR 019).
+- The demo picks any of the ten charts.
 
 ## 0.1.1 — 2026-10-08
 

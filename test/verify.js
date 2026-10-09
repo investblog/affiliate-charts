@@ -8,7 +8,7 @@
 	document.addEventListener('securitypolicyviolation', function (e) { violations.push(e.violatedDirective + ' ' + e.blockedURI); });
 
 	// cache-bust: a stale library fakes a result either way (AGENTS.md)
-	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js', '../charts-waterfall.js', '../charts-series.js', '../charts-spark.js', '../charts-rank.js', '../charts-share.js', '../charts-heatmap.js', '../charts-meter.js'], i = 0;
+	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js', '../charts-waterfall.js', '../charts-series.js', '../charts-spark.js', '../charts-rank.js', '../charts-share.js', '../charts-heatmap.js', '../charts-meter.js', '../charts-sankey.js'], i = 0;
 	(function next() {
 		if (i === files.length) return setTimeout(run, 50);
 		var s = document.createElement('script');
@@ -84,6 +84,12 @@
 		// the meter: a third of the way, a tier mark at half
 		['meter', { label: 'Tier 3', value: 40, display: '40', target: 120, targetDisplay: 'tier 3 at 120', marks: [{ value: 60, label: 'Tier 2' }] },
 			{ title: 'Meter', theme: 'dark' }, 'meter'],
+		// the sankey (ADR 019): A 40, B 60 → R, X; R → F; one scale 2.24 px a unit
+		['sankey', { nodes: [{ id: 'A', column: 0, short: 'A', label: 'Source A', display: '40' }, { id: 'B', column: 0, short: 'B', label: 'Source B', display: '60' },
+			{ id: 'R', column: 1, short: 'REG', label: 'Registered', display: '50' }, { id: 'X', column: 1, short: 'NO', label: 'Not registered', display: '50' },
+			{ id: 'F', column: 2, short: 'FTD', label: 'First deposit', display: '25' }],
+		links: [{ from: 'A', to: 'R', value: 30, display: '30' }, { from: 'A', to: 'X', value: 10, display: '10' }, { from: 'B', to: 'R', value: 20, display: '20' },
+			{ from: 'B', to: 'X', value: 40, display: '40' }, { from: 'R', to: 'F', value: 25, display: '25' }] }, { title: 'Sankey' }, 'sankey'],
 	];
 
 	function run() {
@@ -96,11 +102,13 @@
 		if (typeof window.Charts.share !== 'function') return finish(['Charts.share is not loaded']);
 		if (typeof window.Charts.heatmap !== 'function') return finish(['Charts.heatmap is not loaded']);
 		if (typeof window.Charts.meter !== 'function') return finish(['Charts.meter is not loaded']);
+		if (typeof window.Charts.sankey !== 'function') return finish(['Charts.sankey is not loaded']);
 		FIXTURES.concat(FLOWS, SERIES, TILES).forEach(function (f) {
 			var card = document.createElement('div');
 			card.className = 'card ' + (f[2].theme === 'dark' ? 'dark' : 'light') + (f[3] === 'tile' ? ' narrow' : '');
 			card.id = 'card-' + f[0];
-			markup[f[0]] = window.Charts[f[3] || (f[2].names ? 'series' : f[1][0].kind ? 'waterfall' : 'funnel')](f[1], f[2]);
+			markup[f[0]] = f[3] === 'sankey' ? window.Charts.sankey(f[1].nodes, f[1].links, f[2])
+				: window.Charts[f[3] || (f[2].names ? 'series' : f[1][0].kind ? 'waterfall' : 'funnel')](f[1], f[2]);
 			window.Charts.init(card, markup[f[0]]);
 			root.appendChild(card);
 		});
@@ -127,7 +135,7 @@
 		});
 		check('ids are unique across charts on one page', function () {
 			var ids = [].map.call(document.querySelectorAll('#charts svg [id]'), function (e) { return e.id; });
-			return ids.length === 20 && new Set(ids).size === ids.length;
+			return ids.length === 21 && new Set(ids).size === ids.length;
 		});
 		check('aria-labelledby resolves inside its own chart', function () {
 			return [].every.call(document.querySelectorAll('#charts svg[aria-labelledby]'), function (s) {
@@ -388,6 +396,28 @@
 			var s = svg('meter'), r = box(s), t = box(s.querySelector('.chart-track')), f = box(s.querySelector('.chart-bar')), m = s.querySelector('.chart-mark');
 			return near(t.left, r.left) && near(t.width, r.width) && near(f.left, r.left) && near(f.width, r.width / 3, 1.5) &&
 				near(m.x1.baseVal.value, r.width / 2, 0.75) && getComputedStyle(s.querySelector('.chart-track')).opacity === '0.2';
+		});
+		// the sankey: ribbon ends read through the ribbon's own screen matrix (the donut lesson: nested-svg
+		// boxes differ by engine)
+		check('sankey: each ribbon leaves its source node and lands on its target, stacked in order', function () {
+			// the drawn geometry from each ribbon's own box (user units: x in percent, y in px), placed on screen by its
+			// matrix. A→R spans y 0–67.2 from x 0 to 50; B→R leaves B at 105.6 and lands at 67.2 under R's top, its box
+			// 67.2–150.4; R→F reaches x 100
+			var s = svg('sankey'), n = [].map.call(s.querySelectorAll('.chart-node'), box), p = s.querySelectorAll('.chart-link'), r = box(s);
+			var at = function (e, x, y) { var k = e.getScreenCTM(); return [k.a * x + k.c * y + k.e, k.b * x + k.d * y + k.f]; };
+			var g0 = p[0].getBBox(), g2 = p[2].getBBox(), g4 = p[4].getBBox();
+			var a0 = at(p[0], g0.x, g0.y), a1 = at(p[0], g0.x + g0.width, g0.y), b1 = at(p[2], g2.x + g2.width, g2.y), f1 = at(p[4], g4.x + g4.width, g4.y);
+			return p.length === 5 && n.length === 5 && near(g0.height, 67.2, 0.1) && near(g2.y, 67.2, 0.1) && near(g2.height, 83.2, 0.1) &&
+				near(a0[0], r.left) && near(a0[1], n[0].top) && a1[0] > n[2].left && a1[0] < n[2].right && near(a1[1], n[2].top) &&
+				near(b1[1], n[2].top + 67.2, 1) && near(f1[0], r.right) && near(f1[1], n[4].top) && near(n[4].right, r.right);
+		});
+		check('sankey: a ribbon answers with its title under the pointer', function () {
+			// B→X: from 150.4 to 150.4, 89.6 thick; at x 25 its middle is at 195.2
+			var s = svg('sankey'), p = s.querySelectorAll('.chart-link');
+			s.scrollIntoView({ block: 'center' });
+			var k = p[3].getScreenCTM(), e = document.elementFromPoint(k.a * 25 + k.e, k.d * 195.2 + k.f);
+			window.scrollTo(0, 0);
+			return e === p[3] && e.firstElementChild.textContent === 'Source B → Not registered: 40';
 		});
 		// last, after every chart has been in the document: CSP reports arrive asynchronously
 		// the palette in this engine against the bytes Node computed (test/fixtures/palette.json): float

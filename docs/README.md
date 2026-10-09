@@ -15,11 +15,11 @@ consumer has integrated it on a branch (M4) under its production CSP, both theme
 funnel (three forms, base and earned, losses, negative values, gaps) passes the Node tests, the
 typecheck, the Vite bundle gate and the browser gate (Chromium, Firefox, WebKit under
 `default-src 'self'`); every check has been seen red under mutation. Budgets frozen (ADR 012). M5 is
-done: releases run from `v*` tags through the Trusted Publisher (0.1.1 was the first). M6 and M7
+done: releases run from `v*` tags through the Trusted Publisher (0.1.1 was the first). M6–M8
 are done: the waterfall (ADR 014), the daily series (ADR 015), the sparkline and the KPI tile (ADR 016),
-the ranking, part to whole (ADR 017) and the heatmap with its cohort form (ADR 018) are drawn and pass
-every gate (Node, mutations, Vite, three engines, the demo), unreleased — the catalog ships once, after
-M8 and a review (M9). M8's `meter` and `sankey` are next. Scope:
+the ranking, part to whole (ADR 017), the heatmap with its cohort form (ADR 018), the meter and the
+sankey (ADR 019) are drawn and pass every gate (Node, mutations, Vite, three engines, the demo),
+unreleased — the catalog ships once, after a review (M9), which is next. Scope:
 **a chart library for affiliate programmes** — the forms a partner cabinet uses to show traffic,
 conversions and money to a partner. Numbers marked *provisional* are forecasts, not measurements;
 each names the milestone that replaces it. Keep this line true at every milestone.
@@ -481,7 +481,7 @@ catalog.
 | M5 | package-name ADR (done: ADR 013), public repo, Pages playground, first publish, Trusted Publisher, release from `v*` tags | published |
 | M6 | `waterfall`, then Group B: `series` (daily first), `spark`/`tile` | gates green |
 | M7 | Group C: `rank`, `share`, `heatmap` | gates green |
-| M8 | Group D: cohort, `meter`, `sankey` (*provisional budget 4096 B*) | gates green |
+| M8 | Group D: cohort, `meter`, `sankey` | gates green |
 | M9 | an independent review of the whole catalog (Codex), its findings fixed | one release |
 
 **Release plan (2026-10-09):** M6–M8 are not released one by one. The catalog ships once, after M9 —

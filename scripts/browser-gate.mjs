@@ -24,7 +24,7 @@ import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const FILES = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js', 'charts-heatmap.js', 'charts-meter.js'];
+const FILES = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js', 'charts-heatmap.js', 'charts-meter.js', 'charts-sankey.js'];
 const MUTATE = process.argv.includes('--mutate');
 const WIDTHS = [375, 1280];
 const CSP = "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self'; base-uri 'none'; object-src 'none'";
@@ -97,7 +97,8 @@ async function demo(pw, port) {
 			rank: [['sources', 'focus'], [null], '.chart-bar'],
 			share: [['devices', 'geo'], ['bar', 'donut'], '.chart-part'],
 			heatmap: [['hours', 'cohorts'], [null], '.chart-cell'],
-			meter: [['tier', 'cap'], [null], '.chart-track'] };
+			meter: [['tier', 'cap'], [null], '.chart-track'],
+			sankey: [['funnel', 'geo'], [null], '.chart-link'] };
 		for (const [chart, [examples, forms, mark]] of Object.entries(charts)) {
 			await page.selectOption('#chart', chart);
 			for (const show of ['one', 'sheet']) {
@@ -207,6 +208,10 @@ const MUTATIONS = [
 	{ label: 'the meter is not registered', file: 'charts-meter.js', edits: [['core.meter = factory(core._);', 'factory(core._);']] },
 	{ label: 'meter marks at the value', file: 'charts-meter.js', edits: [['marks[i].value / m.target * 100', 'marks[i].value / m.value * 100']] },
 	{ label: 'the meter track solid', file: 'charts-meter.js', edits: [['TRACK = 0.2', 'TRACK = 1']] },
+	{ label: 'the sankey is not registered', file: 'charts-sankey.js', edits: [['core.sankey = factory(core._);', 'factory(core._);']] },
+	{ label: 'sankey ribbons stack from the top', file: 'charts-sankey.js', edits: [['b.i += h;', '']] },
+	{ label: 'sankey nodes spill past the edge', file: 'charts-sankey.js', edits: [["'transform', shift ? 'translate(-' + _.n(shift, 2) + ')' : null", "'transform', null"]] },
+	{ label: 'sankey ribbons without titles', file: 'charts-sankey.js', edits: [["title(a.n.label + ' → ' + b.n.label + ': ' + l.display)", "''"]] },
 	{ label: 'the last x label past the edge', file: 'charts-series.js', edits: [["out += xl(i, end ? '100%' : 0, end ? 'end' : 'start');", "out += xl(i, end ? '100%' : 0, 'start');"]] },
 ];
 

@@ -119,3 +119,15 @@ The meter is the core's `bar` and `labelLine`; it adds nothing to the core.
 | `charts-meter.js` | 928 B | **1024 B** |
 
 A page with a meter alone pays 3489 B gzipped.
+
+## Addendum (M8, the sankey, 2026-10-09)
+
+The spec's provisional 4096 B for the sankey is replaced by the measurement: short tags and a key (ADR
+019) keep the layout to columns, stacking and Bézier bands. The core is untouched.
+
+| File | Measured | Frozen |
+|---|---|---|
+| `charts-sankey.js` | 1755 B | **1920 B** |
+
+A page with a sankey alone pays 4316 B gzipped. The whole catalog — the core and nine modules — is
+16 684 B.
