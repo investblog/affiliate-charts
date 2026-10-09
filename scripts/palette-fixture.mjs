@@ -6,7 +6,9 @@ import { writeFileSync } from 'node:fs';
 import Charts from '../charts.js';
 
 const BRANDS = ['#0066ff', '#2563eb', '#e11d48', '#16a34a', '#f59e0b', '#7c3aed', '#0891b2', '#facc15',
-	'#9a3412', '#22d3ee', '#111111', '#ffffff', '#000080', '#ffff00', '#808080', '#ff00ff'];
+	'#9a3412', '#22d3ee', '#111111', '#ffffff', '#000080', '#ffff00', '#808080', '#ff00ff',
+	// the tile's good and bad change (ADR 016)
+	'#0ca30c', '#d03b3b'];
 const out = {};
 for (const b of BRANDS) for (const t of ['light', 'dark']) {
 	out[`${b} ${t}`] = Charts.palette(b, t);

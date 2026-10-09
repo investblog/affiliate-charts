@@ -318,5 +318,45 @@
   "solid": "#00b249",
   "light": "#0a7536",
   "opacity": 0.6
+ },
+ "#0ca30c light": {
+  "solid": "#008700",
+  "light": "#65b664",
+  "opacity": 0.6
+ },
+ "#0ca30c light turned": {
+  "solid": "#b142c1",
+  "light": "#cf8cd8",
+  "opacity": 0.6
+ },
+ "#0ca30c dark": {
+  "solid": "#0ca30c",
+  "light": "#126c11",
+  "opacity": 0.6
+ },
+ "#0ca30c dark turned": {
+  "solid": "#c556d5",
+  "light": "#813e8a",
+  "opacity": 0.6
+ },
+ "#d03b3b light": {
+  "solid": "#d03b3b",
+  "light": "#e28888",
+  "opacity": 0.6
+ },
+ "#d03b3b light turned": {
+  "solid": "#007f8b",
+  "light": "#65b1b8",
+  "opacity": 0.6
+ },
+ "#d03b3b dark": {
+  "solid": "#e5504d",
+  "light": "#943a38",
+  "opacity": 0.6
+ },
+ "#d03b3b dark turned": {
+  "solid": "#138f9b",
+  "light": "#166067",
+  "opacity": 0.6
  }
 }

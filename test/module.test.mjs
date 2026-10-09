@@ -45,22 +45,24 @@ test('loading a module twice is harmless', () => {
 
 test('the internals are reachable by modules but absent from the public types', () => {
 	assert.equal(typeof Core._, 'object');
-	for (const f of ['charts.d.ts', 'charts-funnel.d.ts', 'charts-waterfall.d.ts', 'charts-series.d.ts']) assert.doesNotMatch(read(f), /\b_\s*:/u, f);
+	for (const f of ['charts.d.ts', 'charts-funnel.d.ts', 'charts-waterfall.d.ts', 'charts-series.d.ts', 'charts-spark.d.ts']) assert.doesNotMatch(read(f), /\b_\s*:/u, f);
 });
 
 test('the modules share one core, in any order, through CommonJS and on a page', () => {
 	assert.equal(require('../charts-waterfall.js'), require('../charts.js'));
 	assert.equal(require('../charts-series.js'), require('../charts.js'));
+	assert.equal(require('../charts-spark.js'), require('../charts.js'));
 	assert.equal(typeof require('../charts-waterfall.js').funnel, 'function', 'the funnel loaded above is on the same core');
-	for (const files of [['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js'],
-		['charts.js', 'charts-series.js', 'charts-waterfall.js', 'charts-funnel.js']]) {
+	for (const files of [['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js'],
+		['charts.js', 'charts-spark.js', 'charts-series.js', 'charts-waterfall.js', 'charts-funnel.js']]) {
 		const self = page(...files);
 		assert.deepEqual(Object.keys(self), ['Charts']);
 		assert.match(self.Charts.funnel([{ label: 'a', value: 1, display: '1' }]), /^<svg /u);
 		assert.match(self.Charts.waterfall([{ label: 'a', value: 1, display: '1', kind: 'total' }]), /^<svg /u);
 		assert.match(self.Charts.series([{ x: 'a', values: [1], display: ['1'] }], { names: ['c'] }), /^<svg /u);
+		assert.match(self.Charts.spark([1, 2]) + self.Charts.tile({ label: 'a', value: '1' }), /^<svg .*<svg /su);
 	}
-	for (const f of ['charts-waterfall.js', 'charts-series.js']) assert.doesNotMatch(read(f), /window\.\w+\s*=/u, f);
+	for (const f of ['charts-waterfall.js', 'charts-series.js', 'charts-spark.js']) assert.doesNotMatch(read(f), /window\.\w+\s*=/u, f);
 });
 
 test('the waterfall loaded before the core throws a clear error and defines nothing', () => {
@@ -71,4 +73,10 @@ test('the waterfall loaded before the core throws a clear error and defines noth
 test('the series loaded before the core throws a clear error and defines nothing', () => {
 	assert.throws(() => page('charts-series.js'), /load charts\.js before charts-series\.js/u);
 	assert.equal(page('charts.js', 'charts-series.js').Charts.waterfall, undefined, 'a page that loads the series alone gets no waterfall');
+});
+
+test('the spark module loaded before the core throws a clear error and defines nothing', () => {
+	assert.throws(() => page('charts-spark.js'), /load charts\.js before charts-spark\.js/u);
+	const self = page('charts.js', 'charts-spark.js');
+	assert.deepEqual([typeof self.Charts.spark, typeof self.Charts.tile, self.Charts.series], ['function', 'function', undefined]);
 });

@@ -23,10 +23,12 @@ try {
 		`import Charts from '${pkg.name}/charts-funnel.js';`,
 		`import Flow from '${pkg.name}/charts-waterfall.js';`,
 		`import Days from '${pkg.name}/charts-series.js';`,
+		`import Kpi from '${pkg.name}/charts-spark.js';`,
+		`globalThis.kpi = Kpi.tile({ label: 'EPC', value: '0.42', trend: [1, 2] }, { title: 't' }) + Kpi.spark([1, 2], { title: 't' });`,
 		`globalThis.out = Charts.funnel([{ label: 'a', value: 1, display: '1' }], { title: 't' });`,
 		`globalThis.flow = Flow.waterfall([{ label: 'a', value: 1, display: '1', kind: 'total' }], { title: 't' });`,
 		`globalThis.days = Days.series([{ x: 'a', values: [1], display: ['1'] }], { names: ['c'], title: 't' });`,
-		'globalThis.same = Charts === Flow && Flow === Days;',
+		'globalThis.same = Charts === Flow && Flow === Days && Days === Kpi;',
 	].join('\n'));
 	const res = await build({
 		root: dir, logLevel: 'error', configFile: false,
@@ -38,6 +40,7 @@ try {
 	if (!/^<svg [^>]*role="img"/u.test(ctx.out || '')) throw new Error(`unexpected output: ${ctx.out}`);
 	if (!/^<svg [^>]*role="img"/u.test(ctx.flow || '')) throw new Error(`unexpected waterfall output: ${ctx.flow}`);
 	if (!/^<svg [^>]*role="img"/u.test(ctx.days || '')) throw new Error(`unexpected series output: ${ctx.days}`);
+	if (!/^<svg [^>]*role="img".*<svg [^>]*role="img"/su.test(ctx.kpi || '')) throw new Error(`unexpected tile or spark output: ${ctx.kpi}`);
 	if (ctx.same !== true) throw new Error('the modules exported different objects');
 	console.log('bundle gate: ok — the default imports through Vite draw, on one core');
 	code = 0;

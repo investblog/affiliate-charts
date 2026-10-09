@@ -4,6 +4,7 @@ import Charts from '../charts-funnel.js';
 import Core from '../charts.js';
 import Charts2 from '../charts-waterfall.js';
 import Charts3 from '../charts-series.js';
+import Charts4 from '../charts-spark.js';
 
 const steps: Charts.FunnelStep[] = [
 	{ label: 'Clicks', value: 1840, display: '1 840' },
@@ -70,7 +71,23 @@ Charts3.series(days, { names: ['a'], format: (v: number) => v });
 // @ts-expect-error — the series module does not type the waterfall
 Charts3.waterfall(flow);
 
+// the spark module types the sparkline and the tile
+const kpi: Charts4.Tile = { label: 'EPC', value: '0.42', delta: { display: '+8%', direction: 'up', good: true }, trend: [1, null, 3] };
+const tl: string = Charts4.tile(kpi, { theme: 'dark' }) + Charts4.spark([1, 2, null, 4]) +
+	Charts4.tile({ label: 'CR', value: '3.1%', delta: { display: '0%', direction: 'flat' } });
+void tl;
+// @ts-expect-error — up needs good
+Charts4.tile({ label: 'CPA', value: '12', delta: { display: '−3', direction: 'down' } });
+// @ts-expect-error — direction is a closed set
+Charts4.tile({ label: 'CPA', value: '12', delta: { display: '−3', direction: 'sideways', good: true } });
+// @ts-expect-error — the value is the caller's string, not a number
+Charts4.tile({ label: 'CPA', value: 12 });
+// @ts-expect-error — a sparkline takes numbers
+Charts4.spark(['1']);
+// @ts-expect-error — the spark module does not type the series
+Charts4.series([], { names: ['a'] });
+
 // the page global, merged from every declaration file
 const viaGlobal: string = globalThis.Charts.funnel(steps) + globalThis.Charts.waterfall(flow) +
-	globalThis.Charts.series(days, { names: ['GGR'] });
+	globalThis.Charts.series(days, { names: ['GGR'] }) + globalThis.Charts.spark([1, 2]) + globalThis.Charts.tile(kpi);
 void viaGlobal;

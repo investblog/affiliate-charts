@@ -284,11 +284,32 @@ Layout and colour: ADR 015. In short:
 
 **`Charts.spark(values, options)` and `Charts.tile(tile, options)`** — `charts-spark.js`
 
-A sparkline (2px line, last point marked) and a KPI tile as one SVG: `label`, `value` (caller string,
-proportional figures), optional `delta` (caller string + `direction: 'up' | 'down'` + `good: boolean`,
-coloured by direction × goodness and always shipped with an arrow glyph, never colour alone),
-optional trend sparkline in the de-emphasis hue with the current period in the accent. EPC, CR,
-ARPU, FTD.
+```ts
+spark(values: (number | null)[], options?: Common): string
+interface Tile {
+  label: string;                   // ≤ 20 characters shown; the rest cut with … (the whole in a <title>)
+  value: string;                   // the caller's figure, never cut; ≤ 10 characters fit 160 px
+  delta?: { display: string; direction: 'up' | 'down'; good: boolean }
+        | { display: string; direction: 'flat' };
+  trend?: (number | null)[];
+}
+tile(tile: Tile, options?: Common): string
+```
+
+Layout and colour: ADR 016. In short:
+
+- **Sparkline:** 32 px high, a 2 px brand line through band centres, `null` breaks it, the last point
+  with data marked with an 8 px dot. Scale: the values' own minimum and maximum (a line, not a length).
+  No text.
+- **Tile:** label (13 px, 0.7), value (26 px, 600), delta (13 px: `▲`/`▼` + `display`), trend (a
+  sparkline in the page colour at 0.35, the last dot in the brand). Promised from 160 px wide.
+- **A change's colour** is direction × good: `good: true` green, `false` red, fitted to 4.5:1 per theme;
+  `flat` has no arrow and the page colour. Never colour alone — the arrow and the signed string.
+- Class hooks: `-line`, `-dot`, `-label`, `-value`, `-delta`, `-delta-good`, `-delta-bad`, `-trend`.
+- Throws: `values` or `trend` not an array, empty, or holding anything but finite numbers and `null`;
+  a tile that is not an object; a `label` or `value` that is not a string; a `delta` without a string
+  `display`, with an unknown `direction`, or `up`/`down` without a boolean `good`; values whose range
+  overflows a number.
 
 ### Group C — traffic breakdowns
 

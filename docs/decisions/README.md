@@ -25,3 +25,4 @@ context → decision → consequences.
 - [013 — the package is `affiliate-charts`](013-package-name.md)
 - [014 — the waterfall: rows, a ghost of the running total, three colour roles](014-waterfall.md)
 - [015 — the series: lines in a stretched box, ticks on the gridlines, at most two series](015-series.md)
+- [016 — the sparkline and the KPI tile](016-spark-and-tile.md)
