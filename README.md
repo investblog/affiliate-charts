@@ -8,6 +8,9 @@ gzipped for the core and the funnel.
 [![npm](https://img.shields.io/npm/v/affiliate-charts.svg)](https://www.npmjs.com/package/affiliate-charts)
 [![license](https://img.shields.io/npm/l/affiliate-charts.svg)](LICENSE)
 
+Made by [301](https://301.st) for the [OktagonBet partner programme](https://oktagonbet.partners), its
+first user and sponsor.
+
 **[Live demo →](https://investblog.github.io/affiliate-charts/)** — every option wired to a control,
 four example funnels, light and dark, and a width slider to watch the bars follow their container.
 
@@ -105,4 +108,4 @@ Bad input throws a `TypeError` starting with `affiliate-charts:` — the library
 Playwright already on the machine). `index.html` is the playground. The specification and decisions
 are in [`docs/`](docs/README.md).
 
-MIT © 301ST
+MIT © [301ST](https://301.st) · sponsored by [OktagonBet Partners](https://oktagonbet.partners)

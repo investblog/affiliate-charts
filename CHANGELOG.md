@@ -3,7 +3,9 @@
 ## 0.1.1 — 2026-10-08
 
 - Documentation only; the library's bytes are unchanged. The README gains npm and licence badges, the
-  live demo link, a preview picture drawn by the library, and jsDelivr install lines.
+  live demo link, a preview picture drawn by the library, and jsDelivr install lines; it names the
+  publisher (301) and the sponsor (OktagonBet Partners). The npm homepage is the live demo.
+- The demo's shape form no longer throws on money funnels or on part steps.
 - The first release through the OIDC Trusted Publisher (`release.yml`).
 
 ## 0.1.0 — 2026-10-08
