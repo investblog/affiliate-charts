@@ -31,7 +31,9 @@
 			// keys carry a prefix, so an id such as "__proto__" stays an ordinary key
 			if (byId['#' + _.str(n.id, at + ' id')]) fail(at + ': its id repeats an earlier node\'s');
 			if (typeof n.column !== 'number' || n.column % 1 || n.column < 0 || n.column > 3) fail(at + ': `column` must be 0, 1, 2 or 3');
-			if (typeof n.short !== 'string' || !n.short.length || n.short.length > 3) fail(at + ': `short` must be one to three characters');
+			// characters, not UTF-16 units: an emoji is one (M9 review)
+			var chars = typeof n.short === 'string' && n.short.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '_').length;
+			if (!chars || chars > 3) fail(at + ': `short` must be one to three characters');
 			_.str(n.label, at + ' label');
 			_.str(n.display, at + ' display');
 			byId['#' + n.id] = a = { n: n, c: n.column, inn: 0, out: 0 };
@@ -71,6 +73,8 @@
 			}
 			if (sum) k = Math.min(k, (H - (count - 1) * GAP) / sum);
 		}
+		// a flow near Number.MIN_VALUE makes the scale infinite, columns that overflow make it zero (M9 review)
+		if (!(k > 0 && isFinite(k))) fail('flows too small or too large to draw');
 		for (c = 0; c < C; c++) {
 			for (y = 0, i = 0; i < cols[c].length; i++) {
 				a = cols[c][i];
@@ -117,7 +121,8 @@
 		for (y = TOP + H + SPACE, i = 0; i < nodes.length; i++) {
 			n = nodes[i];
 			var name = n.short + ' ' + n.label, ll = _.labelLine(p, name, _.esc(n.display), name.length + n.display.length + 2, 0, y);
-			key += ll.svg;
+			// every key line titled, the nodes without flow included: a cut name keeps its whole in the title (M9 review)
+			key += _.el('g', [], title(n.label + ': ' + n.display) + ll.svg);
 			y += ll.h;
 		}
 		var out = _.el('svg', ['y', TOP, 'width', '100%', 'height', H, 'viewBox', '0 0 100 ' + H, 'preserveAspectRatio', 'none'], ribbons) + marks +

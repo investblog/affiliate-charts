@@ -52,6 +52,9 @@ test('accessible root, determinism, ids from what is drawn, no inline style', ()
 	const id = (svg) => svg.match(/id="([^"]+)-t"/u)[1];
 	assert.notEqual(id(a), id(Charts.meter({ ...M(30, 120), display: '31' }, { title: 'Next tier', desc: 'Revenue share' })));
 	assert.notEqual(id(a), id(Charts.meter(M(31, 120), { title: 'Next tier', desc: 'Revenue share' })));
+	// M9 review: 1 of 4 and 2 of 8 with the same strings draw alike; the raw values keep them apart
+	const same = (v, t) => ({ label: 'a', value: v, display: 'x', target: t, targetDisplay: 'y' });
+	assert.notEqual(id(Charts.meter(same(1, 4), { title: 't' })), id(Charts.meter(same(2, 8), { title: 't' })));
 	assert.doesNotMatch(a, /style|<script|data-|data:/u);
 	assert.match(Charts.meter(M(30, 120, { marks: [{ value: 60, label: 'm' }] }), { classPrefix: 'k' }), /class="k-label".*class="k-value".*class="k-track".*class="k-bar".*class="k-mark".*class="k-target"/su);
 });

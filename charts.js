@@ -12,9 +12,11 @@
 	'use strict';
 
 	// rounds to d decimals; never emits -0, nor an exponent below 1e21 (layout numbers are far below),
-	// so float noise cannot reach the bytes (ADR 003)
+	// so float noise cannot reach the bytes (ADR 003). A value so large that v × 10^d overflows has no
+	// decimals to round: it is printed as it is, never as "Infinity"
 	function n(v, d) {
 		var p = Math.pow(10, d || 0), r = Math.round(v * p) / p;
+		if (!isFinite(r)) r = v;
 		return String(r === 0 ? 0 : r);
 	}
 	// all five, the apostrophe included: labels come from user data and may land in attributes (ADR 004)
@@ -49,18 +51,22 @@
 		if (o.desc != null) str(o.desc, 'desc');
 		var p = o.classPrefix;
 		if (p != null && (typeof p !== 'string' || !/^[A-Za-z_][\w-]*$/.test(p))) fail('classPrefix must be a token like "chart"');
-		if (o.brand != null && !/^#[0-9a-fA-F]{6}$/.test(o.brand)) fail('brand must be a #rrggbb hex');
+		if (o.brand != null && (typeof o.brand !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(o.brand))) fail('brand must be a #rrggbb hex');
 		if (o.theme != null && o.theme !== 'light' && o.theme !== 'dark') fail('theme must be "light" or "dark"');
 		return o;
 	}
-	// FNV-1a, 32-bit: ids derived from the input, so two charts on one page never collide (ADR 003)
+	// FNV-1a twice, from two offsets: 64 bits of id derived from the input, so two different charts on one
+	// page collide only by a 1-in-2^64 chance (ADR 003). One 32-bit pass had real collisions (M9 review).
 	function hash(s) {
-		var h = 0x811c9dc5;
+		return fnv(s, 0x811c9dc5) + fnv(s, 0x5bd1e995);
+	}
+	function fnv(s, h) {
 		for (var i = 0; i < s.length; i++) {
 			h ^= s.charCodeAt(i);
 			h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
 		}
-		return h.toString(36);
+		// fixed width (2^32 is 7 base-36 digits), so the two halves cannot run into each other
+		return ('000000' + h.toString(36)).slice(-7);
 	}
 	// ── colour: sRGB <-> OKLCH, only the parts a chart uses: parse a hex, move lightness until a contrast
 	// holds, write a hex. OKLCH, not the family's CIE LCh: lightening a blue in CIE LCh turns it violet

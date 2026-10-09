@@ -131,3 +131,21 @@ The spec's provisional 4096 B for the sankey is replaced by the measurement: sho
 
 A page with a sankey alone pays 4316 B gzipped. The whole catalog — the core and nine modules — is
 16 684 B.
+
+## Addendum (M9, the review's fixes, 2026-10-09)
+
+The fixes of ADR 020 — the 64-bit id hash, `n`'s overflow guard and a string `brand` in the core; flag
+checks in the funnel; raw values in ids; the clipped 24 px columns and tick guards in the series; titled
+key lines; the sankey's character count and scale guard — measured after:
+
+| File | Before | After | Frozen |
+|---|---|---|---|
+| `charts.js` | 2561 B | 2604 B | 2688 B (unchanged) |
+| `charts-funnel.js` | 1870 B | 1935 B | 2176 B (unchanged) |
+| `charts-series.js` | 2831 B | 2945 B | **3072 B** (was 2944) |
+| `charts-rank.js` | 915 B | 927 B | 1024 B (unchanged) |
+| `charts-share.js` | 1291 B | 1297 B | 1408 B (unchanged) |
+| `charts-meter.js` | 928 B | 933 B | 1024 B (unchanged) |
+| `charts-sankey.js` | 1755 B | 1845 B | 1920 B (unchanged) |
+
+The core and the funnel are 4539 B; the whole catalog 17 019 B.

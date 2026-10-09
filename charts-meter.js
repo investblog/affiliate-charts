@@ -43,6 +43,7 @@
 		}
 		var out = _.el('g', [], _.el('title', [], _.esc(label + ': ' + display + ' / ' + td)) + ll.svg + bar) +
 			_.el('text', ['class', p + '-target', 'x', '100%', 'y', y + BAR + 15, 'text-anchor', 'end', 'opacity', 0.7], _.esc(td));
-		return _.svg(o, y + BAR + 20, out, JSON.stringify([o.title, o.desc, out]));
+		// ids from what is drawn and the raw values: 1 of 4 and 2 of 8 draw alike (ADR 003)
+		return _.svg(o, y + BAR + 20, out, JSON.stringify([o.title, o.desc, m.value, m.target, out]));
 	};
 });

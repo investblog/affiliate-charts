@@ -13,9 +13,10 @@ const lines = (svg, cls = 'line') => [...svg.matchAll(new RegExp(`<polyline clas
 	.map((m) => ({ pts: m[1].split(' ').map((p) => p.split(',').map(Number)), stroke: m[2], op: +m[3] }));
 const grid = (svg) => [...svg.matchAll(/<line class="chart-grid" x1="0" x2="100%" y1="([-\d.]+)" y2="\1" stroke="currentColor" stroke-opacity="([\d.]+)"/gu)]
 	.map((m) => [+m[1], +m[2]]);
-// columns: [x%, y, width%, height, fill]
-const cols = (svg) => [...svg.matchAll(/<svg class="chart-bar" x="([\d.]+)%" y="([\d.]+)" width="([\d.]+)%" height="([\d.]+)" fill="([^"]+)">(.*?)<\/svg>/gu)]
-	.map((m) => ({ x: +m[1], y: +m[2], w: +m[3], h: +m[4], fill: m[5], inner: m[6] }));
+// columns: 24px wide, dx px from the centre of their point's viewport; viewports: [x%, width%]
+const cols = (svg) => [...svg.matchAll(/<g transform="translate\(([-\d.]+)\)"><svg class="chart-bar" x="50%" y="([\d.]+)" width="24" height="([\d.]+)" fill="([^"]+)">(.*?)<\/svg><\/g>/gu)]
+	.map((m) => ({ dx: +m[1], y: +m[2], h: +m[3], fill: m[4], inner: m[5] }));
+const views = (svg) => [...svg.matchAll(/<svg x="([\d.]+)%" width="([\d.]+)%"><g /gu)].map((m) => [+m[1], +m[2]]);
 const pinned = JSON.parse(readFileSync(new URL('fixtures/palette.json', import.meta.url), 'utf8'));
 // the plot's top for one key line: key 20, gap 8, room for the top tick 16 (ADR 015)
 const TOP = 44, PLOT = 160;
@@ -132,11 +133,13 @@ test('previous: a currentColor line at 0.35 under the series, in the key and in 
 	assert.match(svg, /<title>b: October 30, September —<\/title>/u);
 });
 
-test('columns: grouped in their band, from zero, rounded at the data end', () => {
+test('columns: grouped in a viewport of 70% of their band, 24px each and 2px apart, from zero, rounded at the data end', () => {
 	const svg = Charts.series([P('a', 100, 50), P('b', -50, 0)], { names: ['GGR', 'Commission'], form: 'columns' });
-	// ticks −50…100 by 50 → y = (100 − v) / 150 × 160; band 50%, group 70% of it, a 6% gap
+	// ticks −50…100 by 50 → y = (100 − v) / 150 × 160; band 50%, its viewport 70% of it, centred
 	const c = cols(svg), y = (v) => +((100 - v) / 150 * 160).toFixed(2);
-	assert.deepEqual(c.map((b) => [b.x, b.w]), [[7.5, 16], [26.5, 16], [57.5, 16]]);
+	assert.deepEqual(views(svg), [[7.5, 35], [57.5, 35]]);
+	// series 1 left of the centre, series 2 right, 2px between; a lone series 1 keeps its side
+	assert.deepEqual(c.map((b) => b.dx), [-25, 1, -25]);
 	assert.deepEqual(c.map((b) => [+(b.y - TOP - 20).toFixed(2), b.h]), [[0, y(0)], [y(50), +((100 / 150 - 50 / 150) * 160).toFixed(2)], [y(0), +(50 / 150 * 160).toFixed(2)]]);
 	// positive: the square sits at the foot; negative: at the top
 	assert.match(c[0].inner, /rx="4"\/><rect y="[\d.]+" width="100%" height="4"\/>/u);
@@ -148,11 +151,14 @@ test('stacked columns: parts on each other, 2px apart, only the top one rounded'
 	const svg = Charts.series([P('a', 30, 20)], { names: ['First', 'Repeat'], form: 'columns', stacked: true });
 	// the stack's total 50 sets the scale: ticks 0…60 by 20; y = (60 − v) / 60 × 160
 	const c = cols(svg), y = (v) => (60 - v) / 60 * 160;
-	assert.deepEqual(c.map((b) => [b.x, b.w]), [[15, 70], [15, 70]]);
+	assert.deepEqual(views(svg), [[15, 70]]);
+	assert.deepEqual(c.map((b) => b.dx), [-12, -12], 'one 24px column, centred');
 	assert.deepEqual([c[0].y - TOP - 20, c[0].h], [y(30), y(0) - y(30)]);
 	assert.deepEqual([+(c[1].y - TOP - 20).toFixed(2), +c[1].h.toFixed(2)], [+y(50).toFixed(2), +(y(30) - 2 - y(50)).toFixed(2)]);
 	assert.doesNotMatch(c[0].inner, /rx=/u);
 	assert.match(c[1].inner, /rx="4"/u);
+	// M9 review: one point of one series is a 24px column, not 70% of the chart
+	assert.deepEqual([views(Charts.series([P('a', 5)], { names: ['c'], form: 'columns' })), cols(Charts.series([P('a', 5)], { names: ['c'], form: 'columns' }))[0].dx], [[[15, 70]], -12]);
 	// the lower part is the top one when the upper has no value
 	assert.match(cols(Charts.series([P('a', 30, null)], { names: ['First', 'Repeat'], form: 'columns', stacked: true }))[0].inner, /rx="4"/u);
 });
@@ -193,6 +199,9 @@ test('accessible root, determinism, ids from what is drawn, no inline style', ()
 	assert.notEqual(id(a), id(Charts.series(pts, { ...o, theme: 'dark' })));
 	assert.notEqual(id(a), id(Charts.series(pts, { ...o, format: (v) => v + '!' })));
 	assert.notEqual(id(Charts.series(pts, { ...o, title: 'May' })), id(Charts.series(pts, { ...o, title: 'June' })));
+	// M9 review: one point of 1 and one of 10 draw alike when the ticks read alike; the raw values keep them apart
+	const pt = (v) => [{ x: 'a', values: [v], display: ['x'] }];
+	assert.notEqual(id(Charts.series(pt(1), { names: ['c'], title: 't', format: () => 'm' })), id(Charts.series(pt(10), { names: ['c'], title: 't', format: () => 'm' })));
 	assert.equal(id(a), id(Charts.series(pts, { ...o, legend: ['unused', 'option'] })), 'an unused option changes nothing');
 	assert.doesNotMatch(a, /style|<script|data-|data:/u);
 	assert.match(Charts.series(pts, { ...o, classPrefix: 'k' }), /class="k-key".*class="k-grid".*class="k-line".*class="k-dot".*class="k-tick".*class="k-x".*class="k-hit"/su);
@@ -208,6 +217,7 @@ const throwsCases = [
 	['a name that is not a string', ok, { names: [5] }, /name 0 must be a string/u],
 	['an unknown form', ok, { names: ['c'], form: 'pie' }, /unknown form/u],
 	['stacked lines', ok, { names: ['c'], stacked: true }, /`stacked` needs `columns`/u],
+	['stacked as the string "false"', [P('a', 1, 2)], { names: ['a', 'b'], form: 'columns', stacked: 'false' }, /`stacked` is a boolean/u],
 	['an area of two series', [P('a', 1, 2)], { names: ['a', 'b'], form: 'area' }, /`area` draws a single series/u],
 	['previous with two series', [P('a', 1, 2)], { names: ['a', 'b'], previous: { name: 'p', values: [1], display: ['1'] } }, /`previous` compares a single series/u],
 	['previous that is an array', ok, { names: ['c'], previous: [1] }, /previous name must be a string/u],
@@ -225,6 +235,9 @@ const throwsCases = [
 	['a format that returns a number', ok, { names: ['c'], format: (v) => v }, /format\(v\) must be a string/u],
 	['values too far apart', [P('a', -1.7e308), P('b', 1.7e308)], { names: ['c'] }, /too far apart/u],
 	['a stack that overflows', [P('a', 1e308, 1e308)], { names: ['a', 'b'], form: 'columns', stacked: true }, /too far apart/u],
+	// M9 review: finite values whose ticks underflow or overflow must throw, never draw NaN
+	['a value of Number.MIN_VALUE', [P('a', Number.MIN_VALUE)], { names: ['c'] }, /values too small or too large to draw/u],
+	['a value of Number.MAX_VALUE', [P('a', Number.MAX_VALUE)], { names: ['c'] }, /values too small or too large to draw/u],
 ];
 for (const [name, points, options, msg] of throwsCases) {
 	test(`throws: ${name}`, () => {

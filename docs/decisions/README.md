@@ -29,3 +29,4 @@ context → decision → consequences.
 - [017 — part to whole: a fixed palette of six, a 100% bar or a donut](017-share.md)
 - [018 — the heatmap and the cohort: a five-step ramp of the brand, rows as labelled lines](018-heatmap.md)
 - [019 — the sankey: short tags beside the nodes, the names in a key, one colour](019-sankey.md)
+- [020 — the pre-release review: what it found and what changed](020-review-fixes.md)

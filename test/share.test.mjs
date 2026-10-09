@@ -21,7 +21,9 @@ test('the bar: parts at their share of the width, a 2px surface line between, th
 	const gaps = [...svg.matchAll(/<line x1="([\d.]+)%" x2="\1%" y2="24" stroke="(#\w+)" stroke-width="2"\/>/gu)].map((m) => [+m[1], m[2]]);
 	assert.deepEqual(gaps, [[50, '#fcfcfb'], [80, '#fcfcfb']], 'between parts only: no frame at 0% or 100%');
 	assert.equal(height(svg), 24 + 12 + 3 * 20);
-	assert.match(svg, /<g class="chart-key"><rect x="0" y="39" width="10" height="10" rx="2" fill="#2a78d6"\/><text class="chart-label" x="16" y="49">Android<\/text><text class="chart-value" x="100%" y="49" text-anchor="end">50<\/text>/u);
+	assert.match(svg, /<g class="chart-key"><g><title>Android: 50<\/title><rect x="0" y="39" width="10" height="10" rx="2" fill="#2a78d6"\/><text class="chart-label" x="16" y="49">Android<\/text><text class="chart-value" x="100%" y="49" text-anchor="end">50<\/text><\/g>/u);
+	// M9 review: a zero part has no mark, but its key line keeps a title
+	assert.match(Charts.share([P('a', 1), P('nothing', 0)]), /<g><title>nothing: 0<\/title><rect /u);
 });
 
 test('colour: the fixed slots by index, per theme; the brand is not used', () => {

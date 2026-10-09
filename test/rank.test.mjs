@@ -66,6 +66,9 @@ test('accessible root, determinism, ids from what is drawn, no inline style', ()
 	assert.notEqual(id(a), id(Charts.rank(rows, { title: 'Sources', desc: 'By GGR', highlight: 1 })));
 	assert.notEqual(id(a), id(Charts.rank([R('sub-1', 400), R('sub-2', 201)], { title: 'Sources', desc: 'By GGR' })));
 	assert.equal(id(Charts.rank(rows, { title: 't' })), id(Charts.rank(rows, { title: 't', format: String })), 'an unused option changes nothing');
+	// M9 review: one row of 1 and one of 2 with the same display draw alike; the raw values keep them apart
+	const one = (v) => [{ label: 'a', value: v, display: 'x' }];
+	assert.notEqual(id(Charts.rank(one(1), { title: 't' })), id(Charts.rank(one(2), { title: 't' })));
 	assert.doesNotMatch(a, /style|<script|data-|data:/u);
 	assert.match(Charts.rank(rows, { classPrefix: 'k', highlight: 0 }), /class="k-label".*class="k-value".*class="k-bar".*class="k-bar-muted"/su);
 });

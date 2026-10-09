@@ -59,6 +59,10 @@ const throwsCases = [
 	['a circular brand', counts, (() => { const b = {}; b.b = b; return { brand: b }; })()],
 	['an unknown theme', counts, { theme: 'sepia' }],
 	['an unknown form', counts, { form: 'pyramid' }],
+	// M9 review: a flag spelled as a string is truthy, an unknown group was ignored
+	['part as the string "false"', [S('a', 1), S('b', 1, { part: 'false' })], {}],
+	['gap as the string "false"', [S('a', 1), S('b', 1, { gap: 'false' })], {}],
+	['an unknown group', [S('a', 1), S('b', 1, { group: 'refunds' })], {}],
 ];
 for (const [name, steps, opts] of throwsCases) {
 	// the library's own error, not an engine error that a broken check would also raise

@@ -101,7 +101,7 @@ interface Common {
                            // (or the page overrides colours through the class hooks)
   classPrefix?: string;    // class hooks are `<prefix>-<role>`; default 'chart'. Ids (for aria) are derived
                            // from the input, so two different charts on a page do not collide
-  format?: (v: number) => string;  // text for numbers the library chooses (axis ticks); default n(v)
+  format?: (v: number) => string;  // text for numbers the library chooses (axis ticks); default n(v, 6): six decimals at most, no -0
 }
 ```
 
@@ -185,7 +185,8 @@ interface FunnelOptions extends Common {
 - Throws: `steps` that is not an array, no steps or no main step; values whose range overflows a
   number; `earned` without a `legend` array of two strings; a `rate` that is not a
   string, `null` or absent; a `part` step first or inside losses; a main step after
-  a losses step; `gap` on a `part` step; `shape` with `earned`, `part`, losses or a negative value.
+  a losses step; `gap` on a `part` step; `shape` with `earned`, `part`, losses or a negative value;
+  a `part` or `gap` that is present and not a boolean; a `group` other than `'losses'` (ADR 020).
 - Allowed: `earned` on a losses step (a cancelled commission); a funnel of one step.
 - Units: counts and money are separate calls (ADR 007). A step with no money base (registrations)
   simply is not in the money call.
@@ -263,7 +264,8 @@ Layout and colour: ADR 015. In short:
 - `area`: a single series only, a 0.1 wash between the line and zero.
 - `columns`: **grouped** by default — GGR and commission are nested amounts, not parts of a whole, and a
   stack would count the same money twice. `stacked: true` is for genuinely additive parts (first and
-  repeat deposits) and is the caller's assertion.
+  repeat deposits) and is the caller's assertion. A column is 24 px wide, two of a point 2 px apart, in
+  a viewport of 70% of the point's band that clips them: as thick as the narrower of the two (ADR 020).
 - `previous`: the comparison period as a `currentColor` line at 0.35 under a **single** series, never
   dashed, never a second axis.
 - **Colours:** series 1 the brand's solid mark, series 2 its opposite hue. At most two series: no
@@ -281,7 +283,8 @@ Layout and colour: ADR 015. In short:
   `values` or `display` length differs from `names`; a value `null` whose `display` is not, or the
   reverse; `area` or `previous` with two series; `stacked` outside `columns`; a negative value in a
   stack; `previous` arrays of a length other than the points'; `format` that is not a function or
-  returns something other than a string; values whose range overflows a number.
+  returns something other than a string; values whose range overflows a number; `stacked` present and
+  not a boolean; values so small or so large that the nice ticks underflow or overflow (ADR 020).
 
 **`Charts.spark(values, options)` and `Charts.tile(tile, options)`** — `charts-spark.js`
 
@@ -352,7 +355,8 @@ Layout and colour: ADR 017. In short:
 - `bar`: a 24 px bar, parts at their share of the width, 2 px apart (a surface line between); `donut`: a
   160 px ring from 12 o'clock, clockwise, nothing in the hole. Then the key: one line a part — swatch,
   name, `display` (ADR 010's label line).
-- A zero part keeps its key line and draws nothing. Each part has a `<title>`: `label: display`.
+- A zero part keeps its key line and draws nothing. Each part, and each key line, has a `<title>`:
+  `label: display` — so a zero part and a cut label keep theirs (ADR 020).
 - Class hooks: `-part`, `-part-1` … `-part-6`, `-key`, plus the core's `-label`, `-value`.
 - Throws: `parts` not an array, empty, or longer than six; a part whose `label` or `display` is not a
   string, whose `value` is not finite or is negative; every value zero; a sum that overflows; an unknown
@@ -413,13 +417,14 @@ Layout and colour: ADR 019. In short:
   filling a 240 px plot with 16 px between nodes; ribbons stack in the caller's order.
 - **Colour:** one — nodes the brand's solid mark, ribbons the solid at 0.3. (The first sketch, links
   coloured by their source node, needs a palette no brand gives — ADR 015, 017.)
-- Each ribbon has a `<title>` `from → to: display`, each node `label: display`. Class hooks: `-node`,
+- Each ribbon has a `<title>` `from → to: display`, each node and each key line `label: display`. Class hooks: `-node`,
   `-link`, `-tag`, `-key`, plus the core's `-label`, `-value`.
 - Throws: `nodes` or `links` not an array; fewer than two columns or more than four, a gap in the column
   numbers, more than eight nodes a column; a node id repeated, a `column` that is not an integer, a
-  `short` that is not a string of one to three characters, a `label` or `display` that is not a string;
-  a link to an unknown id, between columns that are not neighbours, or backwards; a link `value` that is
-  not finite or is negative; every link zero.
+  `short` that is not a string of one to three characters (characters, not UTF-16 units: an emoji is
+  one), a `label` or `display` that is not a string; a link to an unknown id, between columns that are
+  not neighbours, or backwards; a link `value` that is not finite or is negative; every link zero; flows
+  so small or so large that the scale underflows or overflows (ADR 020).
 
 **`Charts.meter(meter, options)`** — `charts-meter.js`. Progress to the next revenue-share tier or a
 CPA cap: a filled bar on a lighter track of the same ramp, tier marks as hairlines, caller strings

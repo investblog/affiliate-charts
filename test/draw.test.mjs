@@ -262,3 +262,24 @@ test('the chart draws with the palette of its brand and theme', () => {
 	const svg = Charts.funnel([S('a', 1)], { brand: '#e11d48', theme: 'dark' });
 	assert.equal(bars(svg)[0].fill, Charts.palette('#e11d48', 'dark').solid);
 });
+
+// M9 review findings on the core
+test('ids: 64 bits from two FNV passes; a pair that collided in one 32-bit pass is apart', () => {
+	const id = (svg) => svg.match(/id="([^"]+)-t"/u)[1];
+	const a = id(Charts.funnel([S('a', 1)], { title: 't1vu3-wj0smz' })), b = id(Charts.funnel([S('a', 1)], { title: 't2jq1--vo6x6f' }));
+	assert.notEqual(a, b);
+	assert.match(a, /^chart-[0-9a-z]{14}$/u, 'two fixed-width halves, so they cannot run into each other');
+});
+
+test('n() never prints Infinity: a value whose rounding overflows is printed as it is', () => {
+	assert.equal(Charts._.n(1e308, 6), '1e+308');
+	assert.equal(Charts._.n(-1e308, 6), '-1e+308');
+	assert.equal(Charts._.n(0.25, 6), '0.25');
+	assert.equal(Charts._.n(-0.0000001, 6), '0');
+});
+
+test('brand must be a string: an array, or an object with a hex toString, throws prefixed', () => {
+	for (const brand of [['#2563eb'], { toString: () => '#2563eb' }]) {
+		assert.throws(() => Charts.funnel([S('a', 1)], { brand }), /^TypeError: affiliate-charts: brand must be a #rrggbb hex$/u);
+	}
+});

@@ -5,7 +5,7 @@ and deposits to revenue in money — the base of each event beside what the part
 cancellations and rejected records on the same scale. The **waterfall**: GGR to the partner's
 commission, step by step. The **daily series**: lines, areas and columns over days. **KPI tiles** and
 sparklines. **Rankings** by source, **shares** as a 100% bar or a donut, **heatmaps** and **cohorts**, **meters** to the next tier, **flows** (sankey). Zero dependencies,
-4.4 KB gzipped for the core and the funnel.
+4.5 KB gzipped for the core and the funnel.
 
 [![npm](https://img.shields.io/npm/v/affiliate-charts.svg)](https://www.npmjs.com/package/affiliate-charts)
 [![license](https://img.shields.io/npm/l/affiliate-charts.svg)](LICENSE)
@@ -16,13 +16,13 @@ first user and sponsor.
 **[Live demo →](https://investblog.github.io/affiliate-charts/)** — every option wired to a control,
 four example funnels, two waterfalls, three daily series, four KPI tiles, two rankings, two shares, two heatmaps, two meters and two flows, light and dark, and a width slider to watch the bars follow their container.
 
-[![A money funnel on a light card and a counts funnel on a dark one, drawn by affiliate-charts](https://investblog.github.io/affiliate-charts/docs/preview.svg)](https://investblog.github.io/affiliate-charts/)
+[![Six charts drawn by affiliate-charts: a money funnel, a waterfall from GGR to commission, daily GGR and commission columns, a sankey from sources to first deposits, a cohort heatmap and a donut of clicks by device](https://investblog.github.io/affiliate-charts/docs/preview.svg)](https://investblog.github.io/affiliate-charts/)
 
 - **Renders under a strict CSP.** No `style=""`, no `<style>`, no `<script>`, no `data:` — it works
   under `default-src 'self'`, where most chart libraries break.
 - **Zero dependencies.** One call returns markup, in Node at build time or in the browser.
-- **Small.** A core plus one file per chart: the core and the funnel are 4.4 KB gzipped together, the
-  waterfall adds 1.1 KB, the daily series 2.8 KB, sparklines and KPI tiles 1.6 KB, rankings 0.9 KB, part to whole 1.3 KB, heatmaps and cohorts 1.8 KB, meters 0.9 KB, flows 1.8 KB.
+- **Small.** A core plus one file per chart: the core and the funnel are 4.5 KB gzipped together, the
+  waterfall adds 1.1 KB, the daily series 2.9 KB, sparklines and KPI tiles 1.6 KB, rankings 0.9 KB, part to whole 1.3 KB, heatmaps and cohorts 1.8 KB, meters 0.9 KB, flows 1.8 KB.
 - **Reads on a phone.** Bars follow the width of their container; text keeps its pixel size.
 - **Honest by construction.** Steps are never summed, money and counts never share an axis, a missing
   rate is a dash and never `0%`, and the library never formats or computes a number it shows: every

@@ -51,6 +51,7 @@
 			y += BAR + PAD;
 			out += _.el('g', [], _.el('title', [], _.esc(r.label + ': ' + r.display)) + row);
 		}
-		return _.svg(o, y - PAD, out, JSON.stringify([o.title, o.desc, out]));
+		// ids from what is drawn and the raw values: one row of 1 and one of 2 draw alike (ADR 003)
+		return _.svg(o, y - PAD, out, JSON.stringify([o.title, o.desc, rows.map(function (q) { return q.value; }), out]));
 	};
 });

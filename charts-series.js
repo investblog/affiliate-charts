@@ -40,6 +40,7 @@
 		if (!Array.isArray(names) || !names.length || names.length > 2) fail('`names` must be one or two strings');
 		for (var j = 0; j < names.length; j++) _.str(names[j], 'name ' + j);
 		if (form != null && form !== 'line' && form !== 'area' && form !== 'columns') fail('unknown form');
+		if (o.stacked != null && typeof o.stacked !== 'boolean') fail('`stacked` is a boolean');
 		if (o.stacked && form !== 'columns') fail('`stacked` needs `columns`');
 		if (form === 'area' && names.length > 1) fail('`area` draws a single series');
 		if (o.format != null && typeof o.format !== 'function') fail('`format` must be a function');
@@ -77,7 +78,7 @@
 
 	// Anatomy in px (ADR 015): key lines, GAP, TOP (room for the top tick text), the plot, the x labels.
 	// NARROW and GLYPH are ADR 010's estimate.
-	var GAP = 8, TOP = 16, PLOT = 160, XL = 20, NARROW = 343, GLYPH = 8;
+	var GAP = 8, TOP = 16, PLOT = 160, XL = 20, NARROW = 343, GLYPH = 8, COL = 24;
 
 	function draw(points, o, tk) {
 		var p = o.classPrefix || 'chart', names = o.names, S = names.length, N = points.length, prev = o.previous;
@@ -140,8 +141,11 @@
 
 		if (prev) box += line(prev.values, 'currentColor', 0.35, p + '-prev');
 		if (form === 'columns') {
+			// each point's columns in a viewport of 70% of its band, centred, COL px wide and 2px apart: the
+			// viewport clips them, so a column is as thick as the narrower of its share of the band and COL (M9
+			// review: a sparse series drew one column across 70% of the chart)
 			for (i = 0; i < N; i++) {
-				var x = i * w + 0.15 * w, base = 0, g = S > 1 && !o.stacked ? 0.06 * w : 0, bw = o.stacked ? 0.7 * w : (0.7 * w - g) / S;
+				var base = 0, cols = '';
 				for (j = 0; j < S; j++) {
 					var v = points[i].values[j];
 					if (!v) continue;
@@ -150,12 +154,13 @@
 						var topmost = true;
 						for (var k = j + 1; k < S; k++) if (points[i].values[k]) topmost = false;
 						var b = at(base + v);
-						out += col(x, bw, base ? Math.max(b, at(base) - 2) : at(base), b, colour[j], topmost);
+						cols += col(-COL / 2, base ? Math.max(b, at(base) - 2) : at(base), b, colour[j], topmost);
 						base += v;
 					} else {
-						out += col(x + j * (bw + g), bw, z, at(v), colour[j], true);
+						cols += col(S > 1 ? (j ? 1 : -COL - 1) : -COL / 2, z, at(v), colour[j], true);
 					}
 				}
+				if (cols) out += _.el('svg', ['x', _.pct(i * w + 0.15 * w), 'width', _.pct(0.7 * w)], cols);
 			}
 		} else {
 			for (j = 0; j < S; j++) {
@@ -210,20 +215,25 @@
 		function xl(i, x, anchor) {
 			return _.el('text', ['class', p + '-x', 'x', x, 'y', ly, 'text-anchor', anchor === 'start' ? null : anchor], _.esc(points[i].x));
 		}
-		// a column from the baseline end a to the data end b (y in the plot, px); rounded at b
-		function col(x, cw, a, b, fill, round) {
+		// a column dx px from its viewport's centre, from the baseline end a to the data end b (y in the plot,
+		// px); rounded at b
+		function col(dx, a, b, fill, round) {
 			var h = Math.abs(a - b), r = round ? Math.min(4, h / 2) : 0;
-			return _.el('svg', ['class', p + '-bar', 'x', _.pct(x), 'y', _.n(top + Math.min(a, b), 2), 'width', _.pct(cw), 'height', _.n(h, 2), 'fill', fill],
-				_.el('rect', ['width', '100%', 'height', _.n(h, 2), 'rx', r ? _.n(r, 2) : null]) +
-				(r ? _.el('rect', ['y', b < a ? _.n(h - r, 2) : 0, 'width', '100%', 'height', _.n(r, 2)]) : ''));
+			return _.el('g', ['transform', 'translate(' + dx + ')'], _.el('svg', ['class', p + '-bar', 'x', '50%', 'y', _.n(top + Math.min(a, b), 2),
+				'width', COL, 'height', _.n(h, 2), 'fill', fill],
+			_.el('rect', ['width', '100%', 'height', _.n(h, 2), 'rx', r ? _.n(r, 2) : null]) +
+				(r ? _.el('rect', ['y', b < a ? _.n(h - r, 2) : 0, 'width', '100%', 'height', _.n(r, 2)]) : '')));
 		}
 	}
 
 	return function series(points, options) {
 		var opts = _.common(options);
 		var ends = check(points, opts), tk = ticks(ends[0], ends[1]);
+		// a range near Number.MIN_VALUE underflows the step, one near the top overflows the widened ends (M9 review)
+		if (!tk.length) fail('values too small or too large to draw');
+		for (var i = 0; i < tk.length; i++) if (!isFinite(tk[i]) || i && !(tk[i] > tk[i - 1])) fail('values too small or too large to draw');
 		var d = draw(points, opts, tk);
-		// ids from what is drawn: the body carries every point, name, tick and colour (ADR 003)
-		return _.svg(opts, d.h, d.body, JSON.stringify([opts.title, opts.desc, d.body]));
+		// ids from what is drawn and the raw values: 1 and 10 can draw alike when their ticks read alike (ADR 003)
+		return _.svg(opts, d.h, d.body, JSON.stringify([opts.title, opts.desc, points.map(function (q) { return q.values; }), opts.previous && opts.previous.values, d.body]));
 	};
 });

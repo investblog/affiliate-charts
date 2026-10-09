@@ -74,7 +74,7 @@ test('the key: one line a node in the caller\'s order, tag and label, the displa
 	assert.equal(height(svg), 8 + 240 + 12 + 5 * 20);
 	const k = [...svg.matchAll(/<text class="chart-label" x="0" y="(\d+)">(.*?)<\/text><text class="chart-value" x="100%" y="\1" text-anchor="end">(.*?)<\/text>/gu)].map((m) => [+m[1], m[2], m[3]]);
 	assert.deepEqual(k, [[273, 'A node A', 'dA'], [293, 'B node B', 'dB'], [313, 'REG node R', 'dR'], [333, 'NO node X', 'dX'], [353, 'FTD node F', 'dF']]);
-	assert.match(svg, /<g class="chart-key"><text class="chart-label"/u);
+	assert.match(svg, /<g class="chart-key"><g><title>node A: dA<\/title><text class="chart-label"/u);
 	assert.equal(height(Charts.sankey([N('a', 0, 'a', 'x'.repeat(30)), N('b', 1, 'b')], [L('a', 'b', 1)])), 8 + 240 + 12 + 40);
 	// a 30-character name with a 12-character display may not fit at 343px: the display takes its own line
 	const long = [{ id: 'a', column: 0, short: 'a', label: 'x'.repeat(30), display: '1'.repeat(12) }, N('b', 1, 'b')];
@@ -94,6 +94,8 @@ test('a zero node keeps its key line and draws nothing; a zero link draws no rib
 	assert.equal(rects(svg).length, 5);
 	assert.equal(paths(svg).length, 5);
 	assert.match(svg, />Z node Z<\/text>/u);
+	// M9 review: a node without flow has no mark, but its key line keeps a title
+	assert.match(svg, /<g><title>node Z: dZ<\/title><text class="chart-label"/u);
 	assert.deepEqual(rects(svg).map((x) => x.h), rects(Charts.sankey(nodes, links)).map((x) => x.h), 'a zero node takes no gap');
 });
 
@@ -109,6 +111,8 @@ test('accessible root, determinism, ids from what is drawn and the flows, no inl
 	assert.doesNotMatch(a, /style|<script|data-|data:/u);
 	assert.match(Charts.sankey(nodes, links, { classPrefix: 'k' }), /class="k-link".*class="k-node".*class="k-tag".*class="k-key".*class="k-label"/su);
 	assert.match(Charts.sankey([N('__proto__', 0, 'p'), N('constructor', 1, 'c')], [L('__proto__', 'constructor', 1)]), /^<svg /u, 'ids are ordinary keys');
+	// M9 review: three characters, not UTF-16 units — two emoji are two
+	assert.match(Charts.sankey([N('a', 0, '😀😀'), N('b', 1, 'b')], [L('a', 'b', 1)]), /paint-order="stroke">😀😀<\/text>/u);
 });
 
 const two = [N('a', 0, 'a'), N('b', 1, 'b')];
@@ -124,6 +128,8 @@ const throwsCases = [
 	['a repeated id', [N('a', 0, 'a'), N('a', 1, 'b')], [], /node 1: its id repeats/u],
 	['a short tag of four characters', [N('a', 0, 'ABCD'), N('b', 1, 'b')], [], /node 0: `short` must be one to three characters/u],
 	['an empty short tag', [N('a', 0, ''), N('b', 1, 'b')], [], /`short` must be one to three characters/u],
+	['four emoji as a short tag', [N('a', 0, '😀😀😀😀'), N('b', 1, 'b')], [], /`short` must be one to three characters/u],
+	['a short tag that is a number', [N('a', 0, 123), N('b', 1, 'b')], [], /`short` must be one to three characters/u],
 	['a label missing', [{ id: 'a', column: 0, short: 'a', display: 'x' }, N('b', 1, 'b')], [], /node 0 label must be a string/u],
 	['a null node', [null, N('b', 1, 'b')], [], /node 0 id must be a string/u],
 	['a link to an unknown node', two, [L('a', 'zz', 1)], /link 0: unknown node/u],
@@ -137,6 +143,10 @@ const throwsCases = [
 	['every link zero', two, [L('a', 'b', 0)], /every link is zero/u],
 	['no links', two, [], /every link is zero/u],
 	['flows that overflow', two, [L('a', 'b', 1.7e308), L('a', 'b', 1.7e308)], /overflow/u],
+	// M9 review: finite flows whose scale underflows or overflows must throw, never draw NaN
+	['a flow of Number.MIN_VALUE', two, [L('a', 'b', Number.MIN_VALUE)], /flows too small or too large to draw/u],
+	['two columns that overflow their sum', [N('a', 0, 'a'), N('c', 0, 'c'), N('b', 1, 'b'), N('d', 1, 'd')],
+		[L('a', 'b', 1e308), L('c', 'd', 1e308)], /flows too small or too large to draw/u],
 ];
 for (const [name, n, l, msg] of throwsCases) {
 	test(`throws: ${name}`, () => {

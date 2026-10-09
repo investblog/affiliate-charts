@@ -63,7 +63,9 @@
 		for (i = 0; i < parts.length; i++) {
 			s = parts[i];
 			var ll = _.labelLine(p, s.label, _.esc(s.display), s.label.length + s.display.length + 4, 16, y);
-			key += _.el('rect', ['x', 0, 'y', y + 3, 'width', 10, 'height', 10, 'rx', 2, 'fill', SLOTS[t][i]]) + ll.svg;
+			// every key line titled, the zero parts included: a cut label keeps its whole in the title (M9 review)
+			key += _.el('g', [], _.el('title', [], _.esc(s.label + ': ' + s.display)) +
+				_.el('rect', ['x', 0, 'y', y + 3, 'width', 10, 'height', 10, 'rx', 2, 'fill', SLOTS[t][i]]) + ll.svg);
 			y += ll.h;
 		}
 		var body = (donut ? _.el('svg', ['width', '100%', 'height', DONUT, 'viewBox', '0 0 100 100'], marks) : marks) +

@@ -24,6 +24,11 @@
 - Flows (`charts-sankey.js`): two to four columns of up to eight nodes, ribbons to the next column, short
   tags beside the nodes and the names in a key, one colour (ADR 019).
 - The demo picks any of the ten charts.
+- Fixes from the pre-release review (ADR 020): ids are 64 bits (one 32-bit hash had collisions), and take
+  the raw values in every chart — **every chart's ids change, the funnel's included**; columns are at
+  most 24 px; flags (`part`, `gap`, `stacked`) must be booleans and `group` only `'losses'`; `brand` must
+  be a string; values or flows too small or too large to scale throw instead of drawing `NaN`; tick text
+  never prints `Infinity`; every key line has a `<title>`; a sankey `short` tag is counted in characters.
 
 ## 0.1.1 — 2026-10-08
 

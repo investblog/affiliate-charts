@@ -34,6 +34,9 @@
 				if (shape) fail('`shape` cannot draw `earned`');
 			}
 			if (s.rate !== undefined && s.rate !== null) _.str(s.rate, at + ' rate');
+			// a flag is a boolean and the group a known name: "false" as a string is truthy (M9 review)
+			if (s.part != null && typeof s.part !== 'boolean' || s.gap != null && typeof s.gap !== 'boolean') fail(at + ': `part` and `gap` are booleans');
+			if (s.group != null && s.group !== 'losses') fail(at + ': the only `group` is "losses"');
 			if (s.group === 'losses') {
 				losses = true;
 				if (shape) fail('`shape` cannot draw losses');

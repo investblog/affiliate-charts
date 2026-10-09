@@ -146,7 +146,7 @@
 			});
 		});
 		check('every row is a group whose first child is its <title>', function () {
-			var rows = document.querySelectorAll('#charts svg > g:not([class])');
+			var rows = document.querySelectorAll('#charts > .card > svg > g:not([class])');
 			return rows.length === 25 && [].every.call(rows, function (g) { return g.firstElementChild.tagName === 'title'; });
 		});
 		check('bars follow the page width: 50% of the value is 50% of the chart', function () {
@@ -269,16 +269,39 @@
 			window.scrollTo(0, 0);
 			return ok;
 		});
-		check('series: columns stay inside their band and stand on the zero line', function () {
+		// a column is 24px wide inside its point's viewport, which clips it (M9 review): what shows is the overlap
+		// of the two, the viewport read from its resolved x and width (nested-svg boxes differ by engine)
+		var shown = function (b) {
+			var v = b.parentNode.parentNode, r = box(v.ownerSVGElement), x = box(b), left = r.left + v.x.baseVal.value, right = left + v.width.baseVal.value;
+			return { left: Math.max(x.left, left), right: Math.min(x.right, right), top: x.top, bottom: x.bottom };
+		};
+		check('series: columns stay inside their band, at most 24px, and stand on the zero line', function () {
 			var s = svg('cols'), r = box(s), w = r.width / 30, bars = s.querySelectorAll('.chart-bar');
 			var zero = [].filter.call(s.querySelectorAll('.chart-grid'), function (l) { return l.getAttribute('stroke-opacity') === '0.35'; })[0];
 			var z = box(zero).top, ok = bars.length === 58;
 			[].forEach.call(bars, function (b, k) {
 				// two columns a point; the fourth point has no data
-				var i = Math.floor(k / 2) + (k >= 6 ? 1 : 0), x = box(b);
-				if (x.left < r.left + i * w - 0.5 || x.right > r.left + (i + 1) * w + 0.5) ok = false;
+				var i = Math.floor(k / 2) + (k >= 6 ? 1 : 0), x = shown(b);
+				if (x.left < r.left + i * w - 0.5 || x.right > r.left + (i + 1) * w + 0.5 || x.right - x.left > 24.5 || x.right <= x.left) ok = false;
 				if (!(near(x.bottom, z, 1.5) || near(x.top, z, 1.5))) ok = false;
+				// the two columns of a point do not overlap
+				if (k % 2 && !(shown(bars[k - 1]).right <= x.left + 0.5)) ok = false;
 			});
+			// the viewport really clips: just past its edge, between two viewports, under the column's full 24px,
+			// no column answers
+			// (the hover bands, transparent and on top by design, are set aside for the probe)
+			// the second point's first column: the first point's would spill past the chart, which clips on its own
+			var first = bars[2], v = first.parentNode.parentNode, edge = box(v.ownerSVGElement).left + v.x.baseVal.value, full = box(first);
+			if (full.left < edge - 2) {
+				s.scrollIntoView({ block: 'center' });
+				var hits = s.querySelectorAll('.chart-hit');
+				[].forEach.call(hits, function (h) { h.setAttribute('pointer-events', 'none'); });
+				full = box(first);
+				var e = document.elementFromPoint(box(v.ownerSVGElement).left + v.x.baseVal.value - 2, (full.top + full.bottom) / 2);
+				[].forEach.call(hits, function (h) { h.removeAttribute('pointer-events'); });
+				window.scrollTo(0, 0);
+				if (e && e.closest('.chart-bar')) ok = false;
+			}
 			return ok;
 		});
 		check('series: stacked parts sit on each other, 2px apart', function () {
