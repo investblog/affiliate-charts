@@ -45,7 +45,7 @@ test('loading a module twice is harmless', () => {
 
 test('the internals are reachable by modules but absent from the public types', () => {
 	assert.equal(typeof Core._, 'object');
-	for (const f of ['charts.d.ts', 'charts-funnel.d.ts', 'charts-waterfall.d.ts', 'charts-series.d.ts', 'charts-spark.d.ts', 'charts-rank.d.ts']) assert.doesNotMatch(read(f), /\b_\s*:/u, f);
+	for (const f of ['charts.d.ts', 'charts-funnel.d.ts', 'charts-waterfall.d.ts', 'charts-series.d.ts', 'charts-spark.d.ts', 'charts-rank.d.ts', 'charts-share.d.ts']) assert.doesNotMatch(read(f), /\b_\s*:/u, f);
 });
 
 test('the modules share one core, in any order, through CommonJS and on a page', () => {
@@ -53,9 +53,10 @@ test('the modules share one core, in any order, through CommonJS and on a page',
 	assert.equal(require('../charts-series.js'), require('../charts.js'));
 	assert.equal(require('../charts-spark.js'), require('../charts.js'));
 	assert.equal(require('../charts-rank.js'), require('../charts.js'));
+	assert.equal(require('../charts-share.js'), require('../charts.js'));
 	assert.equal(typeof require('../charts-waterfall.js').funnel, 'function', 'the funnel loaded above is on the same core');
-	for (const files of [['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js'],
-		['charts.js', 'charts-rank.js', 'charts-spark.js', 'charts-series.js', 'charts-waterfall.js', 'charts-funnel.js']]) {
+	for (const files of [['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js'],
+		['charts.js', 'charts-share.js', 'charts-rank.js', 'charts-spark.js', 'charts-series.js', 'charts-waterfall.js', 'charts-funnel.js']]) {
 		const self = page(...files);
 		assert.deepEqual(Object.keys(self), ['Charts']);
 		assert.match(self.Charts.funnel([{ label: 'a', value: 1, display: '1' }]), /^<svg /u);
@@ -63,8 +64,9 @@ test('the modules share one core, in any order, through CommonJS and on a page',
 		assert.match(self.Charts.series([{ x: 'a', values: [1], display: ['1'] }], { names: ['c'] }), /^<svg /u);
 		assert.match(self.Charts.spark([1, 2]) + self.Charts.tile({ label: 'a', value: '1' }), /^<svg .*<svg /su);
 		assert.match(self.Charts.rank([{ label: 'a', value: 1, display: '1' }]), /^<svg /u);
+		assert.match(self.Charts.share([{ label: 'a', value: 1, display: '1' }]), /^<svg /u);
 	}
-	for (const f of ['charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js']) assert.doesNotMatch(read(f), /window\.\w+\s*=/u, f);
+	for (const f of ['charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js']) assert.doesNotMatch(read(f), /window\.\w+\s*=/u, f);
 });
 
 test('the waterfall loaded before the core throws a clear error and defines nothing', () => {
@@ -86,4 +88,9 @@ test('the spark module loaded before the core throws a clear error and defines n
 test('the rank module loaded before the core throws a clear error and defines nothing', () => {
 	assert.throws(() => page('charts-rank.js'), /load charts\.js before charts-rank\.js/u);
 	assert.deepEqual([typeof page('charts.js', 'charts-rank.js').Charts.rank, page('charts.js', 'charts-rank.js').Charts.tile], ['function', undefined]);
+});
+
+test('the share module loaded before the core throws a clear error and defines nothing', () => {
+	assert.throws(() => page('charts-share.js'), /load charts\.js before charts-share\.js/u);
+	assert.deepEqual([typeof page('charts.js', 'charts-share.js').Charts.share, page('charts.js', 'charts-share.js').Charts.rank], ['function', undefined]);
 });

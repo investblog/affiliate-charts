@@ -23,6 +23,9 @@
     "charts-rank.js",
     "charts-rank.min.js",
     "charts-rank.d.ts",
+    "charts-share.js",
+    "charts-share.min.js",
+    "charts-share.d.ts",
     "CHANGELOG.md"
   ],
   "scripts": {
@@ -44,7 +47,8 @@
       "charts-waterfall.js": 1152,
       "charts-series.js": 2944,
       "charts-spark.js": 1792,
-      "charts-rank.js": 1024
+      "charts-rank.js": 1024,
+      "charts-share.js": 1536
     }
   },
   "keywords": [

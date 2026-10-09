@@ -335,9 +335,27 @@ interface RankOptions extends Common { highlight?: number }   // a row index
   `value` is not finite; `highlight` that is not an integer index of a row; values whose range overflows.
 
 **`Charts.share(parts, options)`** — `charts-share.js`. Part-to-whole (device, geo). Default form is a
-**100% stacked bar**; `form: 'donut'` is allowed with a **hard cap of 6 segments** (throws above it —
-fold into "Other"); segment labels follow O3. Never for comparing close values. Categorical hues in
-fixed order; colour follows the entity. Throws: a negative part.
+**100% stacked bar**; `form: 'donut'` is allowed. Never for comparing close values. Categorical hues in
+fixed order; colour follows the entity.
+
+```ts
+interface SharePart { label: string; value: number; display: string }
+interface ShareOptions extends Common { form?: 'bar' | 'donut' }
+```
+
+Layout and colour: ADR 017. In short:
+
+- **Colour:** the dataviz reference palette, six slots per theme, by the part's index. `brand` is not
+  used — no brand-derived set of six passes the checks.
+- **At most six parts**, in either form (throws above — fold into "Other").
+- `bar`: a 24 px bar, parts at their share of the width, 2 px apart (a surface line between); `donut`: a
+  160 px ring from 12 o'clock, clockwise, nothing in the hole. Then the key: one line a part — swatch,
+  name, `display` (ADR 010's label line).
+- A zero part keeps its key line and draws nothing. Each part has a `<title>`: `label: display`.
+- Class hooks: `-part`, `-part-1` … `-part-6`, `-key`, plus the core's `-label`, `-value`.
+- Throws: `parts` not an array, empty, or longer than six; a part whose `label` or `display` is not a
+  string, whose `value` is not finite or is negative; every value zero; a sum that overflows; an unknown
+  `form`.
 
 **`Charts.heatmap(cells, options)`** — `charts-heatmap.js`. A grid: hour × weekday of clicks.
 Sequential, one hue light → dark, with a scale legend; a `null` cell is drawn as an empty outlined

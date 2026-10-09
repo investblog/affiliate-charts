@@ -10,7 +10,7 @@ import { spawnSync } from 'node:child_process';
 const TEST = [process.execPath, ['--test', 'test/*.test.mjs']];
 const TYPES = [process.execPath, ['node_modules/typescript/bin/tsc', '-p', 'tsconfig.json']];
 const BUNDLE = [process.execPath, ['scripts/bundle-gate.mjs']];
-const T = TEST, C = 'charts.js', F = 'charts-funnel.js', W = 'charts-waterfall.js', S = 'charts-series.js', K = 'charts-spark.js', RK = 'charts-rank.js';
+const T = TEST, C = 'charts.js', F = 'charts-funnel.js', W = 'charts-waterfall.js', S = 'charts-series.js', K = 'charts-spark.js', RK = 'charts-rank.js', SH = 'charts-share.js';
 
 const MUTATIONS = [
 	[C, T, 'esc leaves the apostrophe', ".replace(/'/g, '&#39;')", ''],
@@ -277,6 +277,39 @@ const MUTATIONS = [
 	['charts-rank.d.ts', TYPES, 'highlight any', 'highlight?: number;', 'highlight?: number | string;'],
 	['charts-rank.d.ts', TYPES, 'display optional', '\t\tdisplay: string;', '\t\tdisplay?: string;'],
 	['charts-rank.d.ts', TYPES, 'rank global not merged', 'interface ChartsGlobal extends RankApi {}', ''],
+	// part to whole (M7 Group C, ADR 017)
+	[SH, T, 'share without core does not throw', "if (!core || !core._) throw new Error('affiliate-charts: load charts.js before charts-share.js');", 'if (!core) return;'],
+	[SH, BUNDLE, 'bundled: share exports the function', 'if (cjs) module.exports = core;', 'if (cjs) module.exports = core.share;'],
+	[SH, T, 'share parts may be any object', "if (!Array.isArray(parts)) fail('`parts` must be an array');", ''],
+	[SH, T, 'seven parts accepted', 'parts.length > 6', 'parts.length > 7'],
+	[SH, T, 'no parts accepted', '!parts.length || parts.length > 6', 'parts.length > 6'],
+	[SH, T, 'share unknown form accepted', "if (o.form != null && o.form !== 'bar' && o.form !== 'donut') fail('unknown form');", ''],
+	[SH, T, 'a null part reaches the engine', 's = parts[i] || {};', 's = parts[i];'],
+	[SH, T, 'share displays unchecked', "_.str(s.display, 'part ' + i + ' display');", ''],
+	[SH, T, 'a negative part accepted', "if (_.num(s.value, 'part ' + i + ' value') < 0) fail('part ' + i + ' is negative: a share cannot be');", "_.num(s.value, 'part ' + i + ' value');"],
+	[SH, T, 'share overflow drawn as nothing', "if (!isFinite(sum)) fail('the parts overflow a number');", ''],
+	[SH, T, 'all zero accepted', "if (!sum) fail('every part is zero: nothing to share');", ''],
+	[SH, T, 'the slots in the brand', 'fill = SLOTS[t][i]', 'fill = _.palette(o.brand, o.theme).solid'],
+	[SH, T, 'the slots ignore the theme', "t = o.theme === 'dark' ? 'dark' : 'light'", "t = 'light'"],
+	[SH, T, 'slots by the drawn parts, not the index', "'#d95926', '#199e70', '#c98500', '#d55181', '#008300']", "'#199e70', '#d95926', '#c98500', '#d55181', '#008300']"],
+	[SH, T, 'a zero part drawn', 'if (f) {', 'if (true) {'],
+	[SH, T, 'bar gaps at the edges too', "if (!donut && at) gaps +=", 'if (!donut) gaps +='],
+	[SH, T, 'no bar gaps', 'marks += gaps;', ''],
+	[SH, T, 'a gap line 1px', "'stroke', surface, 'stroke-width', 2]);", "'stroke', surface, 'stroke-width', 1]);"],
+	[SH, T, 'the donut without gaps', '_.n(Math.max(f * CIRC - GAP, 0.5), 3)', '_.n(Math.max(f * CIRC, 0.5), 3)'],
+	[SH, T, 'a sliver vanishes', 'Math.max(f * CIRC - GAP, 0.5)', 'Math.max(f * CIRC - GAP, 0)'],
+	[SH, T, 'the donut parts all from 12 o\'clock', "'stroke-dashoffset', n > 1 ? _.n(-at * CIRC, 3) : null", "'stroke-dashoffset', n > 1 ? 0 : null"],
+	[SH, T, 'the donut counter-clockwise', "_.n(-at * CIRC, 3)", '_.n(at * CIRC, 3)'],
+	[SH, T, 'the donut from 3 o\'clock', "'transform', 'rotate(-90 50 50)'", "'transform', null"],
+	[SH, T, 'one part dashed', "'stroke-dasharray', n > 1 ?", "'stroke-dasharray', n > 0 ?"],
+	[SH, T, 'a part without its title', "title = _.el('title', [], _.esc(s.label + ': ' + s.display));", "title = '';"],
+	[SH, T, 'the key with no space', 'BAR = 24, DONUT = 160, SPACE = 12', 'BAR = 24, DONUT = 160, SPACE = 0'],
+	[SH, T, 'the key swatch in the wrong slot', "'rx', 2, 'fill', SLOTS[t][i]]", "'rx', 2, 'fill', SLOTS[t][0]]"],
+	[SH, T, 'the key ignores the value length', 's.label.length + s.display.length + 4', 's.label.length + 4'],
+	[SH, T, 'share ids ignore the values', 'parts.map(function (q) { return q.value; }), body]', 'body]'],
+	['charts-share.d.ts', TYPES, 'share form open', "form?: 'bar' | 'donut';", 'form?: string;'],
+	['charts-share.d.ts', TYPES, 'share display optional', '\t\tdisplay: string;', '\t\tdisplay?: string;'],
+	['charts-share.d.ts', TYPES, 'share global not merged', 'interface ChartsGlobal extends ShareApi {}', ''],
 	[F, BUNDLE, 'bundled: module exports the function', 'if (cjs) module.exports = core;', 'if (cjs) module.exports = core.funnel;'],
 	[F, BUNDLE, 'bundled: the core taken from a global', "var core = cjs ? require('./charts.js') : root.Charts;", 'var core = root.Charts;'],
 	['charts-funnel.d.ts', TYPES, 'form is open', "form?: 'bars' | 'steps' | 'shape';", 'form?: string;'],

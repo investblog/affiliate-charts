@@ -6,6 +6,7 @@ import Charts2 from '../charts-waterfall.js';
 import Charts3 from '../charts-series.js';
 import Charts4 from '../charts-spark.js';
 import Charts5 from '../charts-rank.js';
+import Charts6 from '../charts-share.js';
 
 const steps: Charts.FunnelStep[] = [
 	{ label: 'Clicks', value: 1840, display: '1 840' },
@@ -99,7 +100,18 @@ Charts5.rank([{ label: 'a', value: 1 }]);
 // @ts-expect-error — the rank module does not type the tile
 Charts5.tile(kpi);
 
+// the share module types part to whole
+const devices: Charts6.SharePart[] = [{ label: 'Android', value: 5, display: '5' }, { label: 'iOS', value: 3, display: '3' }];
+const sh: string = Charts6.share(devices, { form: 'donut', theme: 'dark' });
+void sh;
+// @ts-expect-error — form is a closed set
+Charts6.share(devices, { form: 'pie' });
+// @ts-expect-error — a part needs its display
+Charts6.share([{ label: 'a', value: 1 }]);
+// @ts-expect-error — the share module does not type the ranking
+Charts6.rank(sources);
+
 // the page global, merged from every declaration file
 const viaGlobal: string = globalThis.Charts.funnel(steps) + globalThis.Charts.waterfall(flow) +
-	globalThis.Charts.series(days, { names: ['GGR'] }) + globalThis.Charts.spark([1, 2]) + globalThis.Charts.tile(kpi) + globalThis.Charts.rank(sources);
+	globalThis.Charts.series(days, { names: ['GGR'] }) + globalThis.Charts.spark([1, 2]) + globalThis.Charts.tile(kpi) + globalThis.Charts.rank(sources) + globalThis.Charts.share(devices);
 void viaGlobal;

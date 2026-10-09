@@ -26,3 +26,4 @@ context → decision → consequences.
 - [014 — the waterfall: rows, a ghost of the running total, three colour roles](014-waterfall.md)
 - [015 — the series: lines in a stretched box, ticks on the gridlines, at most two series](015-series.md)
 - [016 — the sparkline and the KPI tile](016-spark-and-tile.md)
+- [017 — part to whole: a fixed palette of six, a 100% bar or a donut](017-share.md)
