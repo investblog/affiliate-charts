@@ -1,7 +1,7 @@
 {
   "name": "affiliate-charts",
   "version": "0.1.1",
-  "description": "Affiliate dashboard charts as SVG strings: conversion funnels in counts and money (deposits, GGR, partner commission), with more forms to come. No inline styles, so it renders under a strict CSP. A core plus one file per chart; zero dependencies; Node and the browser.",
+  "description": "Affiliate dashboard charts as SVG strings: conversion funnels in counts and money (deposits, GGR, partner commission) and the money waterfall from GGR to commission, with more forms to come. No inline styles, so it renders under a strict CSP. A core plus one file per chart; zero dependencies; Node and the browser.",
   "main": "charts.js",
   "types": "charts.d.ts",
   "files": [
@@ -11,6 +11,9 @@
     "charts-funnel.js",
     "charts-funnel.min.js",
     "charts-funnel.d.ts",
+    "charts-waterfall.js",
+    "charts-waterfall.min.js",
+    "charts-waterfall.d.ts",
     "CHANGELOG.md"
   ],
   "scripts": {
@@ -27,14 +30,17 @@
   },
   "config": {
     "sizeBudget": {
-      "charts.js": 2432,
-      "charts-funnel.js": 2176
+      "charts.js": 2688,
+      "charts-funnel.js": 2176,
+      "charts-waterfall.js": 1152
     }
   },
   "keywords": [
     "chart",
     "charts",
     "funnel",
+    "waterfall",
+    "ngr",
     "affiliate",
     "partner-program",
     "igaming",

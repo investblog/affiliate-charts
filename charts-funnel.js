@@ -56,12 +56,9 @@
 	}
 
 	// Row anatomy in px (ADR 010): [rate line] label line [value line] base bar [gap earned bar] padding.
-	// Bars are laid out in percent of the page's width; text stays in px (ADR 009).
-	var LINE = 18, RATE = 16, BAR = 12, PART = 8, SHAPE = 20, PAD = 10, BLOCK = 16, INDENT = 12;
-	// the narrowest content width the layout promises (a 375px screen less 16px gutters) and an
-	// average glyph width at 13px — a row whose label and values may not share a line at that width
-	// puts its values on their own line, at every width, so the bytes never depend on the page (ADR 010)
-	var NARROW = 343, GLYPH = 8;
+	// Bars are laid out in percent of the page's width; text stays in px (ADR 009). The label line is the
+	// core's, shared with the waterfall.
+	var RATE = 16, BAR = 12, PART = 8, SHAPE = 20, PAD = 10, BLOCK = 16, INDENT = 12;
 	var DASH = '—', DOWN = '↓ ';
 
 	function draw(steps, opts, earned) {
@@ -96,17 +93,11 @@
 			}
 			var valText = s.earned ? _.el('tspan', ['fill-opacity', 0.75], _.esc(s.display)) + ' · ' +
 				_.el('tspan', ['font-weight', 600], _.esc(s.earned.display)) : _.esc(s.display);
-			var chars = s.label.length + (s.part ? 2 : 0) + s.display.length + (s.earned ? s.earned.display.length + 3 : 0) + 2;
-			// a label longer than the narrow width holds is cut with an ellipsis; the row's <title> keeps it whole
-			var max = Math.floor(NARROW / GLYPH) - (s.part ? 2 : 0);
-			var cut = max - 1, c = s.label.charCodeAt(cut - 1);
-			// never between the halves of a surrogate pair: an emoji is dropped whole (ADR 010 addendum)
-			if (c >= 0xD800 && c <= 0xDBFF) cut--;
-			var label = s.label.length > max ? s.label.slice(0, cut) + '…' : s.label;
-			row += _.el('text', ['class', p + '-label', 'x', s.part ? INDENT : 0, 'y', y + 13], _.esc(label));
-			if (chars * GLYPH > NARROW) y += LINE;
-			row += _.el('text', ['class', p + '-value', 'x', '100%', 'y', y + 13, 'text-anchor', 'end'], valText);
-			y += LINE + 2;
+			// the row's <title> keeps a cut label whole
+			var ll = _.labelLine(p, s.label, valText, s.label.length + (s.part ? 2 : 0) + s.display.length +
+				(s.earned ? s.earned.display.length + 3 : 0) + 2, s.part ? INDENT : 0, y);
+			row += ll.svg;
+			y += ll.h;
 			var h = form === 'shape' ? SHAPE : s.part ? PART : BAR, top = y;
 			var cls = p + (loss ? '-bar-loss' : s.part ? '-bar-part' : '-bar');
 			var fill = loss ? 'currentColor' : pal.solid;

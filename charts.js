@@ -153,6 +153,23 @@
 			el('rect', toLeft ? ['x', '100%', 'width', n(r, 2), 'height', n(h, 2), 'transform', 'translate(-' + n(r, 2) + ')']
 				: ['width', n(r, 2), 'height', n(h, 2)]));
 	}
+	// a row's label line (ADR 010): the label at x=indent, cut with an ellipsis past what the narrow width
+	// holds; the values (markup) end-anchored at 100%, on their own line when a conservative estimate of
+	// `chars` says label and values may not share one at that width — the same at every width, so the
+	// bytes never depend on the page. Returns the markup and the height it takes, padding included.
+	// NARROW: a 375px screen less 16px gutters; GLYPH: an average glyph at 13px.
+	var LINE = 18, NARROW = 343, GLYPH = 8;
+	function labelLine(p, label, values, chars, indent, y) {
+		var max = Math.floor(NARROW / GLYPH) - (indent ? 2 : 0), cut = max - 1, c = label.charCodeAt(cut - 1);
+		// never between the halves of a surrogate pair: an emoji is dropped whole (ADR 010 addendum)
+		if (c >= 0xD800 && c <= 0xDBFF) cut--;
+		var dy = chars * GLYPH > NARROW ? LINE : 0;
+		return {
+			svg: el('text', ['class', p + '-label', 'x', indent, 'y', y + 13], esc(label.length > max ? label.slice(0, cut) + '…' : label)) +
+				el('text', ['class', p + '-value', 'x', '100%', 'y', y + dy + 13, 'text-anchor', 'end'], values),
+			h: dy + LINE + 2
+		};
+	}
 	// a legend one entry per line, so it needs no text width; entries are [label, fill, opacity]
 	function legend(p, entries, y) {
 		var s = '';
@@ -200,6 +217,6 @@
 			return palette(common({ brand: brand, theme: theme }).brand, theme);
 		},
 		_: { n: n, esc: esc, el: el, fail: fail, num: num, str: str, common: common, svg: svg, palette: palette,
-			pct: pct, bar: bar, legend: legend }
+			pct: pct, bar: bar, labelLine: labelLine, legend: legend }
 	};
 });

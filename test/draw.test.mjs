@@ -110,6 +110,10 @@ test('a row that may not fit at 343px puts its values on their own line (8px a g
 	assert.equal(at(fits), 0);
 	assert.equal(at(over), 0);
 	assert.equal(at('x'.repeat(41)), 18, '41 + 2 + 2 = 45 chars × 8 = 360 > 343');
+	// the earned value shares the line: 30 + 2 + 2 = 34 chars fit alone, + 2 + 3 = 39 still fit, + 7 + 3 = 44 do not
+	const pair = (earned) => { const svg = Charts.funnel([S('x'.repeat(30), 10, { earned: E(earned) })], { legend }); return texts(svg, 'value')[0].y - texts(svg, 'label')[0].y; };
+	assert.equal(pair(10), 0);
+	assert.equal(pair(1234567), 18, 'the earned display counts towards the line');
 });
 
 test('labels past 42 characters are cut with an ellipsis; the row title keeps the whole label', () => {
