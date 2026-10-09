@@ -19,7 +19,10 @@
 - Heatmaps and cohorts (`charts-heatmap.js`): a grid or a cohort triangle in five steps of the brand's
   hue, `null` as a dash, absent future cells not drawn, values in cohort cells when they fit (ADR 018).
   The core gains `shade` for the ramp.
-- The demo picks the chart: funnel, waterfall, daily series, KPI tiles, ranking, part to whole or heatmap.
+- Meters (`charts-meter.js`): progress to a tier or a cap, a fill on a lighter track of the brand, tier
+  marks as hairlines named on hover.
+- The demo picks the chart: funnel, waterfall, daily series, KPI tiles, ranking, part to whole, heatmap or
+  meter.
 
 ## 0.1.1 — 2026-10-08
 

@@ -24,7 +24,7 @@ import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const FILES = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js', 'charts-heatmap.js'];
+const FILES = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js', 'charts-heatmap.js', 'charts-meter.js'];
 const MUTATE = process.argv.includes('--mutate');
 const WIDTHS = [375, 1280];
 const CSP = "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self'; base-uri 'none'; object-src 'none'";
@@ -96,7 +96,8 @@ async function demo(pw, port) {
 			tile: [['epc', 'cpa', 'cr', 'ftd'], [null], '.chart-value'],
 			rank: [['sources', 'focus'], [null], '.chart-bar'],
 			share: [['devices', 'geo'], ['bar', 'donut'], '.chart-part'],
-			heatmap: [['hours', 'cohorts'], [null], '.chart-cell'] };
+			heatmap: [['hours', 'cohorts'], [null], '.chart-cell'],
+			meter: [['tier', 'cap'], [null], '.chart-track'] };
 		for (const [chart, [examples, forms, mark]] of Object.entries(charts)) {
 			await page.selectOption('#chart', chart);
 			for (const show of ['one', 'sheet']) {
@@ -203,6 +204,9 @@ const MUTATIONS = [
 	{ label: 'heatmap steps by rounding', file: 'charts-heatmap.js', edits: [['Math.min(4, Math.floor(v / max * 5))', 'Math.min(4, Math.round(v / max * 4))']] },
 	{ label: 'a null cell filled near zero', file: 'charts-heatmap.js', edits: [["'height', CELL, 'fill', 'transparent'", "'height', CELL, 'fill', ramp[0]"]] },
 	{ label: 'cohort text always white', file: 'charts-heatmap.js', edits: [["STEPS[t][s] >= 0.6 ? INK : '#fff'", "'#fff'"]] },
+	{ label: 'the meter is not registered', file: 'charts-meter.js', edits: [['core.meter = factory(core._);', 'factory(core._);']] },
+	{ label: 'meter marks at the value', file: 'charts-meter.js', edits: [['marks[i].value / m.target * 100', 'marks[i].value / m.value * 100']] },
+	{ label: 'the meter track solid', file: 'charts-meter.js', edits: [['TRACK = 0.2', 'TRACK = 1']] },
 	{ label: 'the last x label past the edge', file: 'charts-series.js', edits: [["out += xl(i, end ? '100%' : 0, end ? 'end' : 'start');", "out += xl(i, end ? '100%' : 0, 'start');"]] },
 ];
 

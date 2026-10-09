@@ -8,7 +8,7 @@
 	document.addEventListener('securitypolicyviolation', function (e) { violations.push(e.violatedDirective + ' ' + e.blockedURI); });
 
 	// cache-bust: a stale library fakes a result either way (AGENTS.md)
-	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js', '../charts-waterfall.js', '../charts-series.js', '../charts-spark.js', '../charts-rank.js', '../charts-share.js', '../charts-heatmap.js'], i = 0;
+	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js', '../charts-waterfall.js', '../charts-series.js', '../charts-spark.js', '../charts-rank.js', '../charts-share.js', '../charts-heatmap.js', '../charts-meter.js'], i = 0;
 	(function next() {
 		if (i === files.length) return setTimeout(run, 50);
 		var s = document.createElement('script');
@@ -81,6 +81,9 @@
 			display: [['0', '25', null, '100'], ['15', '50', '75', '99']] }, { title: 'Heat', brand: '#e11d48' }, 'heatmap'],
 		['cohort', { rows: ['Apr', 'May', 'Jun'], cols: ['M0', 'M1', 'M2'], values: [[100, 62, 9], [100, 63], [100]],
 			display: [['100%', '62%', '9%'], ['100%', '63%'], ['100%']] }, { title: 'Cohort', form: 'cohort', theme: 'dark' }, 'heatmap'],
+		// the meter: a third of the way, a tier mark at half
+		['meter', { label: 'Tier 3', value: 40, display: '40', target: 120, targetDisplay: 'tier 3 at 120', marks: [{ value: 60, label: 'Tier 2' }] },
+			{ title: 'Meter', theme: 'dark' }, 'meter'],
 	];
 
 	function run() {
@@ -92,6 +95,7 @@
 		if (typeof window.Charts.rank !== 'function') return finish(['Charts.rank is not loaded']);
 		if (typeof window.Charts.share !== 'function') return finish(['Charts.share is not loaded']);
 		if (typeof window.Charts.heatmap !== 'function') return finish(['Charts.heatmap is not loaded']);
+		if (typeof window.Charts.meter !== 'function') return finish(['Charts.meter is not loaded']);
 		FIXTURES.concat(FLOWS, SERIES, TILES).forEach(function (f) {
 			var card = document.createElement('div');
 			card.className = 'card ' + (f[2].theme === 'dark' ? 'dark' : 'light') + (f[3] === 'tile' ? ' narrow' : '');
@@ -123,7 +127,7 @@
 		});
 		check('ids are unique across charts on one page', function () {
 			var ids = [].map.call(document.querySelectorAll('#charts svg [id]'), function (e) { return e.id; });
-			return ids.length === 19 && new Set(ids).size === ids.length;
+			return ids.length === 20 && new Set(ids).size === ids.length;
 		});
 		check('aria-labelledby resolves inside its own chart', function () {
 			return [].every.call(document.querySelectorAll('#charts svg[aria-labelledby]'), function (s) {
@@ -135,7 +139,7 @@
 		});
 		check('every row is a group whose first child is its <title>', function () {
 			var rows = document.querySelectorAll('#charts svg > g:not([class])');
-			return rows.length === 24 && [].every.call(rows, function (g) { return g.firstElementChild.tagName === 'title'; });
+			return rows.length === 25 && [].every.call(rows, function (g) { return g.firstElementChild.tagName === 'title'; });
 		});
 		check('bars follow the page width: 50% of the value is 50% of the chart', function () {
 			var s = svg('counts'), w = s.getBoundingClientRect().width;
@@ -378,6 +382,12 @@
 				var b = glyphs(x), cell = box(c[k]);
 				return b.left >= cell.left - 0.5 && b.right <= cell.right + 0.5;
 			}) && hex(getComputedStyle(t[0]).fill) === '#11171c' && hex(getComputedStyle(t[2]).fill) === '#ffffff';
+		});
+		// the meter
+		check('meter: the track spans the chart, the fill a third of it, the tier mark at half', function () {
+			var s = svg('meter'), r = box(s), t = box(s.querySelector('.chart-track')), f = box(s.querySelector('.chart-bar')), m = s.querySelector('.chart-mark');
+			return near(t.left, r.left) && near(t.width, r.width) && near(f.left, r.left) && near(f.width, r.width / 3, 1.5) &&
+				near(m.x1.baseVal.value, r.width / 2, 0.75) && getComputedStyle(s.querySelector('.chart-track')).opacity === '0.2';
 		});
 		// last, after every chart has been in the document: CSP reports arrive asynchronously
 		// the palette in this engine against the bytes Node computed (test/fixtures/palette.json): float

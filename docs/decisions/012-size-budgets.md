@@ -109,3 +109,13 @@ rule; moving that rule into the core, shared with the series, is not measured ye
 | `charts-heatmap.js` | 1819 B | **1920 B** |
 
 A page with a heatmap alone pays 4380 B gzipped.
+
+## Addendum (M8, the meter, 2026-10-09)
+
+The meter is the core's `bar` and `labelLine`; it adds nothing to the core.
+
+| File | Measured | Frozen |
+|---|---|---|
+| `charts-meter.js` | 928 B | **1024 B** |
+
+A page with a meter alone pays 3489 B gzipped.
