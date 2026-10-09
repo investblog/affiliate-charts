@@ -40,9 +40,9 @@ gap, array and range checks) cost 145 B and are in the measurement.
 
 The waterfall moved the row's label line (the cut at 42 characters, the split at 343 px) from the funnel
 into the core as `labelLine`, and the core's palette took a hue turn for the waterfall's decrease.
-Measured: the shared helper costs a funnel-only page 31 B (core +169 B, funnel −138 B). A copy in the
-waterfall would have added about as much as the funnel saved to every page that draws a waterfall, and
-two copies of the truncation rule to keep in step.
+Measured both ways: shared, the core grows 169 B and the funnel shrinks 138 B; as a copy inside the
+waterfall, the waterfall would be 1274 B instead of 1084 B. Shared costs a funnel-only page 31 B and
+saves a waterfall-only page 21 B and a page with both 159 B — and keeps one copy of the truncation rule.
 
 | File | Measured | Frozen |
 |---|---|---|

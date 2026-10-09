@@ -120,6 +120,11 @@ async function demo(pw, port) {
 				}
 			}
 		}
+		// and back: the funnel after the waterfall gets its form control and its bars again
+		await page.selectOption('#show', 'one');
+		await page.selectOption('#chart', 'funnel');
+		const back = await page.evaluate(() => !document.getElementById('form').disabled && !!document.querySelector('#stage .card svg .chart-bar'));
+		if (!back) problems.push('waterfall → funnel: the form stays disabled or no funnel is drawn');
 		return { combos, problems };
 	} finally { await browser.close(); }
 }
