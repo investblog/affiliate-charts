@@ -16,8 +16,9 @@ funnel (three forms, base and earned, losses, negative values, gaps) passes the 
 typecheck, the Vite bundle gate and the browser gate (Chromium, Firefox, WebKit under
 `default-src 'self'`); every check has been seen red under mutation. Budgets frozen (ADR 012). M5 is
 done: releases run from `v*` tags through the Trusted Publisher (0.1.1 was the first). M6 in progress:
-the waterfall is drawn and passes every gate (Node, mutations, Vite, three engines, the demo; ADR 014),
-unreleased — the catalog ships once, after M8 and a review (M9); Group B is next. Scope:
+the waterfall (ADR 014) and the daily series (ADR 015) are drawn and pass every gate (Node, mutations,
+Vite, three engines, the demo), unreleased — the catalog ships once, after M8 and a review (M9);
+`spark`/`tile` are next. Scope:
 **a chart library for affiliate programmes** — the forms a partner cabinet uses to show traffic,
 conversions and money to a partner. Numbers marked *provisional* are forecasts, not measurements;
 each names the milestone that replaces it. Keep this line true at every milestone.

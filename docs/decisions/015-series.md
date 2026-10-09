@@ -33,7 +33,10 @@ point is drawn as a dot, so a lone day stays visible.
 **One value axis, the ticks on the gridlines.** The scale is over zero and every value drawn (both
 series, the comparison period, stack totals), widened to "nice" steps (1, 2 or 5 × 10ⁿ, about four
 intervals). Each gridline carries its tick text above it at `x=0`, so the labels take no width from the
-plot. Tick text is the caller's `format(v)`; the default is the core's `n(v, 6)` — `n(v)` as ADR 004
+plot. The plot then starts at the chart's left edge, under the tick text: the text is drawn after the
+marks, with a 3 px halo of the theme's surface (`stroke` + `paint-order="stroke"`, presentation
+attributes), so the first column or a line cannot hide it — seen on the playground, where the first
+column covered the `0` and the `500`. Tick text is the caller's `format(v)`; the default is the core's `n(v, 6)` — `n(v)` as ADR 004
 names it rounds to an integer and would print a 0.25 step as `0`. All values zero or `null`: one tick, 0.
 
 **x labels: first, last, and what fits at 343 px.** The first and the last label are centred under their
@@ -89,7 +92,9 @@ parts add up; negative parts then throw — a stack across zero has no honest re
 ## Consequences
 
 - `names` takes one or two entries; the spec's open count is narrowed.
-- The ring around an end dot is the theme's reference surface (ADR 011); a page on another surface
-  overrides it through `-dot`.
+- The ring around an end dot and the halo behind tick text are the theme's reference surface (ADR 011);
+  a page on another surface overrides them through `-dot` and `-tick`.
+- Firefox counts a text's stroke in its client rect (measured: the halo moves a tick's box 2.5 px left
+  and 2 px down); the browser gate measures haloed text by its fill geometry (`getBBox`).
 - At 30 points and two grouped series a column is about 4.5 px wide at 375 px, and the percent gap
   inside a band under 1 px. Accepted: the hover band, not the column, is the target.

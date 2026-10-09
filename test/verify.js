@@ -8,7 +8,7 @@
 	document.addEventListener('securitypolicyviolation', function (e) { violations.push(e.violatedDirective + ' ' + e.blockedURI); });
 
 	// cache-bust: a stale library fakes a result either way (AGENTS.md)
-	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js', '../charts-waterfall.js'], i = 0;
+	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js', '../charts-waterfall.js', '../charts-series.js'], i = 0;
 	(function next() {
 		if (i === files.length) return setTimeout(run, 50);
 		var s = document.createElement('script');
@@ -42,21 +42,48 @@
 			D('Stays with the platform and the network, by the agreement', -490), T('Commission', 210)], { title: 'Flow', brand: '#e11d48' }],
 		['flowneg', [T('GGR', -200), D('Recovered', 500), T('Result', 300)], { title: 'Flow, negative', theme: 'dark' }],
 	];
+	// the series (ADR 015): a month of two series with gaps and a losing day, as lines and as columns; a
+	// stacked week; an area with a comparison period
+	var month = [], week = [], P = function (x, a, b) {
+		var v = b === undefined ? [a] : [a, b];
+		return { x: x, values: v, display: v.map(function (n) { return n === null ? null : String(n); }) };
+	};
+	for (var d = 0; d < 30; d++) {
+		var ggr = d === 3 ? null : d === 5 ? -120 : 300 + (d * 53) % 400;
+		month.push(P((d + 1) + ' Oct', ggr, ggr === null ? null : Math.round(ggr / 4)));
+	}
+	['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(function (x, i) { week.push(P(x, 10 + i * 3, 4 + i)); });
+	var prior = month.map(function (p, i) { return i === 7 ? null : 250 + (i * 31) % 300; });
+	var SERIES = [
+		['days', month, { title: 'Daily', names: ['Revenue — GGR', 'Commission'], brand: '#e11d48' }],
+		['cols', month, { title: 'Daily columns', names: ['Revenue — GGR', 'Commission'], form: 'columns', theme: 'dark' }],
+		['stack', week, { title: 'Deposits', names: ['First deposits', 'Repeat deposits'], form: 'columns', stacked: true }],
+		['area', month.map(function (p) { return P(p.x, p.values[0]); }), { title: 'GGR', names: ['October'], form: 'area', theme: 'dark',
+			previous: { name: 'September', values: prior, display: prior.map(function (n) { return n === null ? null : String(n); }) } }],
+	];
 
 	function run() {
 		var root = document.getElementById('charts'), markup = {}, results = [];
 		if (!window.Charts || typeof window.Charts.funnel !== 'function') return finish(['Charts.funnel is not loaded']);
 		if (typeof window.Charts.waterfall !== 'function') return finish(['Charts.waterfall is not loaded']);
-		FIXTURES.concat(FLOWS).forEach(function (f) {
+		if (typeof window.Charts.series !== 'function') return finish(['Charts.series is not loaded']);
+		FIXTURES.concat(FLOWS, SERIES).forEach(function (f) {
 			var card = document.createElement('div');
 			card.className = 'card ' + (f[2].theme === 'dark' ? 'dark' : 'light');
 			card.id = 'card-' + f[0];
-			markup[f[0]] = window.Charts[f[1][0].kind ? 'waterfall' : 'funnel'](f[1], f[2]);
+			markup[f[0]] = window.Charts[f[2].names ? 'series' : f[1][0].kind ? 'waterfall' : 'funnel'](f[1], f[2]);
 			window.Charts.init(card, markup[f[0]]);
 			root.appendChild(card);
 		});
 		var svg = function (name) { return document.querySelector('#card-' + name + ' > svg'); };
 		var near = function (a, b, tol) { return Math.abs(a - b) <= (tol || 1); };
+		// a text's glyph box on screen. Firefox puts a text's stroke in its client rect (measured: a 3px halo
+		// moves a tick's box 2.5px left and 2px down), so a haloed tick is measured by its fill geometry
+		var glyphs = function (t) {
+			if (t.getAttribute('paint-order') !== 'stroke') return t.getBoundingClientRect();
+			var r = t.ownerSVGElement.getBoundingClientRect(), b = t.getBBox();
+			return { left: r.left + b.x, right: r.left + b.x + b.width, top: r.top + b.y, bottom: r.top + b.y + b.height, width: b.width };
+		};
 
 		function check(name, fn) {
 			var ok;
@@ -71,7 +98,7 @@
 		});
 		check('ids are unique across charts on one page', function () {
 			var ids = [].map.call(document.querySelectorAll('#charts svg [id]'), function (e) { return e.id; });
-			return ids.length === 7 && new Set(ids).size === ids.length;
+			return ids.length === 11 && new Set(ids).size === ids.length;
 		});
 		check('aria-labelledby resolves inside its own chart', function () {
 			return [].every.call(document.querySelectorAll('#charts svg[aria-labelledby]'), function (s) {
@@ -124,7 +151,7 @@
 		check('no text overlaps, and none leaves its chart', function () {
 			return [].every.call(document.querySelectorAll('#charts > .card > svg'), function (s) {
 				var r = s.getBoundingClientRect();
-				var boxes = [].map.call(s.querySelectorAll('text'), function (t) { return t.getBoundingClientRect(); });
+				var boxes = [].map.call(s.querySelectorAll('text'), glyphs);
 				return boxes.every(function (a, k) {
 					if (a.right > r.right + 2 || a.left < r.left - 2) return false;
 					return boxes.slice(k + 1).every(function (b) {
@@ -166,6 +193,77 @@
 			return fill('flow', '.chart-bar-total') === light.solid && fill('flow', '.chart-bar-down') === window.Charts._.palette('#e11d48', 'light', Math.PI).solid &&
 				fill('flowneg', '.chart-bar-up') === dark.solid && svg('flowneg').querySelector('.chart-bar-up').getAttribute('opacity') === '0.6' &&
 				light.solid !== window.Charts._.palette('#e11d48', 'light', Math.PI).solid;
+		});
+		// the series (ADR 015)
+		var box = function (e) { return e.getBoundingClientRect(); };
+		check('series: points sit at band centres, at any width', function () {
+			var s = svg('days'), r = box(s), dots = s.querySelectorAll('.chart-dot');
+			return dots.length === 2 && [].every.call(dots, function (d) { return near((box(d).left + box(d).right) / 2, r.left + r.width * 29.5 / 30, 1.5); });
+		});
+		check('series: lines keep a round 2px stroke in the stretched box', function () {
+			var l = svg('days').querySelectorAll('.chart-line');
+			return l.length === 4 && [].every.call(l, function (p) {
+				var c = getComputedStyle(p);
+				return c.vectorEffect === 'non-scaling-stroke' && c.strokeWidth === '2px' && c.strokeLinejoin === 'round';
+			});
+		});
+		check('series: each tick text sits just above its gridline', function () {
+			var s = svg('days'), g = s.querySelectorAll('.chart-grid'), t = s.querySelectorAll('.chart-tick');
+			return g.length > 2 && g.length === t.length && [].every.call(g, function (line, k) {
+				var y = box(line).top, b = glyphs(t[k]);
+				return b.bottom <= y + 1 && b.bottom > y - 8 && near(b.left, box(s).left, 2);
+			});
+		});
+		check('series: tick text is on top of the columns, where a reader looks for it', function () {
+			var s = svg('cols');
+			s.scrollIntoView({ block: 'center' });
+			var t = s.querySelectorAll('.chart-tick'), ok = t.length > 2;
+			[].forEach.call(t, function (e) {
+				var b = glyphs(e), hit = document.elementFromPoint(b.left + 2, (b.top + b.bottom) / 2);
+				// the hover bands are transparent and on top by design; under them, the text must win over the marks
+				if (hit && hit.classList.contains('chart-hit')) {
+					hit.style.pointerEvents = 'none';
+					var under = document.elementFromPoint(b.left + 2, (b.top + b.bottom) / 2);
+					hit.style.pointerEvents = '';
+					hit = under;
+				}
+				if (hit !== e) ok = false;
+			});
+			window.scrollTo(0, 0);
+			return ok;
+		});
+		check('series: columns stay inside their band and stand on the zero line', function () {
+			var s = svg('cols'), r = box(s), w = r.width / 30, bars = s.querySelectorAll('.chart-bar');
+			var zero = [].filter.call(s.querySelectorAll('.chart-grid'), function (l) { return l.getAttribute('stroke-opacity') === '0.35'; })[0];
+			var z = box(zero).top, ok = bars.length === 58;
+			[].forEach.call(bars, function (b, k) {
+				// two columns a point; the fourth point has no data
+				var i = Math.floor(k / 2) + (k >= 6 ? 1 : 0), x = box(b);
+				if (x.left < r.left + i * w - 0.5 || x.right > r.left + (i + 1) * w + 0.5) ok = false;
+				if (!(near(x.bottom, z, 1.5) || near(x.top, z, 1.5))) ok = false;
+			});
+			return ok;
+		});
+		check('series: stacked parts sit on each other, 2px apart', function () {
+			var b = svg('stack').querySelectorAll('.chart-bar');
+			if (b.length !== 14) return false;
+			for (var k = 0; k < 14; k += 2) if (!near(box(b[k + 1]).bottom, box(b[k]).top - 2, 0.75) || !near(box(b[k + 1]).left, box(b[k]).left, 0.5)) return false;
+			return true;
+		});
+		check('series: the band under a point answers with that point\'s title', function () {
+			var s = svg('days');
+			s.scrollIntoView({ block: 'center' });
+			var r = box(s), hits = s.querySelectorAll('.chart-hit'), plot = box(hits[0]);
+			var e = document.elementFromPoint(r.left + r.width * 10.5 / 30, (plot.top + plot.bottom) / 2);
+			window.scrollTo(0, 0);
+			return hits.length === 30 && e === hits[10] && e.firstElementChild.textContent === '11 Oct: Revenue — GGR 430, Commission 108';
+		});
+		check('series colours: series 1 the solid, series 2 the opposite hue, the comparison in the page colour', function () {
+			var hex = function (c) { return '#' + c.match(/\d+/g).slice(0, 3).map(function (v) { return (+v + 256).toString(16).slice(1); }).join(''); };
+			var l = svg('days').querySelectorAll('.chart-line'), prev = getComputedStyle(svg('area').querySelector('.chart-prev'));
+			return hex(getComputedStyle(l[0]).stroke) === window.Charts._.palette('#e11d48', 'light').solid &&
+				hex(getComputedStyle(l[3]).stroke) === window.Charts._.palette('#e11d48', 'light', Math.PI).solid &&
+				hex(prev.stroke) === '#e6e6e6' && prev.strokeOpacity === '0.35';
 		});
 		// last, after every chart has been in the document: CSP reports arrive asynchronously
 		// the palette in this engine against the bytes Node computed (test/fixtures/palette.json): float

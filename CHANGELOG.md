@@ -7,7 +7,10 @@
   opposite hue (ADR 014).
 - The core: the row's label line is shared by the funnel and the waterfall (the funnel's bytes are
   unchanged); its palette can turn the brand's hue. Size budgets re-frozen (ADR 012).
-- The demo picks the chart, funnel or waterfall.
+- The daily series (`charts-series.js`): lines, an area or columns (grouped or stacked) at band centres,
+  `null` as a break, a comparison period, one value axis with nice ticks through `format`, at most two
+  series — the brand and its opposite hue (ADR 015).
+- The demo picks the chart: funnel, waterfall or daily series.
 
 ## 0.1.1 — 2026-10-08
 

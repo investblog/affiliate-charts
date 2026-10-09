@@ -103,12 +103,15 @@
 		function at(v) { return (dHi - v) / (dHi - dLo) * PLOT; }
 		function cx(i) { return (i + 0.5) * w; }
 
-		// gridlines with their tick text above them; zero stronger
+		// gridlines under the marks; their tick text above each line and over the marks, haloed in the theme's
+		// surface so a column or a line at the left edge cannot hide it (ADR 015); zero stronger
+		var surface = _.SURFACE[o.theme === 'dark' ? 'dark' : 'light'], tickText = '';
 		for (i = 0; i < tk.length; i++) {
 			var gy = top + at(tk[i]);
 			out += _.el('line', ['class', p + '-grid', 'x1', 0, 'x2', '100%', 'y1', _.n(gy, 2), 'y2', _.n(gy, 2),
-				'stroke', 'currentColor', 'stroke-opacity', tk[i] ? 0.12 : 0.35]) +
-				_.el('text', ['class', p + '-tick', 'x', 0, 'y', _.n(gy - 4, 2), 'opacity', 0.7], _.esc(_.str(format(tk[i]), 'format(v)')));
+				'stroke', 'currentColor', 'stroke-opacity', tk[i] ? 0.12 : 0.35]);
+			tickText += _.el('text', ['class', p + '-tick', 'x', 0, 'y', _.n(gy - 4, 2), 'opacity', 0.7, 'stroke', surface, 'stroke-width', 3,
+				'stroke-linejoin', 'round', 'paint-order', 'stroke'], _.esc(_.str(format(tk[i]), 'format(v)')));
 		}
 
 		var box = '', dots = '', z = at(0);
@@ -162,12 +165,12 @@
 				for (i = N - 1; i >= 0 && vs[i] === null; i--);
 				if (i >= 0) {
 					dots += _.el('circle', ['class', p + '-dot', 'cx', _.pct(cx(i)), 'cy', _.n(top + at(vs[i]), 2), 'r', 4,
-						'fill', colour[j], 'stroke', _.SURFACE[o.theme === 'dark' ? 'dark' : 'light'], 'stroke-width', 2]);
+						'fill', colour[j], 'stroke', surface, 'stroke-width', 2]);
 				}
 			}
 		}
 		out += _.el('svg', ['y', top, 'width', '100%', 'height', PLOT, 'viewBox', '0 0 100 ' + PLOT, 'preserveAspectRatio', 'none',
-			'overflow', 'visible'], box) + dots;
+			'overflow', 'visible'], box) + dots + tickText;
 
 		// x labels: the first and the last, and every k-th between them that fits at the narrow width. The
 		// first and the last sit under their point when half of them fits in half a band there, else at the edge.

@@ -51,3 +51,16 @@ saves a waterfall-only page 21 B and a page with both 159 B — and keeps one co
 | `charts-waterfall.js` | 1084 B | **1152 B** |
 
 A page that draws the funnel pays 4393 B gzipped; the waterfall alone 3607 B; both 5477 B.
+
+## Addendum (M6, the daily series, 2026-10-09)
+
+The series takes the theme's reference surface from the core (`_.SURFACE`, for the end dot's ring and the
+tick halo, ADR 015): the core grows 11 B, inside its budget, which stays. The series is the first module
+with an axis, two forms of mark and x-label placement; measured as built, no trim attempted yet.
+
+| File | Measured | Frozen |
+|---|---|---|
+| `charts.js` | 2534 B | 2688 B (unchanged) |
+| `charts-series.js` | 2831 B | **2944 B** |
+
+A page that draws the series alone pays 5365 B gzipped; the funnel and the series 7235 B.

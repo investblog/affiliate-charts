@@ -3,7 +3,8 @@
 Charts for affiliate programmes, as SVG strings. The **funnel**: clicks to first deposits in counts,
 and deposits to revenue in money — the base of each event beside what the partner earned from it, with
 cancellations and rejected records on the same scale. The **waterfall**: GGR to the partner's
-commission, step by step. Zero dependencies, 4.3 KB gzipped for the core and the funnel.
+commission, step by step. The **daily series**: lines, areas and columns over days. Zero dependencies,
+4.4 KB gzipped for the core and the funnel.
 
 [![npm](https://img.shields.io/npm/v/affiliate-charts.svg)](https://www.npmjs.com/package/affiliate-charts)
 [![license](https://img.shields.io/npm/l/affiliate-charts.svg)](LICENSE)
@@ -12,15 +13,15 @@ Made by [301](https://301.st) for the [OktagonBet partner programme](https://okt
 first user and sponsor.
 
 **[Live demo →](https://investblog.github.io/affiliate-charts/)** — every option wired to a control,
-four example funnels and two waterfalls, light and dark, and a width slider to watch the bars follow their container.
+four example funnels, two waterfalls and three daily series, light and dark, and a width slider to watch the bars follow their container.
 
 [![A money funnel on a light card and a counts funnel on a dark one, drawn by affiliate-charts](https://investblog.github.io/affiliate-charts/docs/preview.svg)](https://investblog.github.io/affiliate-charts/)
 
 - **Renders under a strict CSP.** No `style=""`, no `<style>`, no `<script>`, no `data:` — it works
   under `default-src 'self'`, where most chart libraries break.
 - **Zero dependencies.** One call returns markup, in Node at build time or in the browser.
-- **Small.** A core plus one file per chart: the core and the funnel are 4.3 KB gzipped together, the
-  waterfall adds 1.1 KB.
+- **Small.** A core plus one file per chart: the core and the funnel are 4.4 KB gzipped together, the
+  waterfall adds 1.1 KB, the daily series 2.8 KB.
 - **Reads on a phone.** Bars follow the width of their container; text keeps its pixel size.
 - **Honest by construction.** Steps are never summed, money and counts never share an axis, a missing
   rate is a dash and never `0%`, and the library never formats or computes a number it shows: every
@@ -116,13 +117,39 @@ decrease the opposite hue. Name a deduction that is not an expense neutrally, as
 `desc`, `brand`, `theme`, `classPrefix`. Both modules can sit on one page; each import returns the same
 `Charts`.
 
+## The daily series
+
+*Not on npm yet either — the next release.*
+
+A day (or a week, a month) per point, as lines, an area or columns, on one value axis.
+
+```js
+import Charts from 'affiliate-charts/charts-series.js';
+
+const days = Charts.series([
+  { x: '1 Oct', values: [4120, 1030], display: ['4 120.00', '1 030.00'] },
+  { x: '2 Oct', values: [null, null], display: [null, null] },          // no data: the line breaks
+  { x: '3 Oct', values: [-1240, -310], display: ['−1 240.00', '−310.00'] },
+], { names: ['Revenue — GGR', 'Commission'], form: 'line', title: 'October' });
+```
+
+- `form`: `'line'` (default), `'area'` (one series) or `'columns'` (grouped; `stacked: true` when the parts
+  really add up, such as first and repeat deposits — never GGR and commission, which are nested).
+- At most two series: the first in your `brand`, the second in its opposite hue. More measures are more
+  charts.
+- `previous: { name, values, display }` draws a comparison period under a single series, in the page colour.
+- The key above the plot shows each series' last `display`; hovering a day shows its `<title>`. Axis
+  ticks are numbers the library picks, so their text goes through your `format(v)` (default: plain
+  digits).
+
 ## Colour and size
 
 - Bars are your `brand`, fitted for contrast on a light or a dark surface. Text, losses and lines use
   `currentColor`, so they follow your page.
 - Every mark has a class (`chart-bar`, `chart-bar-earned`, `chart-bar-part`, `chart-bar-loss`, `chart-bar-ghost`,
   `chart-bar-total`, `chart-bar-up`, `chart-bar-down`, `chart-label`, `chart-value`, `chart-rate`,
-  `chart-legend`, `chart-grid`, `chart-axis`); a stylesheet can recolour any of them.
+  `chart-legend`, `chart-grid`, `chart-axis`, and for the series `chart-line`, `chart-area`, `chart-dot`,
+  `chart-prev`, `chart-tick`, `chart-x`, `chart-key`, `chart-hit`); a stylesheet can recolour any of them.
 - `Charts.palette(brand, theme)` returns `{ solid, light, opacity }` to paint your table to match.
 - The chart takes the width of its container. Text is laid out for 13 px and screens from 375 px.
 - The same input gives the same bytes within a minor version: pin the exact version.

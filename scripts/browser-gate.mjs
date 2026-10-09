@@ -24,7 +24,7 @@ import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const FILES = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js'];
+const FILES = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js'];
 const MUTATE = process.argv.includes('--mutate');
 const WIDTHS = [375, 1280];
 const CSP = "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self'; base-uri 'none'; object-src 'none'";
@@ -91,7 +91,8 @@ async function demo(pw, port) {
 		let combos = 0;
 		// the waterfall has one form: its form control is disabled, and is not touched
 		const charts = { funnel: [['counts', 'money', 'negative', 'fresh'], ['bars', 'steps', 'shape'], '.chart-bar'],
-			waterfall: [['flow', 'losing'], [null], '.chart-bar-total'] };
+			waterfall: [['flow', 'losing'], [null], '.chart-bar-total'],
+			series: [['money', 'clicks', 'deposits'], ['line', 'area', 'columns'], '.chart-hit'] };
 		for (const [chart, [examples, forms, mark]] of Object.entries(charts)) {
 			await page.selectOption('#chart', chart);
 			for (const show of ['one', 'sheet']) {
@@ -112,8 +113,8 @@ async function demo(pw, port) {
 							const at = `${chart}/${show}/${example}/${form || '-'}/${theme}`;
 							if (!cards) problems.push(`${at}: no card`);
 							if (empty) problems.push(`${at}: ${empty} card(s) with neither a chart nor a note`);
-							// the chart chosen is the chart drawn: a waterfall card carries total bars
-							if (chart === 'waterfall' && drawn !== cards) problems.push(`${at}: ${cards - drawn} card(s) without a waterfall`);
+							// the chart chosen is the chart drawn: a waterfall card carries total bars, a series card its hover bands
+							if (chart !== 'funnel' && drawn !== cards) problems.push(`${at}: ${cards - drawn} card(s) without a ${chart}`);
 							combos++;
 						}
 					}
@@ -172,6 +173,16 @@ const MUTATIONS = [
 	{ label: 'waterfall decrease in the brand hue', file: 'charts-waterfall.js', edits: [['Math.PI).solid', '0).solid']] },
 	{ label: 'waterfall increase solid', file: 'charts-waterfall.js', edits: [['pal.solid, pal.opacity, p', 'pal.solid, 1, p']] },
 	{ label: 'waterfall rows lose their title', file: 'charts-waterfall.js', edits: [["_.el('title', [], _.esc(s.label + ': ' + s.display))", "''"]] },
+	{ label: 'the series is not registered', file: 'charts-series.js', edits: [['core.series = factory(core._);', 'factory(core._);']] },
+	{ label: 'series points at band edges', file: 'charts-series.js', edits: [['function cx(i) { return (i + 0.5) * w; }', 'function cx(i) { return i * w; }']] },
+	{ label: 'series stroke scales with the box', file: 'charts-series.js', edits: [["'vector-effect', 'non-scaling-stroke'", "'vector-effect', null"]] },
+	{ label: 'series tick text under its gridline', file: 'charts-series.js', edits: [["_.n(gy - 4, 2), 'opacity', 0.7", "_.n(gy + 12, 2), 'opacity', 0.7"]] },
+	{ label: 'grouped columns overlap', file: 'charts-series.js', edits: [['out += col(x + j * (bw + g), bw', 'out += col(x + j * bw * 1.5, bw * 1.5']] },
+	{ label: 'stacked parts touch', file: 'charts-series.js', edits: [['Math.max(b, at(base) - 2)', 'Math.max(b, at(base))']] },
+	{ label: 'hover bands that take no pointer', file: 'charts-series.js', edits: [["'height', PLOT, 'fill', 'transparent'", "'height', PLOT, 'fill', 'none'"]] },
+	{ label: 'series 2 in the brand hue', file: 'charts-series.js', edits: [['_.palette(o.brand, o.theme, Math.PI).solid', '_.palette(o.brand, o.theme).solid']] },
+	{ label: 'series tick text under the marks', file: 'charts-series.js', edits: [["'overflow', 'visible'], box) + dots + tickText;", "'overflow', 'visible'], tickText + box) + dots;"]] },
+	{ label: 'the last x label past the edge', file: 'charts-series.js', edits: [["out += xl(i, end ? '100%' : 0, end ? 'end' : 'start');", "out += xl(i, end ? '100%' : 0, 'start');"]] },
 ];
 
 async function main() {

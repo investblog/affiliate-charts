@@ -53,6 +53,17 @@ test('ticks: nice steps over zero and every value, on the gridlines, the zero li
 	assert.deepEqual(texts(flat, 'tick').map((t) => t.text), ['0']);
 });
 
+test('tick text is drawn over the marks, haloed in the theme surface, so a column cannot hide it', () => {
+	for (const [theme, halo] of [['light', '#fcfcfb'], ['dark', '#1a1a19']]) {
+		const svg = Charts.series([P('a', 100)], { names: ['c'], form: 'columns', theme });
+		assert.ok(svg.indexOf('chart-tick') > svg.lastIndexOf('chart-bar'), 'after the columns');
+		const t = [...svg.matchAll(/<text class="chart-tick" [^>]*>/gu)];
+		assert.ok(t.length === 3 && t.every((m) => m[0].includes(`opacity="0.7" stroke="${halo}" stroke-width="3" stroke-linejoin="round" paint-order="stroke"`)));
+	}
+	const line = Charts.series([P('a', 1), P('b', 2)], { names: ['c'] });
+	assert.ok(line.indexOf('chart-tick') > line.lastIndexOf('chart-dot'), 'after the lines and their dots');
+});
+
 test('tick text goes through format, escaped; format gets the tick without float noise', () => {
 	const svg = Charts.series([P('a', 0), P('b', 100)], { names: ['c'], format: (v) => `<${v} €>` });
 	assert.deepEqual(texts(svg, 'tick').map((t) => t.text), ['&lt;0 €&gt;', '&lt;50 €&gt;', '&lt;100 €&gt;']);
@@ -184,7 +195,7 @@ test('accessible root, determinism, ids from what is drawn, no inline style', ()
 	assert.notEqual(id(Charts.series(pts, { ...o, title: 'May' })), id(Charts.series(pts, { ...o, title: 'June' })));
 	assert.equal(id(a), id(Charts.series(pts, { ...o, legend: ['unused', 'option'] })), 'an unused option changes nothing');
 	assert.doesNotMatch(a, /style|<script|data-|data:/u);
-	assert.match(Charts.series(pts, { ...o, classPrefix: 'k' }), /class="k-key".*class="k-grid".*class="k-tick".*class="k-line".*class="k-dot".*class="k-x".*class="k-hit"/su);
+	assert.match(Charts.series(pts, { ...o, classPrefix: 'k' }), /class="k-key".*class="k-grid".*class="k-line".*class="k-dot".*class="k-tick".*class="k-x".*class="k-hit"/su);
 });
 
 const ok = [P('a', 1)];
