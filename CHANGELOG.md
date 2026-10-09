@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 1.0.0 — 2026-10-09
+
+The whole catalog: nine charts beside the funnel, reviewed before release (ADR 020). A major version:
+every chart's ids change, and `null` options now throw.
 
 - The waterfall (`charts-waterfall.js`): totals from zero, deltas floating from the running total with a
   ghost of it behind them; totals in the brand, an increase in its lighter mark, a decrease in the

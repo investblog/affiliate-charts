@@ -42,8 +42,8 @@ CommonJS: `require('affiliate-charts/charts-funnel.js')`. Or from a CDN, no buil
 then the chart; the page gets the global `Charts`:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/affiliate-charts@0.1/charts.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/affiliate-charts@0.1/charts-funnel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/affiliate-charts@1.0/charts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/affiliate-charts@1.0/charts-funnel.min.js"></script>
 ```
 
 A cabinet that ships `script-src 'self'` installs from npm and bundles instead.
@@ -94,9 +94,6 @@ Bad input throws a `TypeError` starting with `affiliate-charts:` — the library
 
 ## The waterfall
 
-*Not on npm yet: `affiliate-charts@0.1.1` ships the funnel only. The waterfall comes with the next
-release, together with the rest of the catalog; until then, take it from this repository.*
-
 From GGR to the partner's commission: totals stand on zero, each delta floats from where the running
 total stands, with a faint ghost of that running total behind it.
 
@@ -119,8 +116,6 @@ decrease the opposite hue. Name a deduction that is not an expense neutrally, as
 `Charts`.
 
 ## The daily series
-
-*Not on npm yet either — the next release.*
 
 A day (or a week, a month) per point, as lines, an area or columns, on one value axis.
 
@@ -145,8 +140,6 @@ const days = Charts.series([
 
 ## Sparklines and KPI tiles
 
-*The next release, too.*
-
 ```js
 import Charts from 'affiliate-charts/charts-spark.js';
 
@@ -166,8 +159,6 @@ A change is green when `good`, red when not, whichever way it moves, and always 
 
 ## Rankings
 
-*The next release, too.*
-
 ```js
 import Charts from 'affiliate-charts/charts-rank.js';
 
@@ -182,8 +173,6 @@ One bar a row in your order — sort and fold the tail yourself. Every bar is yo
 `highlight`, that row keeps it and the rest turn grey.
 
 ## Part to whole
-
-*The next release, too.*
 
 ```js
 import Charts from 'affiliate-charts/charts-share.js';
@@ -200,8 +189,6 @@ by the part's position, and ignore `brand`: no six colours derived from one bran
 checks. Each part gets a key line with your `display`; the library shows no percentages of its own.
 
 ## Heatmaps and cohorts
-
-*The next release, too.*
 
 ```js
 import Charts from 'affiliate-charts/charts-heatmap.js';
@@ -221,8 +208,6 @@ the lightest colour. Values are magnitudes: a negative one throws.
 
 ## Meters
 
-*The next release, too.*
-
 ```js
 import Charts from 'affiliate-charts/charts-meter.js';
 
@@ -238,8 +223,6 @@ Progress to the next revenue-share tier or a CPA cap: your `brand` filling a lig
 Past the target the fill stops at the end — say by how much in your `display`.
 
 ## Flows
-
-*The next release, too.*
 
 ```js
 import Charts from 'affiliate-charts/charts-sankey.js';

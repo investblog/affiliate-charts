@@ -10,16 +10,15 @@ project: affiliate-charts
 Docs for developers and agents. `index.html` is the playground, `test/verify.html` the browser
 gate, `test/*.test.mjs` the Node gate. Contract-first: change the doc here **before** the code.
 
-**Status (2026-10-09): `affiliate-charts@0.1.1` is on npm (core + funnel), with provenance.** The first
-consumer has integrated it on a branch (M4) under its production CSP, both themes, 375 and 1280 px. The
-funnel (three forms, base and earned, losses, negative values, gaps) passes the Node tests, the
-typecheck, the Vite bundle gate and the browser gate (Chromium, Firefox, WebKit under
-`default-src 'self'`); every check has been seen red under mutation. Budgets frozen (ADR 012). M5 is
-done: releases run from `v*` tags through the Trusted Publisher (0.1.1 was the first). M6–M8
-are done: the waterfall (ADR 014), the daily series (ADR 015), the sparkline and the KPI tile (ADR 016),
-the ranking, part to whole (ADR 017), the heatmap with its cohort form (ADR 018), the meter and the
-sankey (ADR 019) are drawn and pass every gate (Node, mutations, Vite, three engines, the demo),
-unreleased — the catalog ships once, after a review (M9), which is next. Scope:
+**Status (2026-10-09): `affiliate-charts@1.0.0` — the whole catalog — is released from a `v*` tag
+through the Trusted Publisher, with provenance.** The first consumer integrated the funnel (0.1.x) on a
+branch (M4) under its production CSP, both themes, 375 and 1280 px. Every chart — the funnel, the
+waterfall (ADR 014), the daily series (ADR 015), the sparkline and the KPI tile (ADR 016), the ranking,
+part to whole (ADR 017), the heatmap with its cohort form (ADR 018), the meter and the sankey (ADR 019)
+— passes the Node tests, the typecheck, the Vite bundle gate and the browser gate (Chromium, Firefox,
+WebKit under `default-src 'self'`, 375 and 1280 px) and the demo walk; every check has been seen red
+under mutation. An independent review in three passes (M9, ADR 020) found no critical issue; its
+seventeen findings are fixed. Budgets frozen (ADR 012). Scope:
 **a chart library for affiliate programmes** — the forms a partner cabinet uses to show traffic,
 conversions and money to a partner. Numbers marked *provisional* are forecasts, not measurements;
 each names the milestone that replaces it. Keep this line true at every milestone.
@@ -489,9 +488,9 @@ catalog.
 | M6 | `waterfall`, then Group B: `series` (daily first), `spark`/`tile` | gates green |
 | M7 | Group C: `rank`, `share`, `heatmap` | gates green |
 | M8 | Group D: cohort, `meter`, `sankey` | gates green |
-| M9 | an independent review of the whole catalog (Codex), its findings fixed | one release |
+| M9 | an independent review of the whole catalog (Codex), its findings fixed | done 2026-10-09 → 1.0.0 |
 
-**Release plan (2026-10-09):** M6–M8 are not released one by one. The catalog ships once, after M9 —
+**Release plan (2026-10-09):** M6–M8 were not released one by one. The catalog shipped once, as 1.0.0 after M9 —
 the per-minor plan above (0.2.0, 0.3.0, 0.4.0) is superseded.
 
 The funnel ships first and alone (0.1.0): it is what the first consumer needs, and it proves the core.

@@ -54,7 +54,8 @@ line, which emits an empty `<text class="-value">`; the x-label rule is repeated
 ## Consequences
 
 - Ids change for every chart, the funnel's included: the output of the next release differs from
-  0.1.1's byte for byte. Consumers pin the exact version (ADR 003), so this is a minor-version change.
+  0.1.1's byte for byte, and `null` options now throw: the release is a major version, 1.0.0 — which the
+  spec reserved for the whole catalog anyway. Consumers pin the exact version (ADR 003).
 - `series` grows past its frozen budget by 1 B with these fixes; the budget is re-frozen (ADR 012).
 - Each fix has a Node test and a mutation seen red; the column clipping also a browser check that probes
   a pixel past the viewport's edge (two mutations survived the first two drafts of that check).
