@@ -7,6 +7,7 @@ import Charts3 from '../charts-series.js';
 import Charts4 from '../charts-spark.js';
 import Charts5 from '../charts-rank.js';
 import Charts6 from '../charts-share.js';
+import Charts7 from '../charts-heatmap.js';
 
 const steps: Charts.FunnelStep[] = [
 	{ label: 'Clicks', value: 1840, display: '1 840' },
@@ -111,7 +112,18 @@ Charts6.share([{ label: 'a', value: 1 }]);
 // @ts-expect-error — the share module does not type the ranking
 Charts6.rank(sources);
 
+// the heatmap module types the grid and the cohort
+const week: Charts7.HeatmapCells = { rows: ['Mon'], cols: ['00', '01'], values: [[1, null]], display: [['1', null]] };
+const hm: string = Charts7.heatmap(week, { form: 'cohort', format: (v) => v + '%' });
+void hm;
+// @ts-expect-error — form is a closed set
+Charts7.heatmap(week, { form: 'calendar' });
+// @ts-expect-error — the display is required
+Charts7.heatmap({ rows: ['a'], cols: ['b'], values: [[1]] });
+// @ts-expect-error — the heatmap module does not type the share
+Charts7.share(devices);
+
 // the page global, merged from every declaration file
 const viaGlobal: string = globalThis.Charts.funnel(steps) + globalThis.Charts.waterfall(flow) +
-	globalThis.Charts.series(days, { names: ['GGR'] }) + globalThis.Charts.spark([1, 2]) + globalThis.Charts.tile(kpi) + globalThis.Charts.rank(sources) + globalThis.Charts.share(devices);
+	globalThis.Charts.series(days, { names: ['GGR'] }) + globalThis.Charts.spark([1, 2]) + globalThis.Charts.tile(kpi) + globalThis.Charts.rank(sources) + globalThis.Charts.share(devices) + globalThis.Charts.heatmap(week);
 void viaGlobal;

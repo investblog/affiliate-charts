@@ -27,3 +27,4 @@ context → decision → consequences.
 - [015 — the series: lines in a stretched box, ticks on the gridlines, at most two series](015-series.md)
 - [016 — the sparkline and the KPI tile](016-spark-and-tile.md)
 - [017 — part to whole: a fixed palette of six, a 100% bar or a donut](017-share.md)
+- [018 — the heatmap and the cohort: a five-step ramp of the brand, rows as labelled lines](018-heatmap.md)

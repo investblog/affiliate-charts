@@ -26,6 +26,9 @@
     "charts-share.js",
     "charts-share.min.js",
     "charts-share.d.ts",
+    "charts-heatmap.js",
+    "charts-heatmap.min.js",
+    "charts-heatmap.d.ts",
     "CHANGELOG.md"
   ],
   "scripts": {
@@ -48,7 +51,8 @@
       "charts-series.js": 2944,
       "charts-spark.js": 1792,
       "charts-rank.js": 1024,
-      "charts-share.js": 1408
+      "charts-share.js": 1408,
+      "charts-heatmap.js": 2560
     }
   },
   "keywords": [

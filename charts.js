@@ -136,6 +136,12 @@
 		return { solid: toHex(solid), light: toHex(light), opacity: LIGHT };
 	}
 
+	// the brand's hue and chroma at a given OKLCH lightness: a step of the heatmap's ramp (ADR 018)
+	function shade(brand, L) {
+		var o = oklch(rgb(brand || '#2563eb'));
+		return toHex(fromOklch(L, o[1], o[2]));
+	}
+
 	// ── marks ──
 
 	function pct(v) {
@@ -217,6 +223,6 @@
 			return palette(common({ brand: brand, theme: theme }).brand, theme);
 		},
 		_: { n: n, esc: esc, el: el, fail: fail, num: num, str: str, common: common, svg: svg, palette: palette,
-			pct: pct, bar: bar, labelLine: labelLine, legend: legend, SURFACE: SURFACE }
+			pct: pct, bar: bar, labelLine: labelLine, legend: legend, SURFACE: SURFACE, shade: shade }
 	};
 });

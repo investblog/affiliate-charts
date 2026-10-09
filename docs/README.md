@@ -358,13 +358,40 @@ Layout and colour: ADR 017. In short:
   `form`.
 
 **`Charts.heatmap(cells, options)`** — `charts-heatmap.js`. A grid: hour × weekday of clicks.
-Sequential, one hue light → dark, with a scale legend; a `null` cell is drawn as an empty outlined
-cell, never as the lightest colour.
+Sequential, one hue, with a scale legend; a `null` cell has no fill and an em dash, never the lightest
+colour.
+
+```ts
+interface HeatmapCells {
+  rows: string[]; cols: string[];          // caller strings
+  values: (number | null)[][];             // values[row][col]; null: no data
+  display: (string | null)[][];            // the same shape; null exactly where the value is null
+}
+interface HeatmapOptions extends Common { form?: 'grid' | 'cohort' }   // default 'grid'
+```
+
+Layout and colour: ADR 018. In short:
+
+- **Five steps of the brand's hue**, quantised over `[0, max]`; more is darker on light surfaces,
+  brighter on dark ones. Negative values throw (no diverging form).
+- **Rows** as labelled lines (ADR 010): the label, then 20 px of cells, 2 px surface lines between
+  cells; column labels by ADR 015's x-label rule; then the scale: five swatches, `format(0)` and
+  `format(max)`.
+- `grid`: every row full, no text in cells. `cohort`: a row may be shorter than `cols` — the cells
+  past it are absent, not zero — and a cell shows its `display` at 11 px when it fits one band at
+  343 px.
+- Every cell has a `<title>`: `row · col: display`. Class hooks: `-cell`, `-cell-empty`, `-x`,
+  `-legend`, plus the core's `-label`.
+- Throws: `rows` or `cols` not a non-empty array of strings; `values` or `display` not an array of one
+  array per row; a row longer than `cols`, or shorter in the `grid` form; a `display` row of another
+  length than its `values` row; a value `null` whose display is not, or the reverse; a value that is
+  not finite or is negative; an unknown `form`.
 
 ### Group D — cohorts, flows, targets
 
 **Cohort** — `heatmap` with `form: 'cohort'`: rows = FTD month, columns = month since FTD; a
-triangular matrix (future cells are absent, not zero); values as caller strings.
+triangular matrix (future cells are absent, not zero); values as caller strings. Built with the
+heatmap (ADR 018).
 
 **`Charts.sankey(nodes, links, options)`** — `charts-sankey.js`. Source → registration → FTD flows.
 Readable only small: at most 4 columns and 8 nodes per column (throws above); links coloured by their
