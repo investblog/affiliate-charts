@@ -32,6 +32,9 @@
     "charts-meter.js",
     "charts-meter.min.js",
     "charts-meter.d.ts",
+    "charts-sankey.js",
+    "charts-sankey.min.js",
+    "charts-sankey.d.ts",
     "CHANGELOG.md"
   ],
   "scripts": {
@@ -56,7 +59,8 @@
       "charts-rank.js": 1024,
       "charts-share.js": 1408,
       "charts-heatmap.js": 1920,
-      "charts-meter.js": 1024
+      "charts-meter.js": 1024,
+      "charts-sankey.js": 4096
     }
   },
   "keywords": [

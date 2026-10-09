@@ -395,9 +395,31 @@ triangular matrix (future cells are absent, not zero); values as caller strings.
 heatmap (ADR 018).
 
 **`Charts.sankey(nodes, links, options)`** — `charts-sankey.js`. Source → registration → FTD flows.
-Readable only small: at most 4 columns and 8 nodes per column (throws above); links coloured by their
-source node at reduced opacity; nodes labelled outside. Built last — the layout is the largest piece
-of code in the library.
+Readable only small: at most 4 columns and 8 nodes per column (throws above). Built last — the layout
+is the largest piece of code in the library.
+
+```ts
+interface SankeyNode { id: string; column: number; short: string; label: string; display: string }  // short ≤ 3 chars
+interface SankeyLink { from: string; to: string; value: number; display: string }
+sankey(nodes: SankeyNode[], links: SankeyLink[], options?: Common): string
+```
+
+Layout and colour: ADR 019. In short:
+
+- **Labels:** each node's `short` tag (≤ 3 characters, 11 px) beside it; the full `label` and its
+  `display` in a key under the diagram, one line a node. (The first sketch, "nodes labelled outside",
+  cannot fit 375 px — ADR 019.)
+- **Sizes:** a node is the larger of its in- and outflow; one scale for the diagram, the fullest column
+  filling a 240 px plot with 16 px between nodes; ribbons stack in the caller's order.
+- **Colour:** one — nodes the brand's solid mark, ribbons the solid at 0.3. (The first sketch, links
+  coloured by their source node, needs a palette no brand gives — ADR 015, 017.)
+- Each ribbon has a `<title>` `from → to: display`, each node `label: display`. Class hooks: `-node`,
+  `-link`, `-tag`, `-key`, plus the core's `-label`, `-value`.
+- Throws: `nodes` or `links` not an array; fewer than two columns or more than four, a gap in the column
+  numbers, more than eight nodes a column; a node id repeated, a `column` that is not an integer, a
+  `short` that is not a string of one to three characters, a `label` or `display` that is not a string;
+  a link to an unknown id, between columns that are not neighbours, or backwards; a link `value` that is
+  not finite or is negative; every link zero.
 
 **`Charts.meter(meter, options)`** — `charts-meter.js`. Progress to the next revenue-share tier or a
 CPA cap: a filled bar on a lighter track of the same ramp, tier marks as hairlines, caller strings

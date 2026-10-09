@@ -28,6 +28,8 @@ try {
 		`import Part from '${pkg.name}/charts-share.js';`,
 		`import Heat from '${pkg.name}/charts-heatmap.js';`,
 		`import Gauge from '${pkg.name}/charts-meter.js';`,
+		`import Flows from '${pkg.name}/charts-sankey.js';`,
+		`globalThis.flows = Flows.sankey([{ id: 'a', column: 0, short: 'a', label: 'a', display: '1' }, { id: 'b', column: 1, short: 'b', label: 'b', display: '1' }], [{ from: 'a', to: 'b', value: 1, display: '1' }], { title: 't' });`,
 		`globalThis.gauge = Gauge.meter({ label: 'a', value: 1, display: '1', target: 2, targetDisplay: '2' }, { title: 't' });`,
 		`globalThis.heat = Heat.heatmap({ rows: ['a'], cols: ['b'], values: [[1]], display: [['1']] }, { title: 't' });`,
 		`globalThis.part = Part.share([{ label: 'a', value: 1, display: '1' }], { title: 't', form: 'donut' });`,
@@ -36,7 +38,7 @@ try {
 		`globalThis.out = Charts.funnel([{ label: 'a', value: 1, display: '1' }], { title: 't' });`,
 		`globalThis.flow = Flow.waterfall([{ label: 'a', value: 1, display: '1', kind: 'total' }], { title: 't' });`,
 		`globalThis.days = Days.series([{ x: 'a', values: [1], display: ['1'] }], { names: ['c'], title: 't' });`,
-		'globalThis.same = Charts === Flow && Flow === Days && Days === Kpi && Kpi === Top && Top === Part && Part === Heat && Heat === Gauge;',
+		'globalThis.same = Charts === Flow && Flow === Days && Days === Kpi && Kpi === Top && Top === Part && Part === Heat && Heat === Gauge && Gauge === Flows;',
 	].join('\n'));
 	const res = await build({
 		root: dir, logLevel: 'error', configFile: false,
@@ -53,6 +55,7 @@ try {
 	if (!/^<svg [^>]*role="img"/u.test(ctx.part || '')) throw new Error(`unexpected share output: ${ctx.part}`);
 	if (!/^<svg [^>]*role="img"/u.test(ctx.heat || '')) throw new Error(`unexpected heatmap output: ${ctx.heat}`);
 	if (!/^<svg [^>]*role="img"/u.test(ctx.gauge || '')) throw new Error(`unexpected meter output: ${ctx.gauge}`);
+	if (!/^<svg [^>]*role="img"/u.test(ctx.flows || '')) throw new Error(`unexpected sankey output: ${ctx.flows}`);
 	if (ctx.same !== true) throw new Error('the modules exported different objects');
 	console.log('bundle gate: ok — the default imports through Vite draw, on one core');
 	code = 0;

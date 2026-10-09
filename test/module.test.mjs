@@ -45,7 +45,7 @@ test('loading a module twice is harmless', () => {
 
 test('the internals are reachable by modules but absent from the public types', () => {
 	assert.equal(typeof Core._, 'object');
-	for (const f of ['charts.d.ts', 'charts-funnel.d.ts', 'charts-waterfall.d.ts', 'charts-series.d.ts', 'charts-spark.d.ts', 'charts-rank.d.ts', 'charts-share.d.ts', 'charts-heatmap.d.ts', 'charts-meter.d.ts']) assert.doesNotMatch(read(f), /\b_\s*:/u, f);
+	for (const f of ['charts.d.ts', 'charts-funnel.d.ts', 'charts-waterfall.d.ts', 'charts-series.d.ts', 'charts-spark.d.ts', 'charts-rank.d.ts', 'charts-share.d.ts', 'charts-heatmap.d.ts', 'charts-meter.d.ts', 'charts-sankey.d.ts']) assert.doesNotMatch(read(f), /\b_\s*:/u, f);
 });
 
 test('the modules share one core, in any order, through CommonJS and on a page', () => {
@@ -56,9 +56,10 @@ test('the modules share one core, in any order, through CommonJS and on a page',
 	assert.equal(require('../charts-share.js'), require('../charts.js'));
 	assert.equal(require('../charts-heatmap.js'), require('../charts.js'));
 	assert.equal(require('../charts-meter.js'), require('../charts.js'));
+	assert.equal(require('../charts-sankey.js'), require('../charts.js'));
 	assert.equal(typeof require('../charts-waterfall.js').funnel, 'function', 'the funnel loaded above is on the same core');
-	for (const files of [['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js', 'charts-heatmap.js', 'charts-meter.js'],
-		['charts.js', 'charts-meter.js', 'charts-heatmap.js', 'charts-share.js', 'charts-rank.js', 'charts-spark.js', 'charts-series.js', 'charts-waterfall.js', 'charts-funnel.js']]) {
+	for (const files of [['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js', 'charts-heatmap.js', 'charts-meter.js', 'charts-sankey.js'],
+		['charts.js', 'charts-sankey.js', 'charts-meter.js', 'charts-heatmap.js', 'charts-share.js', 'charts-rank.js', 'charts-spark.js', 'charts-series.js', 'charts-waterfall.js', 'charts-funnel.js']]) {
 		const self = page(...files);
 		assert.deepEqual(Object.keys(self), ['Charts']);
 		assert.match(self.Charts.funnel([{ label: 'a', value: 1, display: '1' }]), /^<svg /u);
@@ -69,8 +70,9 @@ test('the modules share one core, in any order, through CommonJS and on a page',
 		assert.match(self.Charts.share([{ label: 'a', value: 1, display: '1' }]), /^<svg /u);
 		assert.match(self.Charts.heatmap({ rows: ['a'], cols: ['b'], values: [[1]], display: [['1']] }), /^<svg /u);
 		assert.match(self.Charts.meter({ label: 'a', value: 1, display: '1', target: 2, targetDisplay: '2' }), /^<svg /u);
+		assert.match(self.Charts.sankey([{ id: 'a', column: 0, short: 'a', label: 'a', display: '1' }, { id: 'b', column: 1, short: 'b', label: 'b', display: '1' }], [{ from: 'a', to: 'b', value: 1, display: '1' }]), /^<svg /u);
 	}
-	for (const f of ['charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js', 'charts-heatmap.js', 'charts-meter.js']) assert.doesNotMatch(read(f), /window\.\w+\s*=/u, f);
+	for (const f of ['charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js', 'charts-heatmap.js', 'charts-meter.js', 'charts-sankey.js']) assert.doesNotMatch(read(f), /window\.\w+\s*=/u, f);
 });
 
 test('the waterfall loaded before the core throws a clear error and defines nothing', () => {
@@ -107,4 +109,9 @@ test('the heatmap module loaded before the core throws a clear error and defines
 test('the meter module loaded before the core throws a clear error and defines nothing', () => {
 	assert.throws(() => page('charts-meter.js'), /load charts\.js before charts-meter\.js/u);
 	assert.deepEqual([typeof page('charts.js', 'charts-meter.js').Charts.meter, page('charts.js', 'charts-meter.js').Charts.heatmap], ['function', undefined]);
+});
+
+test('the sankey module loaded before the core throws a clear error and defines nothing', () => {
+	assert.throws(() => page('charts-sankey.js'), /load charts\.js before charts-sankey\.js/u);
+	assert.deepEqual([typeof page('charts.js', 'charts-sankey.js').Charts.sankey, page('charts.js', 'charts-sankey.js').Charts.meter], ['function', undefined]);
 });

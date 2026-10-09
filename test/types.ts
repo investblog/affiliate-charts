@@ -9,6 +9,7 @@ import Charts5 from '../charts-rank.js';
 import Charts6 from '../charts-share.js';
 import Charts7 from '../charts-heatmap.js';
 import Charts8 from '../charts-meter.js';
+import Charts9 from '../charts-sankey.js';
 
 const steps: Charts.FunnelStep[] = [
 	{ label: 'Clicks', value: 1840, display: '1 840' },
@@ -135,7 +136,20 @@ Charts8.meter({ ...tier, marks: [{ value: 1 }] });
 // @ts-expect-error — the meter module does not type the heatmap
 Charts8.heatmap(week);
 
+// the sankey module types the flows
+const sn: Charts9.SankeyNode[] = [{ id: 'tg', column: 0, short: 'TG', label: 'sub-id: tg', display: '9 200' },
+	{ id: 'reg', column: 1, short: 'REG', label: 'Registrations', display: '2 410' }];
+const sl: Charts9.SankeyLink[] = [{ from: 'tg', to: 'reg', value: 1500, display: '1 500' }];
+const sk: string = Charts9.sankey(sn, sl, { theme: 'dark' });
+void sk;
+// @ts-expect-error — a node needs its short tag
+Charts9.sankey([{ id: 'a', column: 0, label: 'a', display: '1' }], sl);
+// @ts-expect-error — a link needs its display
+Charts9.sankey(sn, [{ from: 'tg', to: 'reg', value: 1 }]);
+// @ts-expect-error — the sankey module does not type the meter
+Charts9.meter(tier);
+
 // the page global, merged from every declaration file
 const viaGlobal: string = globalThis.Charts.funnel(steps) + globalThis.Charts.waterfall(flow) +
-	globalThis.Charts.series(days, { names: ['GGR'] }) + globalThis.Charts.spark([1, 2]) + globalThis.Charts.tile(kpi) + globalThis.Charts.rank(sources) + globalThis.Charts.share(devices) + globalThis.Charts.heatmap(week) + globalThis.Charts.meter(tier);
+	globalThis.Charts.series(days, { names: ['GGR'] }) + globalThis.Charts.spark([1, 2]) + globalThis.Charts.tile(kpi) + globalThis.Charts.rank(sources) + globalThis.Charts.share(devices) + globalThis.Charts.heatmap(week) + globalThis.Charts.meter(tier) + globalThis.Charts.sankey(sn, sl);
 void viaGlobal;
