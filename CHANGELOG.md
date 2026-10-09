@@ -14,7 +14,9 @@
   value, a change coloured by direction × good with its arrow, and a trend (ADR 016).
 - Rankings (`charts-rank.js`): one bar a row in the caller's order, negatives left of zero, one colour,
   an optional `highlight` with the rest in grey.
-- The demo picks the chart: funnel, waterfall, daily series, KPI tiles or ranking.
+- Part to whole (`charts-share.js`): a 100% bar or a donut, up to six parts, in a fixed palette of six
+  per theme checked for colour blindness — the one chart that ignores `brand` (ADR 017).
+- The demo picks the chart: funnel, waterfall, daily series, KPI tiles, ranking or part to whole.
 
 ## 0.1.1 — 2026-10-08
 

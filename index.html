@@ -42,7 +42,7 @@
 <main>
 	<aside>
 		<h1>affiliate-charts</h1>
-		<p class="meta">Funnels, money waterfalls, daily series, KPI tiles and rankings for partner cabinets, drawn as SVG strings. Every control below is an option of one call.</p>
+		<p class="meta">Funnels, money waterfalls, daily series, KPI tiles, rankings and shares for partner cabinets, drawn as SVG strings. Every control below is an option of one call.</p>
 		<label>show <select id="show">
 			<option value="one">one example</option>
 			<option value="sheet">every example</option>
@@ -53,6 +53,7 @@
 			<option value="series">daily series</option>
 			<option value="tile">KPI tiles</option>
 			<option value="rank">ranking</option>
+			<option value="share">part to whole</option>
 		</select></label>
 		<label>example <select id="example"></select></label>
 		<label>form <select id="form"></select></label>
@@ -78,7 +79,7 @@
 // cache-bust the library, so a stale copy never shows an old picture (AGENTS.md); file:// loads plain
 (function () {
 	var bust = location.protocol === 'file:' ? '' : '?ts=' + Date.now();
-	var files = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js'], i = 0;
+	var files = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js'], i = 0;
 	(function next() {
 		if (i === files.length) return app();
 		var s = document.createElement('script');
@@ -190,13 +191,19 @@ function app() {
 		sources: { option: 'GGR by sub-id', name: 'GGR by sub-id, October', rows: sources },
 		focus: { option: 'one sub-id emphasised', name: 'Where tg-channel stands', rows: sources, highlight: 1 },
 	};
-	var FORMS = { funnel: ['bars', 'steps', 'shape'], waterfall: [], series: ['line', 'area', 'columns'], tile: [], rank: [] };
+	// part to whole: the caller folds the tail into "Other"; six parts at most
+	var Sh = function (label, value) { return { label: label, value: value, display: count(value) }; };
+	var SHARES = {
+		devices: { option: 'clicks by device', name: 'Clicks by device', parts: [Sh('Mobile — Android', 9820), Sh('Mobile — iOS', 5410), Sh('Desktop', 2630), Sh('Tablet', 410), Sh('Other', 130)] },
+		geo: { option: 'first deposits by country', name: 'First deposits by country', parts: [Sh('Serbia', 212), Sh('Bosnia', 88), Sh('Montenegro', 41), Sh('North Macedonia', 30), Sh('Croatia', 19), Sh('Other (9)', 20)] },
+	};
+	var FORMS = { funnel: ['bars', 'steps', 'shape'], waterfall: [], series: ['line', 'area', 'columns'], tile: [], rank: [], share: ['bar', 'donut'] };
 
 	var $ = function (id) { return document.getElementById(id); };
 	var stage = $('stage');
 	var chart = function () { return $('chart').value; };
 	var flowChart = function () { return chart() === 'waterfall'; };
-	var examples = function () { return { funnel: FUNNELS, waterfall: FLOWS, series: DAYS, tile: TILES, rank: RANKS }[chart()]; };
+	var examples = function () { return { funnel: FUNNELS, waterfall: FLOWS, series: DAYS, tile: TILES, rank: RANKS, share: SHARES }[chart()]; };
 	// the example and form lists follow the chart; a choice survives as long as the chart has it
 	var shown = null;
 	function fillExamples() {
@@ -224,7 +231,7 @@ function app() {
 	}
 
 	function options(ex) {
-		var o = chart() === 'funnel' ? { form: $('form').value } : chart() === 'series' ? { form: seriesForm(ex), names: ex.names } : {};
+		var o = chart() === 'funnel' || chart() === 'share' ? { form: $('form').value } : chart() === 'series' ? { form: seriesForm(ex), names: ex.names } : {};
 		if (ex.stacked && o.form === 'columns') o.stacked = true;
 		if (ex.previous) o.previous = ex.previous;
 		o.theme = $('theme').value;
@@ -249,6 +256,9 @@ function app() {
 			Charts.init(host, svg);
 		} else if (chart() === 'tile') {
 			svg = Charts.tile(ex.tile, options(ex));
+			Charts.init(host, svg);
+		} else if (chart() === 'share') {
+			svg = Charts.share(ex.parts, options(ex));
 			Charts.init(host, svg);
 		} else if (chart() === 'rank') {
 			svg = Charts.rank(ex.rows, options(ex));
@@ -295,7 +305,7 @@ function app() {
 		var o = options(examples()[$('example').value]), fn = chart();
 		if (o.previous) o.previous = '{ name, values, display }';
 		$('code').textContent = "import Charts from 'affiliate-charts/charts-" + (fn === 'tile' ? 'spark' : fn) + ".js';\n\nconst svg = Charts." + fn + '(' +
-			({ series: 'points', tile: 'tile', rank: 'rows' }[fn] || 'steps') + ', ' +
+			({ series: 'points', tile: 'tile', rank: 'rows', share: 'parts' }[fn] || 'steps') + ', ' +
 			JSON.stringify(o, null, 1).replace(/\n\s*/g, ' ') + ');\nCharts.init(el, svg);';
 	}
 	['show', 'chart', 'example', 'form', 'theme', 'brand', 'width', 'titled'].forEach(function (id) {

@@ -8,7 +8,7 @@
 	document.addEventListener('securitypolicyviolation', function (e) { violations.push(e.violatedDirective + ' ' + e.blockedURI); });
 
 	// cache-bust: a stale library fakes a result either way (AGENTS.md)
-	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js', '../charts-waterfall.js', '../charts-series.js', '../charts-spark.js', '../charts-rank.js'], i = 0;
+	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js', '../charts-waterfall.js', '../charts-series.js', '../charts-spark.js', '../charts-rank.js', '../charts-share.js'], i = 0;
 	(function next() {
 		if (i === files.length) return setTimeout(run, 50);
 		var s = document.createElement('script');
@@ -71,6 +71,11 @@
 		// the ranking: a source where players won, the third row emphasised
 		['rank', [{ label: 'sub-1', value: 300, display: '300' }, { label: 'sub-2', value: 150, display: '150' },
 			{ label: 'sub-3', value: -100, display: '−100' }], { title: 'Rank', highlight: 1, theme: 'dark' }, 'rank'],
+		// part to whole (ADR 017): 50 / 30 / 0 / 20, as a bar and as a donut
+		['sharebar', [{ label: 'Android', value: 50, display: '50' }, { label: 'iOS', value: 30, display: '30' }, { label: 'TV', value: 0, display: '0' },
+			{ label: 'Desktop', value: 20, display: '20' }], { title: 'Share', theme: 'dark' }, 'share'],
+		['donut', [{ label: 'Android', value: 50, display: '50' }, { label: 'iOS', value: 30, display: '30' }, { label: 'TV', value: 0, display: '0' },
+			{ label: 'Desktop', value: 20, display: '20' }], { title: 'Donut', form: 'donut' }, 'share'],
 	];
 
 	function run() {
@@ -80,6 +85,7 @@
 		if (typeof window.Charts.series !== 'function') return finish(['Charts.series is not loaded']);
 		if (typeof window.Charts.tile !== 'function') return finish(['Charts.tile is not loaded']);
 		if (typeof window.Charts.rank !== 'function') return finish(['Charts.rank is not loaded']);
+		if (typeof window.Charts.share !== 'function') return finish(['Charts.share is not loaded']);
 		FIXTURES.concat(FLOWS, SERIES, TILES).forEach(function (f) {
 			var card = document.createElement('div');
 			card.className = 'card ' + (f[2].theme === 'dark' ? 'dark' : 'light') + (f[3] === 'tile' ? ' narrow' : '');
@@ -111,7 +117,7 @@
 		});
 		check('ids are unique across charts on one page', function () {
 			var ids = [].map.call(document.querySelectorAll('#charts svg [id]'), function (e) { return e.id; });
-			return ids.length === 15 && new Set(ids).size === ids.length;
+			return ids.length === 17 && new Set(ids).size === ids.length;
 		});
 		check('aria-labelledby resolves inside its own chart', function () {
 			return [].every.call(document.querySelectorAll('#charts svg[aria-labelledby]'), function (s) {
@@ -312,6 +318,42 @@
 			var on = s.querySelectorAll('.chart-bar'), off = s.querySelectorAll('.chart-bar-muted');
 			return on.length === 1 && off.length === 2 && hex(getComputedStyle(on[0].querySelector('rect')).fill) === window.Charts._.palette(null, 'dark').solid &&
 				[].every.call(off, function (m) { return getComputedStyle(m).opacity === '0.35' && hex(getComputedStyle(m.querySelector('rect')).fill) === '#e6e6e6'; });
+		});
+		// part to whole
+		check('share: parts at their share of the width, a gap between, none at the ends', function () {
+			// a line's box is 0 wide in Chromium and WebKit and holds its stroke in Firefox (measured): read the
+			// resolved x and the computed stroke instead
+			var s = svg('sharebar'), r = box(s), p = [].map.call(s.querySelectorAll('.chart-part'), box), g = s.querySelectorAll('line');
+			return p.length === 3 && near(p[0].left, r.left) && near(p[0].width, r.width * 0.5) && near(p[1].width, r.width * 0.3) &&
+				near(p[2].right, r.right) && g.length === 2 && getComputedStyle(g[0]).strokeWidth === '2px' &&
+				near(g[0].x1.baseVal.value, r.width * 0.5, 0.75) && near(g[1].x1.baseVal.value, r.width * 0.8, 0.75);
+		});
+		// the donut's boxes differ by engine (Chromium and WebKit box a nested svg by its content, Firefox puts
+		// a circle's stroke in its box, and its nested-svg screen matrix leaves the viewBox out — measured); a
+		// circle's own screen matrix agrees in all three. Only its centre and scale are taken from it: `at(deg)`
+		// probes the ring's centre line at an angle clockwise from the top of the screen, so a circle that lost
+		// its rotation is not followed
+		var donut = function () {
+			var c = svg('donut').querySelectorAll('.chart-part'), k = c[0].getScreenCTM(), s = Math.sqrt(k.a * k.a + k.b * k.b);
+			var mid = [k.a * 50 + k.c * 50 + k.e, k.b * 50 + k.d * 50 + k.f];
+			return { c: c, s: s, mid: mid, at: function (deg) {
+				var a = deg * Math.PI / 180;
+				return document.elementFromPoint(mid[0] + 40 * s * Math.sin(a), mid[1] - 40 * s * Math.cos(a));
+			} };
+		};
+		check('share: the donut is a 160px square, centred, its parts in their slots', function () {
+			// 1.6px a unit; the centre (50, 50) at the chart's middle, 80px down. Desktop is the fourth part (the
+			// zero TV keeps slot 3), so slot 4, yellow
+			var r = box(svg('donut')), d = donut();
+			return d.c.length === 3 && near(d.s, 1.6, 0.01) && near(d.mid[0], (r.left + r.right) / 2, 1.5) && near(d.mid[1], r.top + 80, 1) && getComputedStyle(d.c[2]).stroke === 'rgb(237, 161, 0)';
+		});
+		check('share: the donut starts at 12 o\'clock and runs clockwise', function () {
+			// 50 / 30 / 20 from 12 o'clock clockwise: Android to 180°, iOS to 288°, Desktop to 360°; probe the ring
+			// at 90°, 234° and 324° clockwise from the top
+			svg('donut').scrollIntoView({ block: 'center' });
+			var d = donut(), ok = d.at(90) === d.c[0] && d.at(234) === d.c[1] && d.at(324) === d.c[2];
+			window.scrollTo(0, 0);
+			return ok;
 		});
 		// last, after every chart has been in the document: CSP reports arrive asynchronously
 		// the palette in this engine against the bytes Node computed (test/fixtures/palette.json): float

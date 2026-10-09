@@ -85,3 +85,14 @@ The ranking is rows of the core's `bar` and `labelLine`; it adds nothing to the 
 | `charts-rank.js` | 915 B | **1024 B** |
 
 A page with a ranking alone pays 3449 B gzipped.
+
+## Addendum (M7, part to whole, 2026-10-09)
+
+`share` carries its fixed palette of twelve hexes (ADR 017) and the core's `labelLine` for its key; the
+core is untouched.
+
+| File | Measured | Frozen |
+|---|---|---|
+| `charts-share.js` | 1291 B | **1408 B** |
+
+A page with a share alone pays 3825 B gzipped.

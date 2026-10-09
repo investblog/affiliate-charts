@@ -24,7 +24,7 @@ import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const FILES = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js'];
+const FILES = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js'];
 const MUTATE = process.argv.includes('--mutate');
 const WIDTHS = [375, 1280];
 const CSP = "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self'; base-uri 'none'; object-src 'none'";
@@ -94,7 +94,8 @@ async function demo(pw, port) {
 			waterfall: [['flow', 'losing'], [null], '.chart-bar-total'],
 			series: [['money', 'clicks', 'deposits'], ['line', 'area', 'columns'], '.chart-hit'],
 			tile: [['epc', 'cpa', 'cr', 'ftd'], [null], '.chart-value'],
-			rank: [['sources', 'focus'], [null], '.chart-bar'] };
+			rank: [['sources', 'focus'], [null], '.chart-bar'],
+			share: [['devices', 'geo'], ['bar', 'donut'], '.chart-part'] };
 		for (const [chart, [examples, forms, mark]] of Object.entries(charts)) {
 			await page.selectOption('#chart', chart);
 			for (const show of ['one', 'sheet']) {
@@ -192,6 +193,11 @@ const MUTATIONS = [
 	{ label: 'the rank is not registered', file: 'charts-rank.js', edits: [['core.rank = factory(core._);', 'factory(core._);']] },
 	{ label: 'rank negatives grow right', file: 'charts-rank.js', edits: [['r.value < 0 ? z - w : z', 'z']] },
 	{ label: 'muted rank bars in the brand', file: 'charts-rank.js', edits: [["muted ? 'currentColor' : solid", 'solid']] },
+	{ label: 'the share is not registered', file: 'charts-share.js', edits: [['core.share = factory(core._);', 'factory(core._);']] },
+	{ label: 'the donut counter-clockwise', file: 'charts-share.js', edits: [['_.n(-at * CIRC, 3)', '_.n(at * CIRC, 3)']] },
+	{ label: 'the donut from 3 o\'clock', file: 'charts-share.js', edits: [["'transform', 'rotate(-90 50 50)'", "'transform', null"]] },
+	{ label: 'the donut stretched', file: 'charts-share.js', edits: [["'viewBox', '0 0 100 100']", "'viewBox', '0 0 100 100', 'preserveAspectRatio', 'none']"]] },
+	{ label: 'bar gaps at the edges', file: 'charts-share.js', edits: [['if (!donut && at) gaps +=', 'if (!donut) gaps +=']] },
 	{ label: 'the last x label past the edge', file: 'charts-series.js', edits: [["out += xl(i, end ? '100%' : 0, end ? 'end' : 'start');", "out += xl(i, end ? '100%' : 0, 'start');"]] },
 ];
 
