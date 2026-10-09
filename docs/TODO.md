@@ -17,4 +17,6 @@ The milestone table is in
 - [x] M5 — package-name ADR, public repo, playground on Pages, first publish (2026-10-08); Trusted Publisher, first OIDC release 0.1.1 (2026-10-09)
 - [ ] M6 — `waterfall` (drawn and gated 2026-10-09, unreleased), then Group B: `series` (line, area, columns, previous period), `spark` / `tile`
 - [ ] M7 — Group C: `rank`, `share` (100% bar, donut ≤ 6), `heatmap` (hour × weekday)
-- [ ] M8 — Group D: cohort heatmap, `meter`, `sankey` → v1.0
+- [ ] M8 — Group D: cohort heatmap, `meter`, `sankey`
+- [ ] M9 — independent review of the whole catalog (Codex), fixes, then one release (2026-10-09: no
+  per-milestone releases)

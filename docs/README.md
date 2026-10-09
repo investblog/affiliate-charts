@@ -17,7 +17,7 @@ typecheck, the Vite bundle gate and the browser gate (Chromium, Firefox, WebKit 
 `default-src 'self'`); every check has been seen red under mutation. Budgets frozen (ADR 012). M5 is
 done: releases run from `v*` tags through the Trusted Publisher (0.1.1 was the first). M6 in progress:
 the waterfall is drawn and passes every gate (Node, mutations, Vite, three engines, the demo; ADR 014),
-unreleased; Group B is next. Scope:
+unreleased — the catalog ships once, after M8 and a review (M9); Group B is next. Scope:
 **a chart library for affiliate programmes** — the forms a partner cabinet uses to show traffic,
 conversions and money to a partner. Numbers marked *provisional* are forecasts, not measurements;
 each names the milestone that replaces it. Keep this line true at every milestone.
@@ -326,9 +326,13 @@ catalog.
 | M3 | core drawing + `funnel` (three forms) | gates green → 0.1.0 |
 | M4 | first consumer: the two funnels above their tables, imported from npm through a bundler (Vite: default import of the UMD file via CJS interop), CSP unchanged (`script-src 'self'`, `style-src 'self'`), both themes, 375/1280 px | screenshots + review |
 | M5 | package-name ADR (done: ADR 013), public repo, Pages playground, first publish, Trusted Publisher, release from `v*` tags | published |
-| M6 | `waterfall`, then Group B: `series` (daily first), `spark`/`tile` | gates green → 0.2.0 |
-| M7 | Group C: `rank`, `share`, `heatmap` | → 0.3.0 |
-| M8 | Group D: cohort, `meter`, `sankey` (*provisional budget 4096 B*) | → 0.4.0, then v1.0 |
+| M6 | `waterfall`, then Group B: `series` (daily first), `spark`/`tile` | gates green |
+| M7 | Group C: `rank`, `share`, `heatmap` | gates green |
+| M8 | Group D: cohort, `meter`, `sankey` (*provisional budget 4096 B*) | gates green |
+| M9 | an independent review of the whole catalog (Codex), its findings fixed | one release |
+
+**Release plan (2026-10-09):** M6–M8 are not released one by one. The catalog ships once, after M9 —
+the per-minor plan above (0.2.0, 0.3.0, 0.4.0) is superseded.
 
 The funnel ships first and alone (0.1.0): it is what the first consumer needs, and it proves the core.
 The waterfall is built against a fixture (2026-10-09): no consumer sends a real deduction (bonuses,

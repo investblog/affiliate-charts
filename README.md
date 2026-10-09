@@ -92,6 +92,9 @@ Bad input throws a `TypeError` starting with `affiliate-charts:` — the library
 
 ## The waterfall
 
+*Not on npm yet: `affiliate-charts@0.1.1` ships the funnel only. The waterfall comes with the next
+release, together with the rest of the catalog; until then, take it from this repository.*
+
 From GGR to the partner's commission: totals stand on zero, each delta floats from where the running
 total stands, with a faint ghost of that running total behind it.
 
