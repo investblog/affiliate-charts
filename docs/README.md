@@ -10,12 +10,12 @@ project: affiliate-charts
 Docs for developers and agents. `index.html` is the playground, `test/verify.html` the browser
 gate, `test/*.test.mjs` the Node gate. Contract-first: change the doc here **before** the code.
 
-**Status (2026-10-08): `affiliate-charts@0.1.0` is on npm (core + funnel), with provenance.** The first
+**Status (2026-10-09): `affiliate-charts@0.1.1` is on npm (core + funnel), with provenance.** The first
 consumer has integrated it on a branch (M4) under its production CSP, both themes, 375 and 1280 px. The
 funnel (three forms, base and earned, losses, negative values, gaps) passes the Node tests, the
 typecheck, the Vite bundle gate and the browser gate (Chromium, Firefox, WebKit under
-`default-src 'self'`); every check has been seen red under mutation. Budgets frozen (ADR 012). Open in
-M5: the Trusted Publisher on npmjs.com, after which releases run from `v*` tags. Next: M6. Scope:
+`default-src 'self'`); every check has been seen red under mutation. Budgets frozen (ADR 012). M5 is
+done: releases run from `v*` tags through the Trusted Publisher (0.1.1 was the first). Next: M6. Scope:
 **a chart library for affiliate programmes** — the forms a partner cabinet uses to show traffic,
 conversions and money to a partner. Numbers marked *provisional* are forecasts, not measurements;
 each names the milestone that replaces it. Keep this line true at every milestone.
