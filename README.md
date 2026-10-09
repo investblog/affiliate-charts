@@ -4,7 +4,7 @@ Charts for affiliate programmes, as SVG strings. The **funnel**: clicks to first
 and deposits to revenue in money — the base of each event beside what the partner earned from it, with
 cancellations and rejected records on the same scale. The **waterfall**: GGR to the partner's
 commission, step by step. The **daily series**: lines, areas and columns over days. **KPI tiles** and
-sparklines. **Rankings** by source, **shares** as a 100% bar or a donut. Zero dependencies,
+sparklines. **Rankings** by source, **shares** as a 100% bar or a donut, **heatmaps** and **cohorts**. Zero dependencies,
 4.4 KB gzipped for the core and the funnel.
 
 [![npm](https://img.shields.io/npm/v/affiliate-charts.svg)](https://www.npmjs.com/package/affiliate-charts)
@@ -14,7 +14,7 @@ Made by [301](https://301.st) for the [OktagonBet partner programme](https://okt
 first user and sponsor.
 
 **[Live demo →](https://investblog.github.io/affiliate-charts/)** — every option wired to a control,
-four example funnels, two waterfalls, three daily series, four KPI tiles, two rankings and two shares, light and dark, and a width slider to watch the bars follow their container.
+four example funnels, two waterfalls, three daily series, four KPI tiles, two rankings, two shares and two heatmaps, light and dark, and a width slider to watch the bars follow their container.
 
 [![A money funnel on a light card and a counts funnel on a dark one, drawn by affiliate-charts](https://investblog.github.io/affiliate-charts/docs/preview.svg)](https://investblog.github.io/affiliate-charts/)
 
@@ -22,7 +22,7 @@ four example funnels, two waterfalls, three daily series, four KPI tiles, two ra
   under `default-src 'self'`, where most chart libraries break.
 - **Zero dependencies.** One call returns markup, in Node at build time or in the browser.
 - **Small.** A core plus one file per chart: the core and the funnel are 4.4 KB gzipped together, the
-  waterfall adds 1.1 KB, the daily series 2.8 KB, sparklines and KPI tiles 1.6 KB, rankings 0.9 KB, part to whole 1.3 KB.
+  waterfall adds 1.1 KB, the daily series 2.8 KB, sparklines and KPI tiles 1.6 KB, rankings 0.9 KB, part to whole 1.3 KB, heatmaps and cohorts 1.8 KB.
 - **Reads on a phone.** Bars follow the width of their container; text keeps its pixel size.
 - **Honest by construction.** Steps are never summed, money and counts never share an axis, a missing
   rate is a dash and never `0%`, and the library never formats or computes a number it shows: every
@@ -199,6 +199,26 @@ Up to six parts — fold the rest into "Other". The colours are a fixed, checked
 by the part's position, and ignore `brand`: no six colours derived from one brand pass the colour-blind
 checks. Each part gets a key line with your `display`; the library shows no percentages of its own.
 
+## Heatmaps and cohorts
+
+*The next release, too.*
+
+```js
+import Charts from 'affiliate-charts/charts-heatmap.js';
+
+const cohorts = Charts.heatmap({
+  rows: ['Apr 2026', 'May 2026', 'Jun 2026'],
+  cols: ['M0', 'M1', 'M2'],
+  values: [[100, 58, 34], [100, 60], [100]],      // a shorter row: those months have not happened
+  display: [['100%', '58%', '34%'], ['100%', '60%'], ['100%']],
+}, { form: 'cohort', format: (v) => v + '%', title: 'Still depositing' });
+```
+
+Five steps of your `brand`, from zero to the largest value: more is darker on a light page, brighter on a
+dark one. `form: 'grid'` (default) is for full grids such as clicks by hour and weekday; `'cohort'`
+lets rows stop early and writes each value in its cell when it fits. `null` is no data — a dash, never
+the lightest colour. Values are magnitudes: a negative one throws.
+
 ## Colour and size
 
 - Bars are your `brand`, fitted for contrast on a light or a dark surface. Text, losses and lines use
@@ -207,7 +227,7 @@ checks. Each part gets a key line with your `display`; the library shows no perc
   `chart-bar-total`, `chart-bar-up`, `chart-bar-down`, `chart-label`, `chart-value`, `chart-rate`,
   `chart-legend`, `chart-grid`, `chart-axis`, and for the series `chart-line`, `chart-area`, `chart-dot`,
   `chart-prev`, `chart-tick`, `chart-x`, `chart-key`, `chart-hit`, and for the tile `chart-delta`,
-  `chart-delta-good`, `chart-delta-bad`, `chart-trend`, `chart-bar-muted` in a ranking, `chart-part-1` … `chart-part-6` in a share); a stylesheet can recolour any of them.
+  `chart-delta-good`, `chart-delta-bad`, `chart-trend`, `chart-bar-muted` in a ranking, `chart-part-1` … `chart-part-6` in a share, `chart-cell` in a heatmap); a stylesheet can recolour any of them.
 - `Charts.palette(brand, theme)` returns `{ solid, light, opacity }` to paint your table to match.
 - The chart takes the width of its container. Text is laid out for 13 px and screens from 375 px.
 - The same input gives the same bytes within a minor version: pin the exact version.

@@ -78,7 +78,7 @@
 				// between two cells, a 2px line of the surface (ADR 017's gap)
 				if (c) gaps += _.el('line', ['x1', x, 'x2', x, 'y1', y, 'y2', y + CELL, 'stroke', surface, 'stroke-width', 2]);
 			}
-			out += _.el('g', [], ll.svg + row + gaps);
+			out += _.el('g', ['class', p + '-row'], ll.svg + row + gaps);
 			y += CELL + PAD;
 		}
 

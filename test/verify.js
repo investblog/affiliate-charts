@@ -8,7 +8,7 @@
 	document.addEventListener('securitypolicyviolation', function (e) { violations.push(e.violatedDirective + ' ' + e.blockedURI); });
 
 	// cache-bust: a stale library fakes a result either way (AGENTS.md)
-	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js', '../charts-waterfall.js', '../charts-series.js', '../charts-spark.js', '../charts-rank.js', '../charts-share.js'], i = 0;
+	var bust = '?ts=' + Date.now(), files = ['../charts.js', '../charts-funnel.js', '../charts-waterfall.js', '../charts-series.js', '../charts-spark.js', '../charts-rank.js', '../charts-share.js', '../charts-heatmap.js'], i = 0;
 	(function next() {
 		if (i === files.length) return setTimeout(run, 50);
 		var s = document.createElement('script');
@@ -76,6 +76,11 @@
 			{ label: 'Desktop', value: 20, display: '20' }], { title: 'Share', theme: 'dark' }, 'share'],
 		['donut', [{ label: 'Android', value: 50, display: '50' }, { label: 'iOS', value: 30, display: '30' }, { label: 'TV', value: 0, display: '0' },
 			{ label: 'Desktop', value: 20, display: '20' }], { title: 'Donut', form: 'donut' }, 'share'],
+		// the heatmap (ADR 018): a grid with a null cell, and a cohort triangle with text in its cells
+		['heat', { rows: ['Mon', 'Tue'], cols: ['00', '06', '12', '18'], values: [[0, 25, null, 100], [15, 50, 75, 99]],
+			display: [['0', '25', null, '100'], ['15', '50', '75', '99']] }, { title: 'Heat', brand: '#e11d48' }, 'heatmap'],
+		['cohort', { rows: ['Apr', 'May', 'Jun'], cols: ['M0', 'M1', 'M2'], values: [[100, 62, 9], [100, 63], [100]],
+			display: [['100%', '62%', '9%'], ['100%', '63%'], ['100%']] }, { title: 'Cohort', form: 'cohort', theme: 'dark' }, 'heatmap'],
 	];
 
 	function run() {
@@ -86,6 +91,7 @@
 		if (typeof window.Charts.tile !== 'function') return finish(['Charts.tile is not loaded']);
 		if (typeof window.Charts.rank !== 'function') return finish(['Charts.rank is not loaded']);
 		if (typeof window.Charts.share !== 'function') return finish(['Charts.share is not loaded']);
+		if (typeof window.Charts.heatmap !== 'function') return finish(['Charts.heatmap is not loaded']);
 		FIXTURES.concat(FLOWS, SERIES, TILES).forEach(function (f) {
 			var card = document.createElement('div');
 			card.className = 'card ' + (f[2].theme === 'dark' ? 'dark' : 'light') + (f[3] === 'tile' ? ' narrow' : '');
@@ -117,7 +123,7 @@
 		});
 		check('ids are unique across charts on one page', function () {
 			var ids = [].map.call(document.querySelectorAll('#charts svg [id]'), function (e) { return e.id; });
-			return ids.length === 17 && new Set(ids).size === ids.length;
+			return ids.length === 19 && new Set(ids).size === ids.length;
 		});
 		check('aria-labelledby resolves inside its own chart', function () {
 			return [].every.call(document.querySelectorAll('#charts svg[aria-labelledby]'), function (s) {
@@ -354,6 +360,24 @@
 			var d = donut(), ok = d.at(90) === d.c[0] && d.at(234) === d.c[1] && d.at(324) === d.c[2];
 			window.scrollTo(0, 0);
 			return ok;
+		});
+		// the heatmap
+		var hex = function (c) { return '#' + c.match(/\d+/g).slice(0, 3).map(function (n) { return (+n + 256).toString(16).slice(1); }).join(''); };
+		check('heatmap: cells in their bands, in the step of their value, a null cell unfilled', function () {
+			// 0 25 null 100 | 15 50 75 99 over [0, 100] → steps 0 1 – 4 | 0 2 3 4 (15 rounds to step 1, floors to 0)
+			var s = svg('heat'), r = box(s), c = s.querySelectorAll('.chart-cell'), e = s.querySelectorAll('.chart-cell-empty');
+			var ramp = [0.71, 0.63, 0.55, 0.47, 0.39].map(function (L) { return window.Charts._.shade('#e11d48', L); });
+			var steps = [].map.call(c, function (x) { return ramp.indexOf(hex(getComputedStyle(x).fill)); });
+			return c.length === 7 && e.length === 1 && steps.join() === '0,1,4,0,2,3,4' && near(box(c[0]).left, r.left) && near(box(c[0]).width, r.width / 4) &&
+				near(box(c[2]).right, r.right) && near(box(e[0]).left, r.left + r.width / 2) &&
+				/^(transparent|rgba\(0, 0, 0, 0\))$/.test(getComputedStyle(e[0]).fill);
+		});
+		check('heatmap: a cohort is a triangle, its text inside its cells, ink or white by the step', function () {
+			var s = svg('cohort'), c = s.querySelectorAll('.chart-cell'), t = s.querySelectorAll('text[font-size="11"]');
+			return c.length === 6 && t.length === 6 && [].every.call(t, function (x, k) {
+				var b = glyphs(x), cell = box(c[k]);
+				return b.left >= cell.left - 0.5 && b.right <= cell.right + 0.5;
+			}) && hex(getComputedStyle(t[0]).fill) === '#11171c' && hex(getComputedStyle(t[2]).fill) === '#ffffff';
 		});
 		// last, after every chart has been in the document: CSP reports arrive asynchronously
 		// the palette in this engine against the bytes Node computed (test/fixtures/palette.json): float

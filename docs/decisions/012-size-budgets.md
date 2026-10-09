@@ -96,3 +96,16 @@ core is untouched.
 | `charts-share.js` | 1291 B | **1408 B** |
 
 A page with a share alone pays 3825 B gzipped.
+
+## Addendum (M7, the heatmap, 2026-10-09)
+
+The core gains `shade(brand, L)`, the brand's hue at a given OKLCH lightness, for the heatmap's ramp
+(ADR 018): 27 B, inside its budget, which stays. The heatmap carries its own copy of ADR 015's x-label
+rule; moving that rule into the core, shared with the series, is not measured yet.
+
+| File | Measured | Frozen |
+|---|---|---|
+| `charts.js` | 2561 B | 2688 B (unchanged) |
+| `charts-heatmap.js` | 1819 B | **1920 B** |
+
+A page with a heatmap alone pays 4380 B gzipped.

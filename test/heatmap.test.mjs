@@ -49,7 +49,7 @@ test('anatomy: a label line, 20px of cells, 6px; then the column labels and the 
 	assert.equal(c[4].y, 20 + 20 + 6 + 20);
 	// rows end at 2 × 46; x labels 12 below; the scale 10 below them, 28 high
 	assert.equal(height(svg), 92 + 12 + 10 + 28);
-	assert.match(svg, /<g><text class="chart-label" x="0" y="13">Mon<\/text>/u);
+	assert.match(svg, /<g class="chart-row"><text class="chart-label" x="0" y="13">Mon<\/text>/u);
 	assert.equal([...svg.matchAll(/<line x1="([\d.]+)%" x2="\1%" y1="20" y2="40" stroke="#fcfcfb" stroke-width="2"\/>/gu)].length, 3, 'a gap between cells, none at the edges');
 });
 

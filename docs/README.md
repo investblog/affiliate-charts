@@ -15,10 +15,11 @@ consumer has integrated it on a branch (M4) under its production CSP, both theme
 funnel (three forms, base and earned, losses, negative values, gaps) passes the Node tests, the
 typecheck, the Vite bundle gate and the browser gate (Chromium, Firefox, WebKit under
 `default-src 'self'`); every check has been seen red under mutation. Budgets frozen (ADR 012). M5 is
-done: releases run from `v*` tags through the Trusted Publisher (0.1.1 was the first). M6 is done:
-the waterfall (ADR 014), the daily series (ADR 015), the sparkline and the KPI tile (ADR 016) are drawn
-and pass every gate (Node, mutations, Vite, three engines, the demo), unreleased — the catalog ships
-once, after M8 and a review (M9). Group C (M7) is next. Scope:
+done: releases run from `v*` tags through the Trusted Publisher (0.1.1 was the first). M6 and M7
+are done: the waterfall (ADR 014), the daily series (ADR 015), the sparkline and the KPI tile (ADR 016),
+the ranking, part to whole (ADR 017) and the heatmap with its cohort form (ADR 018) are drawn and pass
+every gate (Node, mutations, Vite, three engines, the demo), unreleased — the catalog ships once, after
+M8 and a review (M9). M8's `meter` and `sankey` are next. Scope:
 **a chart library for affiliate programmes** — the forms a partner cabinet uses to show traffic,
 conversions and money to a partner. Numbers marked *provisional* are forecasts, not measurements;
 each names the milestone that replaces it. Keep this line true at every milestone.
@@ -380,7 +381,7 @@ Layout and colour: ADR 018. In short:
 - `grid`: every row full, no text in cells. `cohort`: a row may be shorter than `cols` — the cells
   past it are absent, not zero — and a cell shows its `display` at 11 px when it fits one band at
   343 px.
-- Every cell has a `<title>`: `row · col: display`. Class hooks: `-cell`, `-cell-empty`, `-x`,
+- Every cell has a `<title>`: `row · col: display`. Class hooks: `-row`, `-cell`, `-cell-empty`, `-x`,
   `-legend`, plus the core's `-label`.
 - Throws: `rows` or `cols` not a non-empty array of strings; `values` or `display` not an array of one
   array per row; a row longer than `cols`, or shorter in the `grid` form; a `display` row of another

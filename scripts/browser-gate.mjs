@@ -24,7 +24,7 @@ import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const FILES = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js'];
+const FILES = ['charts.js', 'charts-funnel.js', 'charts-waterfall.js', 'charts-series.js', 'charts-spark.js', 'charts-rank.js', 'charts-share.js', 'charts-heatmap.js'];
 const MUTATE = process.argv.includes('--mutate');
 const WIDTHS = [375, 1280];
 const CSP = "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self'; base-uri 'none'; object-src 'none'";
@@ -95,7 +95,8 @@ async function demo(pw, port) {
 			series: [['money', 'clicks', 'deposits'], ['line', 'area', 'columns'], '.chart-hit'],
 			tile: [['epc', 'cpa', 'cr', 'ftd'], [null], '.chart-value'],
 			rank: [['sources', 'focus'], [null], '.chart-bar'],
-			share: [['devices', 'geo'], ['bar', 'donut'], '.chart-part'] };
+			share: [['devices', 'geo'], ['bar', 'donut'], '.chart-part'],
+			heatmap: [['hours', 'cohorts'], [null], '.chart-cell'] };
 		for (const [chart, [examples, forms, mark]] of Object.entries(charts)) {
 			await page.selectOption('#chart', chart);
 			for (const show of ['one', 'sheet']) {
@@ -198,6 +199,10 @@ const MUTATIONS = [
 	{ label: 'the donut from 3 o\'clock', file: 'charts-share.js', edits: [["'transform', 'rotate(-90 50 50)'", "'transform', null"]] },
 	{ label: 'the donut stretched', file: 'charts-share.js', edits: [["'viewBox', '0 0 100 100']", "'viewBox', '0 0 100 100', 'preserveAspectRatio', 'none']"]] },
 	{ label: 'bar gaps at the edges', file: 'charts-share.js', edits: [['if (!donut && at) gaps +=', 'if (!donut) gaps +=']] },
+	{ label: 'the heatmap is not registered', file: 'charts-heatmap.js', edits: [['core.heatmap = factory(core._);', 'factory(core._);']] },
+	{ label: 'heatmap steps by rounding', file: 'charts-heatmap.js', edits: [['Math.min(4, Math.floor(v / max * 5))', 'Math.min(4, Math.round(v / max * 4))']] },
+	{ label: 'a null cell filled near zero', file: 'charts-heatmap.js', edits: [["'height', CELL, 'fill', 'transparent'", "'height', CELL, 'fill', ramp[0]"]] },
+	{ label: 'cohort text always white', file: 'charts-heatmap.js', edits: [["STEPS[t][s] >= 0.6 ? INK : '#fff'", "'#fff'"]] },
 	{ label: 'the last x label past the edge', file: 'charts-series.js', edits: [["out += xl(i, end ? '100%' : 0, end ? 'end' : 'start');", "out += xl(i, end ? '100%' : 0, 'start');"]] },
 ];
 

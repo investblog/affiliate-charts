@@ -16,7 +16,10 @@
   an optional `highlight` with the rest in grey.
 - Part to whole (`charts-share.js`): a 100% bar or a donut, up to six parts, in a fixed palette of six
   per theme checked for colour blindness — the one chart that ignores `brand` (ADR 017).
-- The demo picks the chart: funnel, waterfall, daily series, KPI tiles, ranking or part to whole.
+- Heatmaps and cohorts (`charts-heatmap.js`): a grid or a cohort triangle in five steps of the brand's
+  hue, `null` as a dash, absent future cells not drawn, values in cohort cells when they fit (ADR 018).
+  The core gains `shade` for the ramp.
+- The demo picks the chart: funnel, waterfall, daily series, KPI tiles, ranking, part to whole or heatmap.
 
 ## 0.1.1 — 2026-10-08
 
