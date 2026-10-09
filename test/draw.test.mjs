@@ -247,10 +247,10 @@ test('the default brand, and a dark theme that lifts rather than darkens', () =>
 
 test('the palette is pinned to its fixture, which the browser gate checks in every engine', () => {
 	const fixture = JSON.parse(readFileSync(new URL('fixtures/palette.json', import.meta.url), 'utf8'));
-	assert.equal(Object.keys(fixture).length, 32);
+	assert.equal(Object.keys(fixture).length, 64);
 	for (const [key, want] of Object.entries(fixture)) {
-		const [brand, theme] = key.split(' ');
-		assert.deepEqual(Charts.palette(brand, theme), want, key);
+		const [brand, theme, turned] = key.split(' ');
+		assert.deepEqual(turned ? Charts._.palette(brand, theme, Math.PI) : Charts.palette(brand, theme), want, key);
 	}
 });
 

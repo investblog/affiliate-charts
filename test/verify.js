@@ -137,8 +137,9 @@
 			if (!pinned) return setTimeout(wait, 50);
 			check('the palette matches Node byte for byte', function () {
 				var keys = Object.keys(pinned);
-				return keys.length === 32 && keys.every(function (k) {
-					var p = window.Charts.palette(k.split(' ')[0], k.split(' ')[1]), w = pinned[k];
+				return keys.length === 64 && keys.every(function (k) {
+					// "<brand> <theme> turned" is the waterfall's decrease, the opposite hue (ADR 014)
+					var a = k.split(' '), p = a[2] ? window.Charts._.palette(a[0], a[1], Math.PI) : window.Charts.palette(a[0], a[1]), w = pinned[k];
 					return p.solid === w.solid && p.light === w.light && p.opacity === w.opacity;
 				});
 			});

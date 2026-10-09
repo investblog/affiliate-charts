@@ -2,6 +2,7 @@
 // `@ts-expect-error` must stay an error — if the types loosen, tsc reports the unused directive.
 import Charts from '../charts-funnel.js';
 import Core from '../charts.js';
+import Charts2 from '../charts-waterfall.js';
 
 const steps: Charts.FunnelStep[] = [
 	{ label: 'Clicks', value: 1840, display: '1 840' },
@@ -29,6 +30,23 @@ Charts.funnel(steps, { legend: ['base'] });
 // @ts-expect-error — only the losses group exists
 Charts.funnel([{ label: 'x', value: 1, display: '1', group: 'other' }]);
 
-// the page global, merged from both declaration files
-const viaGlobal: string = globalThis.Charts.funnel(steps);
+// the waterfall module types its own chart, and not the funnel
+const flow: Charts2.WaterfallStep[] = [
+	{ label: 'Revenue — GGR', value: 1000, display: '1 000.00', kind: 'total' },
+	{ label: 'Bonuses', value: -120, display: '−120.00', kind: 'delta' },
+	{ label: 'NGR', value: 880, display: '880.00', kind: 'total' },
+];
+const wf: string = Charts2.waterfall(flow, { title: 'Money flow', theme: 'dark' });
+void wf;
+// @ts-expect-error — kind is a closed set
+Charts2.waterfall([{ label: 'x', value: 1, display: '1', kind: 'start' }]);
+// @ts-expect-error — kind is required
+Charts2.waterfall([{ label: 'x', value: 1, display: '1' }]);
+// @ts-expect-error — the waterfall has no form
+Charts2.waterfall(flow, { form: 'bars' });
+// @ts-expect-error — the waterfall module does not type the funnel
+Charts2.funnel(steps);
+
+// the page global, merged from every declaration file
+const viaGlobal: string = globalThis.Charts.funnel(steps) + globalThis.Charts.waterfall(flow);
 void viaGlobal;

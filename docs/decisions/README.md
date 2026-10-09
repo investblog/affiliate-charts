@@ -23,3 +23,4 @@ context → decision → consequences.
 - [011 — the palette: OKLCH from `brand`, `currentColor` for everything else](011-palette.md)
 - [012 — size budgets, frozen per file for 0.1.0](012-size-budgets.md)
 - [013 — the package is `affiliate-charts`](013-package-name.md)
+- [014 — the waterfall: rows, a ghost of the running total, three colour roles](014-waterfall.md)

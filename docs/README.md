@@ -15,7 +15,8 @@ consumer has integrated it on a branch (M4) under its production CSP, both theme
 funnel (three forms, base and earned, losses, negative values, gaps) passes the Node tests, the
 typecheck, the Vite bundle gate and the browser gate (Chromium, Firefox, WebKit under
 `default-src 'self'`); every check has been seen red under mutation. Budgets frozen (ADR 012). M5 is
-done: releases run from `v*` tags through the Trusted Publisher (0.1.1 was the first). Next: M6. Scope:
+done: releases run from `v*` tags through the Trusted Publisher (0.1.1 was the first). M6 in progress:
+the waterfall (contract and ADR 014 written; not drawn yet). Scope:
 **a chart library for affiliate programmes** — the forms a partner cabinet uses to show traffic,
 conversions and money to a partner. Numbers marked *provisional* are forecasts, not measurements;
 each names the milestone that replaces it. Keep this line true at every milestone.
@@ -69,6 +70,7 @@ and a per-mark `<title>`, and is meant to sit **above** a data table, not to rep
 - **009** width from the page: marks in percent, text in pixels; no `width` option.
 - **010** the funnel row: values on the label line, split and truncation by a conservative estimate.
 - **011** the palette: OKLCH from `brand`; `currentColor` for text, losses and chrome.
+- **014** the waterfall: rows, a ghost of the running total instead of connectors, three colour roles.
 
 ## Architecture (ADR 008)
 
@@ -196,19 +198,38 @@ interface FunnelOptions extends Common {
 
 ```ts
 interface WaterfallStep {
-  label: string; value: number; display: string;
+  label: string;            // already translated
+  value: number;            // a total's amount, or a delta's signed change
+  display: string;          // formatted, sign included ("−1 200.00")
   kind: 'total' | 'delta';  // total: a bar from zero (GGR, NGR, commission); delta: a floating bar
 }
+type WaterfallOptions = Common;   // no form, no legend (ADR 014)
 ```
 
 GGR → −bonuses → −taxes/fees → NGR → partner share → commission. A delta is not always an expense:
 the step between NGR and the partner's commission is the share that stays with the platform and the
-network, and its caller label should say so neutrally. A total is a bar from zero (negative
-totals hang below the zero line). A delta floats from the previous bar's end — a position the library
-derives by adding the delta to it; it does not check that the next total equals that sum (the
-caller's totals are the truth; a mismatch shows as a visible jump, which is the caller's bug to see).
-Increase and decrease are a diverging pair (two hues of opposite temperature), not status green/red;
-totals in the brand hue; connector hairlines between bars. Throws: the first step is not a total.
+network, and its caller label should say so neutrally. Layout and colour: ADR 014.
+
+- **Rows**, one a step, with the funnel's anatomy (ADR 010: label line, the same split and truncation,
+  a 12 px bar, padding); no rate line, no blocks, no legend, no ticks.
+- **Positions.** A total is a bar from zero (a negative total grows left of the zero line). A delta
+  floats from the running total — the last total plus every delta since — to the running total plus
+  the delta. The library does not check that a total equals that sum: the caller's totals are the
+  truth, and a mismatch is visible against the previous row (the ends do not line up), which is the
+  caller's bug to see.
+- **One scale** over zero and both ends of every bar. A zero line per row when any bar reaches below
+  zero, as in the funnel.
+- **Behind each delta, a ghost of the running total before it** (from zero, `currentColor` at 0.12):
+  the delta extends it or bites into it. No connector lines — they would cross the value text.
+- **Colour:** totals the brand's solid mark; an increase the light mark (the solid at 0.6); a decrease
+  the brand's opposite hue, fitted like the solid. Never status green/red. A zero value keeps its row,
+  label and value but draws no bar.
+- Class hooks: `-bar-total`, `-bar-up`, `-bar-down`, `-bar-ghost`, plus the core's `-label`, `-value`,
+  `-axis`. Each row is a `<g>` with a `<title>`: `label: display`.
+- Throws: `steps` that is not an array, or empty; a `kind` other than `total` or `delta`; a first step
+  that is not a total; values whose range overflows a number; and the shared input rules.
+- Allowed: a delta after a delta; a total anywhere after the first, matching the running sum or not; a
+  waterfall of one total.
 
 ### Group B — dynamics
 
@@ -308,9 +329,9 @@ catalog.
 | M8 | Group D: cohort, `meter`, `sankey` (*provisional budget 4096 B*) | → 0.4.0, then v1.0 |
 
 The funnel ships first and alone (0.1.0): it is what the first consumer needs, and it proves the core.
-The waterfall waits for a consumer with at least one real deduction (bonuses, taxes, NGR): drawn from
-GGR and commission alone it would show the platform's share as an expense and repeat two numbers the
-money funnel already shows. Groups B–D are built against fixtures on the playground; each module's
+The waterfall is built against a fixture (2026-10-09): no consumer sends a real deduction (bonuses,
+taxes, NGR) yet, and drawn from GGR and commission alone it would show the platform's share as an
+expense and repeat two numbers the money funnel already shows. Groups B–D are built against fixtures on the playground; each module's
 `.d.ts` is written when its milestone starts (contract-first per module).
 
 ## Acceptance (every module)

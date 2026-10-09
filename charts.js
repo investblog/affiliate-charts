@@ -127,9 +127,10 @@
 	// The solid mark: the brand's lightness held inside the band, then moved until it clears 4.5:1 on
 	// the surface, so the light mark (the solid at LIGHT opacity over the page) still clears 2:1 on the
 	// sample surfaces — measured in ADR 011. Hue and chroma are the brand's.
-	function palette(brand, theme) {
+	// `turn` rotates the hue (radians): the waterfall's decrease is the brand's opposite (ADR 014)
+	function palette(brand, theme, turn) {
 		var t = theme === 'dark' ? 'dark' : 'light', bg = rgb(SURFACE[t]), o = oklch(rgb(brand || '#2563eb'));
-		var solid = fromOklch(Math.min(BAND[t][1], Math.max(BAND[t][0], o[0])), o[1], o[2]);
+		var solid = fromOklch(Math.min(BAND[t][1], Math.max(BAND[t][0], o[0])), o[1], o[2] + (turn || 0));
 		solid = ensureContrast(solid, bg, 4.5, t === 'dark' ? 1 : -1);
 		var light = [0, 1, 2].map(function (i) { return clamp255(solid[i] * LIGHT + bg[i] * (1 - LIGHT)); });
 		return { solid: toHex(solid), light: toHex(light), opacity: LIGHT };
