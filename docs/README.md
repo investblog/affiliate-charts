@@ -246,13 +246,15 @@ interface SeriesOptions extends Common {
   form?: 'line' | 'area' | 'columns';   // default 'line'
   names: string[];                 // one or two series names, for the key; length = values.length
   stacked?: boolean;               // columns only; the caller asserts the parts are additive
+  second?: string;                 // #rrggbb, the second series' colour, fitted like brand (ADR 021)
+  gutter?: number;                 // percent of the width kept clear left of the plot, 0–50, default 0
   previous?: {                     // comparison period for a single series, one entry per point
     name: string; values: (number | null)[]; display: (string | null)[];
   };
 }
 ```
 
-Layout and colour: ADR 015. In short:
+Layout and colour: ADR 015; `second` and `gutter`: ADR 021. In short:
 
 - **Anatomy, top to bottom:** the key — one line per series and one for `previous`: a swatch, the name,
   the last point's `display` end-anchored (an em dash when the last point has no data); the plot,
@@ -269,12 +271,18 @@ Layout and colour: ADR 015. In short:
   of the two, never gone however dense the series (ADR 020).
 - `previous`: the comparison period as a `currentColor` line at 0.35 under a **single** series, never
   dashed, never a second axis.
-- **Colours:** series 1 the brand's solid mark, series 2 its opposite hue. At most two series: no
-  third colour from one brand passes the checks (ADR 015) — more measures are more charts.
+- **Colours:** series 1 the brand's solid mark, series 2 its opposite hue — or the caller's `second`,
+  fitted to the theme as `brand` is; the pair is then the caller's to keep apart (no `'tint'` preset: the
+  light mark fails the distinctness check on violet, red, cyan and blue brands, ADR 021). At most two
+  series: no third colour from one brand passes the checks (ADR 015) — more measures are more charts.
+- **Gutter:** `gutter` keeps that percent of the width clear at the left; bands, points, columns, hover
+  bands and x labels lie in the rest, gridlines and tick text keep the full width. Percent, not pixels:
+  a pixel gutter needs `calc()` in an attribute, which Firefox and WebKit drop (ADR 021). Tick text keeps
+  its halo of the theme's surface; a page on another surface restyles it through `-tick`.
 - **Scale:** zero and every value drawn, widened to nice steps (1, 2, 5 × 10ⁿ, about four intervals);
   tick text through `format`, default `n(v, 6)`. All values zero or `null`: one tick, 0.
 - **x labels:** the first and the last always — under their point when the label fits in one band at
-  343 px, else at the chart's edge; between them every k-th, k from the longest label at 343 px (8 px a
+  343 px, else at the plot's edge; between them every k-th, k from the longest label at 343 px (8 px a
   character, a 12 px gap), skipping any that would touch the first or the last.
 - **Hover:** a transparent band per point with a `<title>`: `x: name display`, one entry per series,
   `previous` last. No script.
@@ -285,7 +293,9 @@ Layout and colour: ADR 015. In short:
   reverse; `area` or `previous` with two series; `stacked` outside `columns`; a negative value in a
   stack; `previous` arrays of a length other than the points'; `format` that is not a function or
   returns something other than a string; values whose range overflows a number; `stacked` present and
-  not a boolean; values so small or so large that the nice ticks underflow or overflow (ADR 020).
+  not a boolean; values so small or so large that the nice ticks underflow or overflow (ADR 020);
+  `second` that is not a `#rrggbb` string, or given with a single series; `gutter` that is not a number
+  from 0 to 50 (ADR 021).
 
 **`Charts.spark(values, options)` and `Charts.tile(tile, options)`** — `charts-spark.js`
 

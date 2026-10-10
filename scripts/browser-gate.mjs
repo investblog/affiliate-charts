@@ -180,7 +180,9 @@ const MUTATIONS = [
 	{ label: 'waterfall increase solid', file: 'charts-waterfall.js', edits: [['pal.solid, pal.opacity, p', 'pal.solid, 1, p']] },
 	{ label: 'waterfall rows lose their title', file: 'charts-waterfall.js', edits: [["_.el('title', [], _.esc(s.label + ': ' + s.display))", "''"]] },
 	{ label: 'the series is not registered', file: 'charts-series.js', edits: [['core.series = factory(core._);', 'factory(core._);']] },
-	{ label: 'series points at band edges', file: 'charts-series.js', edits: [['function cx(i) { return (i + 0.5) * w; }', 'function cx(i) { return i * w; }']] },
+	{ label: 'series points at band edges', file: 'charts-series.js', edits: [['function cx(i) { return off + (i + 0.5) * w; }', 'function cx(i) { return off + i * w; }']] },
+	{ label: 'columns ignore the gutter', file: 'charts-series.js', edits: [['out += view(off + i * w + 0.15 * w + j * (cw + g)', 'out += view(i * w + 0.15 * w + j * (cw + g)']] },
+	{ label: 'second ignored', file: 'charts-series.js', edits: [['o.second ? _.palette(o.second, o.theme).solid : ', '']] },
 	{ label: 'series stroke scales with the box', file: 'charts-series.js', edits: [["'vector-effect', 'non-scaling-stroke'", "'vector-effect', null"]] },
 	{ label: 'series tick text under its gridline', file: 'charts-series.js', edits: [["_.n(gy - 4, 2), 'opacity', 0.7", "_.n(gy + 12, 2), 'opacity', 0.7"]] },
 	{ label: 'grouped columns overlap', file: 'charts-series.js', edits: [['j * (cw + g)', 'j * cw * 0.5']] },
@@ -213,7 +215,7 @@ const MUTATIONS = [
 	{ label: 'sankey ribbons stack from the top', file: 'charts-sankey.js', edits: [['b.i += h;', '']] },
 	{ label: 'sankey nodes spill past the edge', file: 'charts-sankey.js', edits: [["'transform', shift ? 'translate(-' + _.n(shift, 2) + ')' : null", "'transform', null"]] },
 	{ label: 'sankey ribbons without titles', file: 'charts-sankey.js', edits: [["title(a.n.label + ' → ' + b.n.label + ': ' + l.display)", "''"]] },
-	{ label: 'the last x label past the edge', file: 'charts-series.js', edits: [["out += xl(i, end ? '100%' : 0, end ? 'end' : 'start');", "out += xl(i, end ? '100%' : 0, 'start');"]] },
+	{ label: 'the last x label past the edge', file: 'charts-series.js', edits: [["out += xl(i, end ? '100%' : off ? _.pct(off) : 0, end ? 'end' : 'start');", "out += xl(i, end ? '100%' : off ? _.pct(off) : 0, 'start');"]] },
 ];
 
 async function main() {

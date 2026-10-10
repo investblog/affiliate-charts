@@ -54,12 +54,21 @@
 	}
 	['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(function (x, i) { week.push(P(x, 10 + i * 3, 4 + i)); });
 	var prior = month.map(function (p, i) { return i === 7 ? null : 250 + (i * 31) % 300; });
+	var views = [];
+	for (d = 0; d < 30; d++) {
+		var vw = 2000 + Math.round(900 * Math.sin(d / 2.3));
+		views.push(P(String(d + 1), vw, Math.round(vw / 2.5)));
+	}
 	var SERIES = [
 		['days', month, { title: 'Daily', names: ['Revenue — GGR', 'Commission'], brand: '#e11d48' }],
 		['cols', month, { title: 'Daily columns', names: ['Revenue — GGR', 'Commission'], form: 'columns', theme: 'dark' }],
 		['stack', week, { title: 'Deposits', names: ['First deposits', 'Repeat deposits'], form: 'columns', stacked: true }],
 		['area', month.map(function (p) { return P(p.x, p.values[0]); }), { title: 'GGR', names: ['October'], form: 'area', theme: 'dark',
 			previous: { name: 'September', values: prior, display: prior.map(function (n) { return n === null ? null : String(n); }) } }],
+		// the second consumer's issues (ADR 021): 30 days of views and visitors, a violet brand, its own second
+		// colour, and a gutter wide enough at 375px for a 5-character tick
+		['gutter', views, { title: 'Views', names: ['Views', 'Visitors'], form: 'columns', brand: '#4D48ED', second: '#7c3aed', gutter: 12,
+			format: function (v) { return String(v).replace(/\B(?=(\d{3})+$)/g, ','); } }],
 	];
 
 	// the tile at its promised 160px (ADR 016): a 20-character label and a 9-character value; a sparkline
@@ -135,7 +144,7 @@
 		});
 		check('ids are unique across charts on one page', function () {
 			var ids = [].map.call(document.querySelectorAll('#charts svg [id]'), function (e) { return e.id; });
-			return ids.length === 21 && new Set(ids).size === ids.length;
+			return ids.length === 22 && new Set(ids).size === ids.length;
 		});
 		check('aria-labelledby resolves inside its own chart', function () {
 			return [].every.call(document.querySelectorAll('#charts svg[aria-labelledby]'), function (s) {
@@ -324,6 +333,25 @@
 			return hex(getComputedStyle(l[0]).stroke) === window.Charts._.palette('#e11d48', 'light').solid &&
 				hex(getComputedStyle(l[3]).stroke) === window.Charts._.palette('#e11d48', 'light', Math.PI).solid &&
 				hex(prev.stroke) === '#e6e6e6' && prev.strokeOpacity === '0.35';
+		});
+		// ADR 021: with a gutter no column lies under a tick's text; series 2 in the caller's colour, fitted
+		check('series gutter: the columns start right of it, clear of every tick\'s text', function () {
+			var s = svg('gutter'), r = box(s), bars = s.querySelectorAll('.chart-bar'), t = s.querySelectorAll('.chart-tick'), ok = bars.length === 60 && t.length > 2;
+			[].forEach.call(bars, function (b) {
+				var x = shown(b);
+				if (x.left < r.left + r.width * 0.12 - 0.5) ok = false;
+				[].forEach.call(t, function (e) {
+					var g = glyphs(e);
+					if (x.left < g.right && x.right > g.left && x.top < g.bottom && x.bottom > g.top) ok = false;
+				});
+			});
+			return ok;
+		});
+		check('series second: series 2 in the caller\'s colour, fitted to the theme', function () {
+			var hex = function (c) { return '#' + c.match(/\d+/g).slice(0, 3).map(function (v) { return (+v + 256).toString(16).slice(1); }).join(''); };
+			var b = svg('gutter').querySelectorAll('.chart-bar');
+			return b.length === 60 && hex(getComputedStyle(b[0]).fill) === window.Charts._.palette('#4D48ED', 'light').solid &&
+				hex(getComputedStyle(b[1]).fill) === window.Charts._.palette('#7c3aed', 'light').solid;
 		});
 		// the sparkline and the tile (ADR 016)
 		check('tile: at 160px a 20-character label, the value and the change stay inside', function () {

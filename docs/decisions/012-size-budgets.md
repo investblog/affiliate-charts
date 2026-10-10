@@ -149,3 +149,15 @@ key lines; the sankey's character count and scale guard — measured after:
 | `charts-sankey.js` | 1755 B | 1863 B | 1920 B (unchanged) |
 
 After the three review passes (ADR 020), the core and the funnel are 4552 B; the whole catalog 17 087 B.
+
+## Addendum (1.1.0, the series' `second` and `gutter`, 2026-10-10)
+
+Two options from the second consumer (ADR 021): the caller's second colour and a gutter in percent, with
+their checks. A feature, so the series' budget is re-frozen at the measurement + 2.5 %, to the next 64 B:
+
+| File | Before | After | Frozen |
+|---|---|---|---|
+| `charts-series.js` | 2969 B | 3141 B | **3264 B** (was 3072) |
+
+The core is untouched. A page that draws the series alone pays 5758 B gzipped; the whole catalog is
+17 259 B.

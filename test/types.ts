@@ -62,7 +62,10 @@ const days: Charts3.SeriesPoint[] = [
 const sr: string = Charts3.series(days, { names: ['GGR', 'Commission'], form: 'columns', format: (v) => String(v) });
 const one: string = Charts3.series([{ x: 'a', values: [1], display: ['1'] }],
 	{ names: ['Clicks'], form: 'area', previous: { name: 'Last month', values: [2], display: ['2'] } });
-void sr; void one;
+const pair: string = Charts3.series(days, { names: ['Views', 'Visitors'], form: 'columns', second: '#7c3aed', gutter: 4 });
+void sr; void one; void pair;
+// @ts-expect-error — the gutter is a number of percent
+Charts3.series(days, { names: ['a'], gutter: '4%' });
 // @ts-expect-error — names are required
 Charts3.series(days, {});
 // @ts-expect-error — at most two series

@@ -44,6 +44,12 @@
 		if (o.stacked && form !== 'columns') fail('`stacked` needs `columns`');
 		if (form === 'area' && names.length > 1) fail('`area` draws a single series');
 		if (o.format != null && typeof o.format !== 'function') fail('`format` must be a function');
+		// the caller's second colour and gutter (ADR 021)
+		if (o.second !== undefined) {
+			if (typeof o.second !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(o.second)) fail('`second` must be a #rrggbb hex');
+			if (names.length < 2) fail('`second` colours a second series');
+		}
+		if (o.gutter !== undefined && (typeof o.gutter !== 'number' || !(o.gutter >= 0 && o.gutter <= 50))) fail('`gutter` is a percent from 0 to 50');
 		function scan(v) {
 			lo = Math.min(lo, v);
 			hi = Math.max(hi, v);
@@ -86,8 +92,9 @@
 	function draw(points, o, tk) {
 		var p = o.classPrefix || 'chart', names = o.names, S = names.length, N = points.length, prev = o.previous;
 		var form = o.form || 'line', format = o.format || function (v) { return _.n(v, 6); };
-		var colour = [_.palette(o.brand, o.theme).solid, _.palette(o.brand, o.theme, Math.PI).solid];
-		var dLo = tk[0], dHi = tk.length > 1 ? tk[tk.length - 1] : 1, w = 100 / N, y = 0, key = '', out = '';
+		var colour = [_.palette(o.brand, o.theme).solid, o.second ? _.palette(o.second, o.theme).solid : _.palette(o.brand, o.theme, Math.PI).solid];
+		// the bands lie right of the gutter, in percent of the width (ADR 021)
+		var off = o.gutter || 0, dLo = tk[0], dHi = tk.length > 1 ? tk[tk.length - 1] : 1, w = (100 - off) / N, y = 0, key = '', out = '';
 		var last = points[N - 1], j, i;
 
 		// the key: swatch, name, the last point's display (ADR 015)
@@ -105,7 +112,7 @@
 		var top = y + GAP + TOP;
 
 		function at(v) { return (dHi - v) / (dHi - dLo) * PLOT; }
-		function cx(i) { return (i + 0.5) * w; }
+		function cx(i) { return off + (i + 0.5) * w; }
 
 		// gridlines under the marks; their tick text above each line and over the marks, haloed in the theme's
 		// surface so a column or a line at the left edge cannot hide it (ADR 015); zero stronger
@@ -162,10 +169,10 @@
 						stack += col(base ? Math.max(b, at(base) - 2) : at(base), b, colour[j], topmost);
 						base += v;
 					} else {
-						out += view(i * w + 0.15 * w + j * (cw + g), col(z, at(v), colour[j], true));
+						out += view(off + i * w + 0.15 * w + j * (cw + g), col(z, at(v), colour[j], true));
 					}
 				}
-				if (stack) out += view(i * w + 0.15 * w, stack);
+				if (stack) out += view(off + i * w + 0.15 * w, stack);
 			}
 		} else {
 			for (j = 0; j < S; j++) {
@@ -184,10 +191,11 @@
 
 		// x labels: the first and the last, and every k-th between them that fits at the narrow width. The
 		// first and the last sit under their point when half of them fits in half a band there, else at the edge.
-		var ly = top + PLOT + 15, bw2 = NARROW / N, maxLen = 0, right = edge(0, 0), lastLeft;
+		// Measured over the plot's share of the narrow width, from the plot's left edge.
+		var ly = top + PLOT + 15, plot = NARROW * (100 - off) / 100, bw2 = plot / N, maxLen = 0, right = edge(0, 0), lastLeft;
 		for (i = 0; i < N; i++) maxLen = Math.max(maxLen, points[i].x.length);
 		if (N > 1) {
-			lastLeft = NARROW - edge(N - 1, 1);
+			lastLeft = plot - edge(N - 1, 1);
 			for (var step = Math.ceil((maxLen * GLYPH + 12) / bw2), m = step; m < N - 1; m += step) {
 				var c = (m + 0.5) * bw2, half = points[m].x.length * GLYPH / 2;
 				if (c - half >= right + 12 && c + half + 12 <= lastLeft) {
@@ -202,7 +210,7 @@
 			var t = [];
 			for (j = 0; j < S; j++) t.push(names[j] + ' ' + (points[i].display[j] == null ? '—' : points[i].display[j]));
 			if (prev) t.push(prev.name + ' ' + (prev.display[i] == null ? '—' : prev.display[i]));
-			out += _.el('rect', ['class', p + '-hit', 'x', _.pct(i * w), 'y', top, 'width', _.pct(w), 'height', PLOT, 'fill', 'transparent'],
+			out += _.el('rect', ['class', p + '-hit', 'x', _.pct(off + i * w), 'y', top, 'width', _.pct(w), 'height', PLOT, 'fill', 'transparent'],
 				_.el('title', [], _.esc(points[i].x + ': ' + t.join(', '))));
 		}
 		return { body: out, h: ly + XL - 15 };
@@ -214,7 +222,7 @@
 				out += xl(i, _.pct(cx(i)), 'middle');
 				return (bw2 + len) / 2;
 			}
-			out += xl(i, end ? '100%' : 0, end ? 'end' : 'start');
+			out += xl(i, end ? '100%' : off ? _.pct(off) : 0, end ? 'end' : 'start');
 			return len;
 		}
 		function xl(i, x, anchor) {

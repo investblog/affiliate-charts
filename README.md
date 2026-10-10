@@ -131,8 +131,12 @@ const days = Charts.series([
 
 - `form`: `'line'` (default), `'area'` (one series) or `'columns'` (grouped; `stacked: true` when the parts
   really add up, such as first and repeat deposits — never GGR and commission, which are nested).
-- At most two series: the first in your `brand`, the second in its opposite hue. More measures are more
-  charts.
+- At most two series: the first in your `brand`, the second in its opposite hue, or in your own
+  `second: '#rrggbb'` (fitted to the theme like `brand`; keeping the two apart is then up to you). More
+  measures are more charts.
+- Tick text sits at the left edge, over the plot. With many columns, `gutter: 4` keeps 4% of the width
+  clear for it — a percent, so pick it for your card's width (about 4 at 1100 px for `3,000`). The text
+  has a halo of the theme's surface; on another surface restyle it: `.chart-tick { stroke: #f7f7f8 }`.
 - `previous: { name, values, display }` draws a comparison period under a single series, in the page colour.
 - The key above the plot shows each series' last `display`; hovering a day shows its `<title>`. Axis
   ticks are numbers the library picks, so their text goes through your `format(v)` (default: plain

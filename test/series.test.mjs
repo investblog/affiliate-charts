@@ -111,6 +111,43 @@ test('colour: series 1 the solid mark, series 2 the opposite hue, in lines, colu
 	}
 });
 
+test('second: the caller\'s colour for series 2, fitted like the brand, in lines, columns and the key (ADR 021)', () => {
+	for (const theme of ['light', 'dark']) {
+		const solid = pinned[`#e11d48 ${theme}`].solid, second = pinned[`#7c3aed ${theme}`].solid;
+		const pts = [P('a', 5, 1), P('b', 6, 2)], o = { names: ['Views', 'Visitors'], brand: '#e11d48', second: '#7c3aed', theme };
+		assert.deepEqual(lines(Charts.series(pts, o)).map((l) => l.stroke), [solid, second]);
+		assert.deepEqual(cols(Charts.series(pts, { ...o, form: 'columns' })).map((c) => c.fill), [solid, second, solid, second]);
+		const swatches = [...Charts.series(pts, o).matchAll(/<rect x="0" y="\d+" width="10" height="10" rx="2" fill="([^"]+)"/gu)].map((m) => m[1]);
+		assert.deepEqual(swatches, [solid, second]);
+	}
+	// absent is the opposite hue, byte for byte
+	const pts = [P('a', 5, 1)], o = { names: ['a', 'b'] };
+	assert.equal(Charts.series(pts, { ...o, second: undefined }), Charts.series(pts, o));
+});
+
+test('gutter: bands, points, columns, hover bands and x labels right of it; gridlines and ticks keep the width (ADR 021)', () => {
+	const pts = [P('Mon', 0), P('Tue', 50), P('Wed', 100), P('Thu', 25)], o = { names: ['c'], gutter: 20 };
+	// four bands of 20% after 20%: centres at 30, 50, 70, 90
+	assert.deepEqual(lines(Charts.series(pts, o))[0].pts, [[30, 160], [50, 80], [70, 0], [90, 120]]);
+	const svg = Charts.series(pts, { ...o, form: 'columns' });
+	// each viewport 70% of its band, from 15% into it
+	assert.deepEqual(views(svg), [[43, 14], [63, 14], [83, 14]], 'the first point is zero and draws no column');
+	assert.deepEqual(views(Charts.series([P('a', 1, 2), P('b', 3, 4)], { names: ['a', 'b'], form: 'columns', stacked: true, gutter: 20 })), [[26, 28], [66, 28]]);
+	const hits = [...svg.matchAll(/<rect class="chart-hit" x="([\d.]+)%" y="\d+" width="([\d.]+)%"/gu)].map((m) => [+m[1], +m[2]]);
+	assert.deepEqual(hits, [[20, 20], [40, 20], [60, 20], [80, 20]]);
+	assert.deepEqual(texts(svg, 'tick').map((t) => t.x), ['0', '0', '0']);
+	assert.equal(grid(svg).length, 3, 'gridlines from 0 to 100%');
+	assert.deepEqual(texts(svg, 'x').map((t) => [t.text, t.x]), [['Mon', '30%'], ['Thu', '90%'], ['Tue', '50%'], ['Wed', '70%']]);
+	// a first label that does not fit its band starts at the plot's edge; the k-th spacing is over the plot's
+	// 90% of 343px: a band of 10.29px, '1 Oct' (40px) → every 6th, 7 Oct too close to the first, 25 Oct to the last
+	const month = Array.from({ length: 30 }, (_, i) => P(`${i + 1} Oct`, i));
+	const xs = texts(Charts.series(month, { names: ['c'], gutter: 10 }), 'x');
+	assert.deepEqual(xs.map((t) => [t.text, t.x, t.attrs]), [['1 Oct', '10%', ''], ['30 Oct', '100%', ' text-anchor="end"'],
+		['13 Oct', '47.5%', ' text-anchor="middle"'], ['19 Oct', '65.5%', ' text-anchor="middle"']]);
+	// zero is no gutter, byte for byte
+	assert.equal(Charts.series(month, { names: ['c'], gutter: 0 }), Charts.series(month, { names: ['c'] }));
+});
+
 test('area: a 0.1 wash from zero under the line, a single series', () => {
 	const svg = Charts.series([P('a', 50), P('b', 100)], { names: ['c'], form: 'area' });
 	assert.match(svg, /<path class="chart-area" d="M25,160L25,80L75,0L75,160Z" fill="#\w+" fill-opacity="0.1"\/>/u);
@@ -247,6 +284,16 @@ const throwsCases = [
 	['a span of ticks that overflows', [P('a', -8e307), P('b', 8e307)], { names: ['c'] }, /values too small or too large to draw/u],
 	// the third pass: ±Number.MIN_VALUE makes the step zero — throws at once, no endless loop
 	['a step that is zero', [P('a', -Number.MIN_VALUE), P('b', Number.MIN_VALUE)], { names: ['c'] }, /values too small or too large to draw/u],
+	// ADR 021
+	['a second colour by name', [P('a', 1, 2)], { names: ['a', 'b'], second: 'violet' }, /`second` must be a #rrggbb hex/u],
+	['a short second hex', [P('a', 1, 2)], { names: ['a', 'b'], second: '#fff' }, /`second` must be a #rrggbb hex/u],
+	['a null second', [P('a', 1, 2)], { names: ['a', 'b'], second: null }, /`second` must be a #rrggbb hex/u],
+	['a second colour for one series', ok, { names: ['c'], second: '#7c3aed' }, /`second` colours a second series/u],
+	['a negative gutter', ok, { names: ['c'], gutter: -1 }, /`gutter` is a percent from 0 to 50/u],
+	['a gutter past half', ok, { names: ['c'], gutter: 51 }, /`gutter` is a percent from 0 to 50/u],
+	['a NaN gutter', ok, { names: ['c'], gutter: NaN }, /`gutter` is a percent from 0 to 50/u],
+	['a gutter as a string', ok, { names: ['c'], gutter: '4' }, /`gutter` is a percent from 0 to 50/u],
+	['a null gutter', ok, { names: ['c'], gutter: null }, /`gutter` is a percent from 0 to 50/u],
 ];
 for (const [name, points, options, msg] of throwsCases) {
 	test(`throws: ${name}`, () => {

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.0 — 2026-10-10
+
+Two options for the series, from its second consumer (ADR 021). Without them every chart keeps its bytes.
+
+- `second: '#rrggbb'` colours the second series (lines, columns, key), fitted to the theme as `brand` is.
+  The default stays the brand's opposite hue. No `'tint'` preset: the brand's light mark is too close to
+  the solid on violet, red, cyan and blue brands (ADR 015's measurement).
+- `gutter: number` keeps that percent of the width clear left of the plot, so dense columns no longer
+  start under the tick text. A percent, not pixels: `calc()` in an SVG attribute works in Chromium only.
+- The README shows how to restyle the tick halo for a page on another surface (`.chart-tick`).
+- The series' size budget is re-frozen at 3264 B (ADR 012).
+
 ## 1.0.0 — 2026-10-09
 
 The whole catalog: nine charts beside the funnel, reviewed before release (ADR 020). A major version:

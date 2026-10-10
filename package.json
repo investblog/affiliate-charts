@@ -1,6 +1,6 @@
 {
   "name": "affiliate-charts",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Affiliate dashboard charts as SVG strings: conversion funnels in counts and money, the money waterfall from GGR to commission, daily series, KPI tiles and sparklines, rankings, part to whole, heatmaps and cohorts, meters and sankey flows. No inline styles, so it renders under a strict CSP. A core plus one file per chart; zero dependencies; Node and the browser.",
   "main": "charts.js",
   "types": "charts.d.ts",
@@ -54,7 +54,7 @@
       "charts.js": 2688,
       "charts-funnel.js": 2176,
       "charts-waterfall.js": 1152,
-      "charts-series.js": 3072,
+      "charts-series.js": 3264,
       "charts-spark.js": 1792,
       "charts-rank.js": 1024,
       "charts-share.js": 1408,
