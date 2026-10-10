@@ -4,9 +4,10 @@
 
 Two options for the series, from its second consumer (ADR 021). Without them every chart keeps its bytes.
 
-- `second: '#rrggbb'` colours the second series (lines, columns, key), fitted to the theme as `brand` is.
-  The default stays the brand's opposite hue. No `'tint'` preset: the brand's light mark is too close to
-  the solid on violet, red, cyan and blue brands (ADR 015's measurement).
+- `second` colours the second series (lines, columns, key). It takes `'tint'`, the brand's light mark,
+  for nested pairs, or a `'#rrggbb'` fitted to the theme as `brand` is. The default stays the brand's
+  opposite hue. Measured: `'tint'` passes the distinctness checks in 63 of 66 brand × surface cases.
+  It falls just short (14.7 against a floor of 15) with red brands on light surfaces.
 - `gutter: number` keeps that percent of the width clear left of the plot, so dense columns no longer
   start under the tick text. A percent, not pixels: `calc()` in an SVG attribute works in Chromium only.
 - The README shows how to restyle the tick halo for a page on another surface (`.chart-tick`).

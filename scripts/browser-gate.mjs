@@ -182,7 +182,7 @@ const MUTATIONS = [
 	{ label: 'the series is not registered', file: 'charts-series.js', edits: [['core.series = factory(core._);', 'factory(core._);']] },
 	{ label: 'series points at band edges', file: 'charts-series.js', edits: [['function cx(i) { return off + (i + 0.5) * w; }', 'function cx(i) { return off + i * w; }']] },
 	{ label: 'columns ignore the gutter', file: 'charts-series.js', edits: [['out += view(off + i * w + 0.15 * w + j * (cw + g)', 'out += view(i * w + 0.15 * w + j * (cw + g)']] },
-	{ label: 'second ignored', file: 'charts-series.js', edits: [['o.second ? _.palette(o.second, o.theme).solid : ', '']] },
+	{ label: 'second ignored', file: 'charts-series.js', edits: [[': o.second ? _.palette(o.second, o.theme).solid : _.palette', ': _.palette']] },
 	{ label: 'series stroke scales with the box', file: 'charts-series.js', edits: [["'vector-effect', 'non-scaling-stroke'", "'vector-effect', null"]] },
 	{ label: 'series tick text under its gridline', file: 'charts-series.js', edits: [["_.n(gy - 4, 2), 'opacity', 0.7", "_.n(gy + 12, 2), 'opacity', 0.7"]] },
 	{ label: 'grouped columns overlap', file: 'charts-series.js', edits: [['j * (cw + g)', 'j * cw * 0.5']] },

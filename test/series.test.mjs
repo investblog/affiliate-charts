@@ -120,6 +120,12 @@ test('second: the caller\'s colour for series 2, fitted like the brand, in lines
 		const swatches = [...Charts.series(pts, o).matchAll(/<rect x="0" y="\d+" width="10" height="10" rx="2" fill="([^"]+)"/gu)].map((m) => m[1]);
 		assert.deepEqual(swatches, [solid, second]);
 	}
+	// 'tint': the brand's light mark as it is, unfitted, for a nested pair
+	for (const theme of ['light', 'dark']) {
+		const o = { names: ['Views', 'Visitors'], brand: '#7c3aed', second: 'tint', theme };
+		assert.deepEqual(cols(Charts.series([P('a', 5, 1)], { ...o, form: 'columns' })).map((c) => c.fill),
+			[pinned[`#7c3aed ${theme}`].solid, pinned[`#7c3aed ${theme}`].light]);
+	}
 	// absent is the opposite hue, byte for byte
 	const pts = [P('a', 5, 1)], o = { names: ['a', 'b'] };
 	assert.equal(Charts.series(pts, { ...o, second: undefined }), Charts.series(pts, o));
@@ -285,9 +291,10 @@ const throwsCases = [
 	// the third pass: ±Number.MIN_VALUE makes the step zero — throws at once, no endless loop
 	['a step that is zero', [P('a', -Number.MIN_VALUE), P('b', Number.MIN_VALUE)], { names: ['c'] }, /values too small or too large to draw/u],
 	// ADR 021
-	['a second colour by name', [P('a', 1, 2)], { names: ['a', 'b'], second: 'violet' }, /`second` must be a #rrggbb hex/u],
-	['a short second hex', [P('a', 1, 2)], { names: ['a', 'b'], second: '#fff' }, /`second` must be a #rrggbb hex/u],
-	['a null second', [P('a', 1, 2)], { names: ['a', 'b'], second: null }, /`second` must be a #rrggbb hex/u],
+	['a second colour by name', [P('a', 1, 2)], { names: ['a', 'b'], second: 'violet' }, /`second` must be a #rrggbb hex or "tint"/u],
+	['a short second hex', [P('a', 1, 2)], { names: ['a', 'b'], second: '#fff' }, /`second` must be a #rrggbb hex or "tint"/u],
+	['a null second', [P('a', 1, 2)], { names: ['a', 'b'], second: null }, /`second` must be a #rrggbb hex or "tint"/u],
+	['a second preset by another name', [P('a', 1, 2)], { names: ['a', 'b'], second: 'Tint' }, /`second` must be a #rrggbb hex or "tint"/u],
 	['a second colour for one series', ok, { names: ['c'], second: '#7c3aed' }, /`second` colours a second series/u],
 	['a negative gutter', ok, { names: ['c'], gutter: -1 }, /`gutter` is a percent from 0 to 50/u],
 	['a gutter past half', ok, { names: ['c'], gutter: 51 }, /`gutter` is a percent from 0 to 50/u],

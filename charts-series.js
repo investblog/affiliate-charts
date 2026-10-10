@@ -46,7 +46,7 @@
 		if (o.format != null && typeof o.format !== 'function') fail('`format` must be a function');
 		// the caller's second colour and gutter (ADR 021)
 		if (o.second !== undefined) {
-			if (typeof o.second !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(o.second)) fail('`second` must be a #rrggbb hex');
+			if (o.second !== 'tint' && (typeof o.second !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(o.second))) fail('`second` must be a #rrggbb hex or "tint"');
 			if (names.length < 2) fail('`second` colours a second series');
 		}
 		if (o.gutter !== undefined && (typeof o.gutter !== 'number' || !(o.gutter >= 0 && o.gutter <= 50))) fail('`gutter` is a percent from 0 to 50');
@@ -92,7 +92,9 @@
 	function draw(points, o, tk) {
 		var p = o.classPrefix || 'chart', names = o.names, S = names.length, N = points.length, prev = o.previous;
 		var form = o.form || 'line', format = o.format || function (v) { return _.n(v, 6); };
-		var colour = [_.palette(o.brand, o.theme).solid, o.second ? _.palette(o.second, o.theme).solid : _.palette(o.brand, o.theme, Math.PI).solid];
+		// series 2: the brand's opposite hue, its light mark (`tint`) or the caller's hex fitted like the brand (ADR 021)
+		var pal = _.palette(o.brand, o.theme), colour = [pal.solid, o.second === 'tint' ? pal.light
+			: o.second ? _.palette(o.second, o.theme).solid : _.palette(o.brand, o.theme, Math.PI).solid];
 		// the bands lie right of the gutter, in percent of the width (ADR 021)
 		var off = o.gutter || 0, dLo = tk[0], dHi = tk.length > 1 ? tk[tk.length - 1] : 1, w = (100 - off) / N, y = 0, key = '', out = '';
 		var last = points[N - 1], j, i;

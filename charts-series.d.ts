@@ -25,8 +25,8 @@ declare namespace Series {
 		names: [string] | [string, string];
 		/** Columns only: the caller asserts the parts add up. */
 		stacked?: boolean;
-		/** Two series only: the second series' colour, `#rrggbb`, fitted to the theme as `brand` is (ADR 021).
-		 * Default: the brand's opposite hue. */
+		/** Two series only: the second series' colour (ADR 021) — a `#rrggbb` fitted to the theme as `brand`
+		 * is, or `'tint'`, the brand's light mark, for nested pairs. Default: the brand's opposite hue. */
 		second?: string;
 		/** Percent of the width, 0–50, kept clear left of the plot for the tick text (ADR 021). Default 0. */
 		gutter?: number;

@@ -246,7 +246,7 @@ interface SeriesOptions extends Common {
   form?: 'line' | 'area' | 'columns';   // default 'line'
   names: string[];                 // one or two series names, for the key; length = values.length
   stacked?: boolean;               // columns only; the caller asserts the parts are additive
-  second?: string;                 // #rrggbb, the second series' colour, fitted like brand (ADR 021)
+  second?: string;                 // series 2: '#rrggbb' fitted like brand, or 'tint' (ADR 021)
   gutter?: number;                 // percent of the width kept clear left of the plot, 0–50, default 0
   previous?: {                     // comparison period for a single series, one entry per point
     name: string; values: (number | null)[]; display: (string | null)[];
@@ -271,10 +271,12 @@ Layout and colour: ADR 015; `second` and `gutter`: ADR 021. In short:
   of the two, never gone however dense the series (ADR 020).
 - `previous`: the comparison period as a `currentColor` line at 0.35 under a **single** series, never
   dashed, never a second axis.
-- **Colours:** series 1 the brand's solid mark, series 2 its opposite hue — or the caller's `second`,
-  fitted to the theme as `brand` is; the pair is then the caller's to keep apart (no `'tint'` preset: the
-  light mark fails the distinctness check on violet, red, cyan and blue brands, ADR 021). At most two
-  series: no third colour from one brand passes the checks (ADR 015) — more measures are more charts.
+- **Colours:** series 1 the brand's solid mark, series 2 its opposite hue. With `second`, series 2 is
+  either the caller's hex, fitted to the theme as `brand` is (the pair is then the caller's to keep
+  apart), or `'tint'`, the brand's light mark, for nested pairs. `'tint'` passes the distinctness checks
+  on 63 of 66 brand × surface cases; it falls just short with red brands on light surfaces, and stands
+  2:1 against the surface (ADR 021). At most two series: no third colour from one brand passes the
+  checks (ADR 015). More measures are more charts.
 - **Gutter:** `gutter` keeps that percent of the width clear at the left; bands, points, columns, hover
   bands and x labels lie in the rest, gridlines and tick text keep the full width. Percent, not pixels:
   a pixel gutter needs `calc()` in an attribute, which Firefox and WebKit drop (ADR 021). Tick text keeps
@@ -294,7 +296,7 @@ Layout and colour: ADR 015; `second` and `gutter`: ADR 021. In short:
   stack; `previous` arrays of a length other than the points'; `format` that is not a function or
   returns something other than a string; values whose range overflows a number; `stacked` present and
   not a boolean; values so small or so large that the nice ticks underflow or overflow (ADR 020);
-  `second` that is not a `#rrggbb` string, or given with a single series; `gutter` that is not a number
+  `second` that is neither a `#rrggbb` string nor `'tint'`, or given with a single series; `gutter` that is not a number
   from 0 to 50 (ADR 021).
 
 **`Charts.spark(values, options)` and `Charts.tile(tile, options)`** — `charts-spark.js`

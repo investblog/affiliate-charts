@@ -157,7 +157,7 @@ their checks. A feature, so the series' budget is re-frozen at the measurement +
 
 | File | Before | After | Frozen |
 |---|---|---|---|
-| `charts-series.js` | 2969 B | 3141 B | **3264 B** (was 3072) |
+| `charts-series.js` | 2969 B | 3175 B | **3264 B** (was 3072) |
 
-The core is untouched. A page that draws the series alone pays 5758 B gzipped; the whole catalog is
-17 259 B.
+The core is untouched. A page that draws the series alone pays 5792 B gzipped; the whole catalog is
+17 293 B.

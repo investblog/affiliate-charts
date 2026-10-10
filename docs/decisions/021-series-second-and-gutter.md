@@ -34,19 +34,33 @@ filed two issues against `series`:
   Every other spelling — nested viewports, `viewBox`, `preserveAspectRatio`, transforms — places a point
   at `a·W + b` with one scale factor for a whole polyline; a gutter needs the factor `W − G`, which no
   constant attribute expresses. Inline `style` would, and is forbidden (`style-src 'self'`).
-- **`'tint'`.** ADR 015 measured the brand's light mark as a series colour beside the solid: normal-vision
-  ΔE under 15 for the red, cyan, blue and **violet** brands on some surface (worst 13.3). The issue's
-  own brand is in that list.
+- **`'tint'` as the second slot.** ADR 015 measured the light mark only as a *third* slot, beside both
+  the solid and the opposite. Measured here as a pair, the solid and the light mark
+  (`palette(brand, theme)`), through the dataviz validator, ADR 011's ten brands and the issue's
+  `#4d48ed`, on its six surfaces (66 cases):
+  - solid + light: normal-vision ΔE ≥ 15 in 63 of 66. The three failures are `#e11d48` on the light
+    surfaces, ΔE 14.7. Worst CVD ΔE 12.5, all pass. `#4d48ed` on light: normal 20.7, CVD 16.7. The light
+    mark is 2–2.7:1 against its surface, under the 3:1 for a lone mark (a WARN, relief required): ADR 011
+    built it for 2:1, as the ordinal light end.
+  - solid + opposite, for reference: 66 of 66 pass. Worst normal 21.3, worst CVD 11.2.
+- **A hex cannot spell the tint.** `second` is fitted like `brand`, so a light hex is darkened until it
+  clears 4.5:1 on the surface and lands near the solid. The light mark is reachable only by name.
 
 ## Decision
 
-**`second?: '#rrggbb'`** — the second series' colour, fitted to the theme exactly as `brand` is (its
-lightness held in the band, then moved to clear 4.5:1 on the surface; hue and chroma the caller's). It
-paints the second series' lines, columns and key swatch. Absent: the brand's opposite hue, as before.
-The library does not check the pair: two colours the caller chose are the caller's to keep apart — the
-reason ADR 015 offers no derived third colour is the same reason it offers no named tint here. A
-`'tint'` preset is not offered: on the issue's own brand it measured below the distinctness floor.
-`second` with a single series throws, as `stacked` without columns does.
+**`second?: '#rrggbb' | 'tint'`** colours the second series' lines, columns and key swatch. Absent: the
+brand's opposite hue, as before.
+
+- A hex is fitted to the theme exactly as `brand` is (its lightness held in the band, then moved to
+  clear 4.5:1 on the surface; hue and chroma the caller's). The library does not check the pair: two
+  colours the caller chose are the caller's to keep apart.
+- `'tint'` is the brand's light mark (`palette(brand, theme).light`), for nested pairs (views ⊃
+  visitors, GGR ⊃ commission), where a lighter step of one hue says "part of the same thing". Its limits
+  are measured, not hidden: on red brands on light surfaces it sits just under the normal-vision floor,
+  and its contrast with the surface is the ordinal light end's 2:1, not a lone mark's 3:1. The key, with
+  each series' value, and the hover title carry the series' identity, which is what the validator's
+  WARN asks for. The opposite hue stays the default because it passes everywhere.
+- `second` with a single series throws, as `stacked` without columns does.
 
 **`gutter?: number`** — percent of the chart's width kept clear at the left of the plot, `0` to `50`,
 default `0`. Bands, points, columns, hover bands and x labels lie in the rest; gridlines and tick text
