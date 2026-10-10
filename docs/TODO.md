@@ -23,3 +23,7 @@ The milestone table is in
   gated 2026-10-09, released in 1.0.0
 - [x] M9 — independent review of the whole catalog (Codex, three passes, ADR 020), fixes, then one release: 1.0.0 (2026-10-09; no
   per-milestone releases)
+- [x] 1.1.0 — the series' `second` (hex or `'tint'`) and `gutter` in percent, from the second consumer's
+  issues #1 and #2 (ADR 021); the demo shows both (2026-10-10)
+- [ ] Decide: a lighter `tint` on the dark theme (reported as dull; by design it blends toward the
+  surface; a change alters bytes → 1.2.0)
