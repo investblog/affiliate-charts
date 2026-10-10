@@ -32,6 +32,9 @@
 	.card { width: 100%; padding: 20px; border-radius: 10px; background: var(--card); color: var(--card-ink);
 		font-family: Montserrat, system-ui, sans-serif; }
 	.card svg { display: block; }
+	/* the tick halo is the theme's reference surface; a card on another surface restyles it (ADR 021) */
+	.card .chart-tick { stroke: var(--card); }
+	[hidden] { display: none !important; }
 	.card h2 { font-size: 13px; font-weight: 600; margin: 0 0 12px; opacity: .7; }
 	.note { color: var(--card-ink); opacity: .6; font-size: 13px; margin: 0; }
 	#stage.sheet { grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); align-items: start; justify-items: stretch; }
@@ -63,6 +66,14 @@
 		<p class="meta" id="formNote" hidden>The classic shape draws one positive series: counts only. Money funnels have two bars a step, losses and negatives.</p>
 		<p class="meta" id="areaNote" hidden>An area draws one series: two would hide each other. This example has two, so it is drawn as lines.</p>
 		<p class="meta" id="partNote" hidden>The shape leaves out part steps such as unique clicks: they are subsets, not stages.</p>
+		<label id="secondField">second <select id="second">
+			<option value="">opposite hue</option>
+			<option value="tint">tint</option>
+			<option value="custom">your hex</option>
+		</select></label>
+		<label class="brand" id="secondHexField" hidden>hex <span class="row"><input type="color" id="secondHex" value="#c026d3"><span class="meta" id="secondHexText">#c026d3</span></span></label>
+		<p class="meta" id="secondNote" hidden>`second` colours a second series; this example has one.</p>
+		<label id="gutterField">gutter <span class="row"><input type="range" id="gutter" min="0" max="20" step="1" value="0"><span class="meta" id="gutterText">0%</span></span></label>
 		<label>theme <select id="theme"><option>dark</option><option>light</option></select></label>
 		<label class="brand">brand <span class="row"><input type="color" id="brand" value="#0066ff"><span class="meta" id="brandHex">#0066ff</span></span></label>
 		<label>width <input type="range" id="width" min="320" max="1100" step="10" value="720"></label>
@@ -157,8 +168,11 @@ function app() {
 	};
 	var money = function (v) { return (v < 0 ? '−' : '') + Math.abs(v).toFixed(2).replace(/\B(?=(\d{3})+\.)/g, ' '); };
 	var count = function (v) { return String(v).replace(/\B(?=(\d{3})+$)/g, ' '); };
-	var month = [], clicks = [], prior = [];
+	var month = [], clicks = [], prior = [], traffic = [];
 	for (var d = 0; d < 30; d++) {
+		// views and the visitors among them: a nested pair, dense enough for the tick text to meet the columns
+		var views = 2000 + Math.round(900 * Math.sin(d / 2.3));
+		traffic.push(P((d + 1) + ' Oct', [views, Math.round(views / 2.5)], count));
 		// a deterministic month: a weekly rhythm, a slow rise, a day with no data and a day players won
 		var ggr = d === 9 ? null : d === 16 ? -1240 : 1400 + d * 40 + [0, 300, 650, 200, 900, 1300, 500][d % 7];
 		month.push(P((d + 1) + ' Oct', [ggr, ggr === null ? null : Math.round(ggr * 0.25)], money));
@@ -174,6 +188,7 @@ function app() {
 			previous: { name: 'September', values: prior, display: prior.map(count) } },
 		deposits: { option: 'deposits by weekday', name: 'First and repeat deposits by weekday', names: ['First deposits', 'Repeat deposits'],
 			points: week, stacked: true },
+		traffic: { option: 'views and visitors', name: 'Views and visitors, October', names: ['Views', 'Visitors'], points: traffic },
 	};
 	// KPI tiles: whether a change is good is the caller's call — a falling CPA is
 	var trend = function (k) { return clicks.slice(18).map(function (p, i) { return p.values[0] * k + (i % 3) * 7; }); };
@@ -284,6 +299,11 @@ function app() {
 		if (ex.legend) o.legend = LEGEND;
 		if (ex.highlight != null) o.highlight = ex.highlight;
 		if (chart() === 'heatmap') { o.form = ex.form; o.format = ex.format; }
+		// the series' second colour (a second series only) and its gutter (ADR 021)
+		if (chart() === 'series') {
+			if ($('second').value && ex.names.length > 1) o.second = $('second').value === 'tint' ? 'tint' : $('secondHex').value;
+			if (+$('gutter').value) o.gutter =+$('gutter').value;
+		}
 		return o;
 	}
 	function card(key) {
@@ -347,6 +367,14 @@ function app() {
 		$('partNote').hidden = !funnel || $('form').value !== 'shape';
 		// a series of two drawn as lines when the area is asked for
 		$('areaNote').hidden = chart() !== 'series' || $('form').value !== 'area' || (!sheet && DAYS[$('example').value].names.length < 2);
+		// second and gutter are the series' own; second needs a second series
+		var series = chart() === 'series', single = series && !sheet && DAYS[$('example').value].names.length < 2;
+		$('secondField').hidden = $('gutterField').hidden = !series;
+		$('second').disabled = single;
+		$('secondNote').hidden = !single;
+		$('secondHexField').hidden = !series || single || $('second').value !== 'custom';
+		$('secondHexText').textContent = $('secondHex').value;
+		$('gutterText').textContent = $('gutter').value + '%';
 		if (sheet) {
 			Object.keys(examples()).forEach(function (k) { stage.appendChild(card(k).el); });
 			$('bytes').textContent = '';
@@ -362,7 +390,7 @@ function app() {
 			({ series: 'points', tile: 'tile', rank: 'rows', share: 'parts', heatmap: 'cells', meter: 'meter', sankey: 'nodes, links' }[fn] || 'steps') + ', ' +
 			JSON.stringify(o, null, 1).replace(/\n\s*/g, ' ') + ');\nCharts.init(el, svg);';
 	}
-	['show', 'chart', 'example', 'form', 'theme', 'brand', 'width', 'titled'].forEach(function (id) {
+	['show', 'chart', 'example', 'form', 'theme', 'brand', 'second', 'secondHex', 'gutter', 'width', 'titled'].forEach(function (id) {
 		$(id).addEventListener('input', draw);
 	});
 	draw();

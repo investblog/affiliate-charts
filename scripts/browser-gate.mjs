@@ -92,7 +92,7 @@ async function demo(pw, port) {
 		// the waterfall has one form: its form control is disabled, and is not touched
 		const charts = { funnel: [['counts', 'money', 'negative', 'fresh'], ['bars', 'steps', 'shape'], '.chart-bar'],
 			waterfall: [['flow', 'losing'], [null], '.chart-bar-total'],
-			series: [['money', 'clicks', 'deposits'], ['line', 'area', 'columns'], '.chart-hit'],
+			series: [['money', 'clicks', 'deposits', 'traffic'], ['line', 'area', 'columns'], '.chart-hit'],
 			tile: [['epc', 'cpa', 'cr', 'ftd'], [null], '.chart-value'],
 			rank: [['sources', 'focus'], [null], '.chart-bar'],
 			share: [['devices', 'geo'], ['bar', 'donut'], '.chart-part'],
@@ -127,6 +127,39 @@ async function demo(pw, port) {
 				}
 			}
 		}
+		// the series' second colour and gutter (ADR 021): every example takes every choice — a single series
+		// leaves `second` out instead of throwing — and the code shown carries what was drawn
+		await page.selectOption('#chart', 'series');
+		await page.selectOption('#form', 'columns');
+		for (const show of ['one', 'sheet']) {
+			await page.selectOption('#show', show);
+			for (const example of ['money', 'clicks', 'deposits', 'traffic']) {
+				if (show === 'one') await page.selectOption('#example', example);
+				for (const second of ['', 'tint', 'custom']) {
+					for (const gutter of ['0', '8']) {
+						await page.evaluate(([s, g]) => {
+							const sel = document.getElementById('second'), r = document.getElementById('gutter');
+							sel.value = s;
+							r.value = g;
+							r.dispatchEvent(new r.ownerDocument.defaultView.Event('input'));
+						}, [second, gutter]);
+						const [cards, drawn, code] = await page.evaluate(() => {
+							const all = [...document.querySelectorAll('#stage .card')];
+							return [all.length, all.filter((c) => c.querySelector('svg .chart-hit')).length, document.getElementById('code').textContent];
+						});
+						const at = `series/${show}/${example}/second=${second || '-'}/gutter=${gutter}`;
+						if (!cards || drawn !== cards) problems.push(`${at}: ${cards - drawn} card(s) without a series`);
+						if (show === 'one') {
+							const two = example !== 'clicks';
+							if ((two && second !== '') !== /"second"/u.test(code)) problems.push(`${at}: the code shown and the second colour disagree`);
+							if ((gutter !== '0') !== /"gutter": 8/u.test(code)) problems.push(`${at}: the code shown and the gutter disagree`);
+						}
+						combos++;
+					}
+				}
+			}
+		}
+		await page.evaluate(() => { document.getElementById('second').value = ''; document.getElementById('gutter').value = '0'; });
 		// and back: the funnel after the waterfall gets its form control and its bars again
 		await page.selectOption('#show', 'one');
 		await page.selectOption('#chart', 'funnel');
