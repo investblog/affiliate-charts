@@ -101,16 +101,16 @@ test('rates inline: the chip leads the values on the label line and the rate lin
 	const svg = Charts.funnel(steps, { rates: 'inline' });
 	assert.equal(texts(svg, 'rate').length, 0, 'no rate line of its own');
 	assert.deepEqual(texts(svg, 'value').map((t) => t.text), ['10',
-		'<tspan class="chart-rate" fill-opacity="0.7" font-size="12">↓ —</tspan> 5',
-		'<tspan class="chart-rate" fill-opacity="0.7" font-size="12">↓ &lt;40%</tspan> 2',
-		'<tspan class="chart-rate" fill-opacity="0.7" font-size="12">↓ 0%</tspan> 0']);
+		'<tspan class="chart-rate" fill-opacity="0.7" font-size="12">↓ —</tspan>\u20025',
+		'<tspan class="chart-rate" fill-opacity="0.7" font-size="12">↓ &lt;40%</tspan>\u20022',
+		'<tspan class="chart-rate" fill-opacity="0.7" font-size="12">↓ 0%</tspan>\u20020']);
 	assert.equal(height(svg), height(Charts.funnel(steps)) - 3 * 16, '16 px less a rated row');
 	assert.ok(svg.includes('<title>b: 5 (—)</title>') && svg.includes('<title>c: 2 (&lt;40%)</title>'), 'the row title keeps the rate');
 	const steps2 = Charts.funnel(steps, { rates: 'inline', form: 'steps' });
 	assert.equal(height(steps2), height(Charts.funnel(steps, { form: 'steps' })) - 3 * 20, 'steps: 20 px less a rated row');
 	assert.match(steps2, /<tspan class="chart-rate" fill-opacity="0.7" font-size="13" font-weight="600">↓ —<\/tspan>/u, 'steps keeps its emphasis');
 	const earned = texts(Charts.funnel([S('Dep', 12, { rate: '9%', earned: E(3) })], { legend, rates: 'inline' }), 'value')[0].text;
-	assert.equal(earned, '<tspan class="chart-rate" fill-opacity="0.7" font-size="12">↓ 9%</tspan> <tspan fill-opacity="0.75">12</tspan> · <tspan font-weight="600">3</tspan>');
+	assert.equal(earned, '<tspan class="chart-rate" fill-opacity="0.7" font-size="12">↓ 9%</tspan>\u2002<tspan fill-opacity="0.75">12</tspan> · <tspan font-weight="600">3</tspan>');
 });
 
 test('rates inline: "above" is the default, byte for byte; inline changes the ids', () => {
