@@ -63,6 +63,9 @@ const throwsCases = [
 	['part as the string "false"', [S('a', 1), S('b', 1, { part: 'false' })], {}],
 	['gap as the string "false"', [S('a', 1), S('b', 1, { gap: 'false' })], {}],
 	['an unknown group', [S('a', 1), S('b', 1, { group: 'refunds' })], {}],
+	// 1.2.0: the rate's place (ADR 010 addendum)
+	['an unknown rates', counts, { rates: 'right' }],
+	['rates as a boolean', counts, { rates: true }],
 ];
 for (const [name, steps, opts] of throwsCases) {
 	// the library's own error, not an engine error that a broken check would also raise

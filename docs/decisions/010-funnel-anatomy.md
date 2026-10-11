@@ -70,3 +70,29 @@ text width.
   a solid bar means "earned" everywhere in that chart, as the legend says.
 - The `steps` ghost belongs to a block: a `gap` starts a base of another kind and resets it, and no ghost
   is drawn for a previous value that is not positive.
+
+## Addendum (1.2.0, 2026-10-11): the rate inline
+
+The first consumer asked for a shorter funnel: five count steps (clicks → registrations → first, second
+and third deposits) with a rate on every step but the first spend much of their height on rate lines,
+and the zero steps have nothing else to show.
+
+**`rates?: 'above' | 'inline'`.** `'above'` is the table above and the default; a chart without the
+option, or with `'above'`, keeps its 1.x bytes and ids. `'inline'` moves the chip onto the label line:
+
+- **Before the values**, as a muted `<tspan class="…-rate">` inside the value text, then an en space,
+  then the value(s): `↓ 7.8%  410`. Values stay end-anchored at `x=100%`, so they still line up as a
+  column. Same size and weight as the chip above (12 px muted; `steps`: 13 px semibold); every form.
+- **No rate line**: a rated row is 16 px shorter (20 in `steps`). The consumer's five steps: 264 → 200 px
+  (`steps`: 280 → 200).
+- **The split estimate counts the chip**: `rate.length + 3` characters (arrow, space, en space). A row
+  that fits without it may split with it; the label is never cut to make room, since truncation looks
+  at the label alone.
+- The row's `<title>` still carries the rate; `null` is still `↓ —`.
+- The option enters the id key only when `'inline'`, so the default keeps its ids.
+
+**Why before the values, not after the label** (the consumer's sketch, `Registrations ↓ 7.8%`): the
+label side needs the core's shared label line to take a suffix and cut the label shorter by the chip —
+a core change shared with the waterfall, against 71 B of headroom in the core budget. Before the values
+it is a funnel-only change: the chip joins the value text the split already measures. Cost, measured
+with `npm run size`: `charts-funnel.js` 1935 → 2037 B gzipped (budget 2176); the core unchanged.

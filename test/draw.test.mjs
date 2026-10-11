@@ -96,6 +96,38 @@ test('rates: absent → no chip; null → an em dash; a string as given, escaped
 	assert.deepEqual(texts(svg, 'rate').map((t) => t.text), ['↓ —', '↓ &lt;40%']);
 });
 
+test('rates inline: the chip leads the values on the label line and the rate line is gone (1.2.0)', () => {
+	const steps = [S('a', 10), S('b', 5, { rate: null }), S('c', 2, { rate: '<40%' }), S('d', 0, { rate: '0%' })];
+	const svg = Charts.funnel(steps, { rates: 'inline' });
+	assert.equal(texts(svg, 'rate').length, 0, 'no rate line of its own');
+	assert.deepEqual(texts(svg, 'value').map((t) => t.text), ['10',
+		'<tspan class="chart-rate" fill-opacity="0.7" font-size="12">↓ —</tspan> 5',
+		'<tspan class="chart-rate" fill-opacity="0.7" font-size="12">↓ &lt;40%</tspan> 2',
+		'<tspan class="chart-rate" fill-opacity="0.7" font-size="12">↓ 0%</tspan> 0']);
+	assert.equal(height(svg), height(Charts.funnel(steps)) - 3 * 16, '16 px less a rated row');
+	assert.ok(svg.includes('<title>b: 5 (—)</title>') && svg.includes('<title>c: 2 (&lt;40%)</title>'), 'the row title keeps the rate');
+	const steps2 = Charts.funnel(steps, { rates: 'inline', form: 'steps' });
+	assert.equal(height(steps2), height(Charts.funnel(steps, { form: 'steps' })) - 3 * 20, 'steps: 20 px less a rated row');
+	assert.match(steps2, /<tspan class="chart-rate" fill-opacity="0.7" font-size="13" font-weight="600">↓ —<\/tspan>/u, 'steps keeps its emphasis');
+	const earned = texts(Charts.funnel([S('Dep', 12, { rate: '9%', earned: E(3) })], { legend, rates: 'inline' }), 'value')[0].text;
+	assert.equal(earned, '<tspan class="chart-rate" fill-opacity="0.7" font-size="12">↓ 9%</tspan> <tspan fill-opacity="0.75">12</tspan> · <tspan font-weight="600">3</tspan>');
+});
+
+test('rates inline: "above" is the default, byte for byte; inline changes the ids', () => {
+	const steps = [S('a', 10), S('b', 5, { rate: '50%' })];
+	assert.equal(Charts.funnel(steps, { rates: 'above', title: 't' }), Charts.funnel(steps, { title: 't' }));
+	const id = (svg) => svg.match(/id="([^"]+)-t"/u)[1];
+	assert.notEqual(id(Charts.funnel(steps, { rates: 'inline', title: 't' })), id(Charts.funnel(steps, { title: 't' })));
+});
+
+test('rates inline: the chip counts towards the split, the label is never cut for it', () => {
+	// 36 + 2 + 2 = 40 chars fit; with "↓ 7%" and an en space (+ 5) = 45 chars × 8 = 360 > 343
+	const at = (opts) => { const svg = Charts.funnel([S('x'.repeat(36), 10, { rate: '7%' })], opts); return texts(svg, 'value')[0].y - texts(svg, 'label')[0].y; };
+	assert.equal(at({}), 0);
+	assert.equal(at({ rates: 'inline' }), 18);
+	assert.equal(texts(Charts.funnel([S('k'.repeat(42), 1, { rate: '7%' })], { rates: 'inline' }), 'label')[0].text, 'k'.repeat(42));
+});
+
 test('values: the base value, then the earned one in semibold, on the label line', () => {
 	const svg = Charts.funnel([S('Dep', 12, { earned: E(3) })], { legend });
 	const v = texts(svg, 'value')[0];

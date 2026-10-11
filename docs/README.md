@@ -161,6 +161,7 @@ interface FunnelStep {
 interface FunnelOptions extends Common {
   form?: 'bars' | 'steps' | 'shape';
   legend?: [string, string];   // [base, earned]; required when any step has `earned`
+  rates?: 'above' | 'inline';  // where `rate` goes: its own line (default) or before the values (ADR 010)
 }
 ```
 
@@ -180,10 +181,15 @@ interface FunnelOptions extends Common {
   starts a base of another kind, and none when that value is not positive); `shape` — the classic funnel as **centred
   rectangles** whose width is the value, labels and values on the label line. Trapezoids are not
   drawn: their slanted edges would show values that do not exist. Row anatomy in pixels: ADR 010.
+- **`rates`**: `'above'` (default) draws each `rate` on a line of its own above the label; `'inline'`
+  puts it on the label line, muted, before the values (`↓ 7.8%  410`), in every form (`steps` keeps it
+  13 px semibold). The row is 16 px shorter (20 in `steps`); the chip's characters count towards the
+  split, and the label is never cut to make room for it (ADR 010, addendum 1.2.0).
 - Class hooks: `-bar`, `-bar-earned`, `-bar-part`, `-bar-loss`, `-bar-ghost`, `-rate`, plus the core's
   `-label`, `-value`, `-legend`, `-grid` (separators), `-axis` (the zero line).
 - Throws: `steps` that is not an array, no steps or no main step; values whose range overflows a
-  number; `earned` without a `legend` array of two strings; a `rate` that is not a
+  number; `earned` without a `legend` array of two strings; `rates` other than `'above'` or
+  `'inline'`; a `rate` that is not a
   string, `null` or absent; a `part` step first or inside losses; a main step after
   a losses step; `gap` on a `part` step; `shape` with `earned`, `part`, losses or a negative value;
   a `part` or `gap` that is present and not a boolean; a `group` other than `'losses'` (ADR 020).

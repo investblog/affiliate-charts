@@ -33,6 +33,10 @@
 			{ title: 'Money', desc: 'Bases differ', legend: ['base of the event', 'earned by the partner'], theme: 'dark' }],
 		['steps', [S('a', 1000), S('b', 400, { rate: '40%' })], { title: 'Steps', form: 'steps' }],
 		['shape', [S('a', 1000), S('b', 500)], { title: 'Shape', form: 'shape' }],
+		// 1.2.0: the rate inline, on a five-step funnel with zero steps and a label long enough to split
+		['inline', [S('Clicks', 5257), S('Registrations', 410, { rate: '7.8%' }), S('First deposits', 0, { rate: '0%' }),
+			S('Second deposits from returning players', 0, { rate: null }), S('Third deposit', 0, { rate: null })],
+			{ title: 'Inline', rates: 'inline', theme: 'dark' }],
 	];
 	// the waterfall (ADR 014): GGR to commission with a long neutral label, and a negative start crossing zero
 	var T = function (label, value) { return { label: label, value: value, display: String(value), kind: 'total' }; };
@@ -144,7 +148,7 @@
 		});
 		check('ids are unique across charts on one page', function () {
 			var ids = [].map.call(document.querySelectorAll('#charts svg [id]'), function (e) { return e.id; });
-			return ids.length === 22 && new Set(ids).size === ids.length;
+			return ids.length === 23 && new Set(ids).size === ids.length;
 		});
 		check('aria-labelledby resolves inside its own chart', function () {
 			return [].every.call(document.querySelectorAll('#charts svg[aria-labelledby]'), function (s) {
@@ -156,7 +160,7 @@
 		});
 		check('every row is a group whose first child is its <title>', function () {
 			var rows = document.querySelectorAll('#charts > .card > svg > g:not([class])');
-			return rows.length === 25 && [].every.call(rows, function (g) { return g.firstElementChild.tagName === 'title'; });
+			return rows.length === 30 && [].every.call(rows, function (g) { return g.firstElementChild.tagName === 'title'; });
 		});
 		check('bars follow the page width: 50% of the value is 50% of the chart', function () {
 			var s = svg('counts'), w = s.getBoundingClientRect().width;
@@ -174,6 +178,16 @@
 			};
 			return unscaled('#charts .chart-label', '13px') && unscaled('#charts .card:not(.narrow) .chart-value', '13px') && unscaled('#charts .narrow .chart-value', '26px') &&
 				unscaled('#card-counts .chart-rate', '12px') && unscaled('#card-steps .chart-rate', '13px');
+		});
+		check('inline rates sit on the label line, before the value, and leave no rate line', function () {
+			var s = svg('inline'), rows = [].slice.call(s.querySelectorAll(':scope > g')), chips = s.querySelectorAll('tspan.chart-rate');
+			return rows.length === 5 && chips.length === 4 && [].every.call(chips, function (c) { return getComputedStyle(c).fontSize === '12px'; }) && s.querySelectorAll('text.chart-rate').length === 0 && rows.slice(1).every(function (g) {
+				var r = function (e) { return e.getBoundingClientRect(); }, label = r(g.querySelector('.chart-label')), value = g.querySelector('.chart-value'), chip = r(value.querySelector('.chart-rate'));
+				// on the value's line (the label's, unless the row split), left of the number, inside the chart
+				var line = r(value), split = line.top - label.top > 9;
+				return near(chip.bottom, line.bottom, 3) && chip.right < line.right - 6 && (split || chip.left > label.right) &&
+					(g.textContent.indexOf('Second deposits') < 0 || split);
+			});
 		});
 		check('a part row is indented 12px', function () {
 			var s = svg('counts'), labels = s.querySelectorAll('.chart-label');

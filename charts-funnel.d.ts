@@ -32,6 +32,11 @@ declare namespace Funnel {
 		form?: 'bars' | 'steps' | 'shape';
 		/** `[base, earned]`. Required when any step has `earned`. */
 		legend?: [string, string];
+		/**
+		 * Where `rate` goes. `above` (default): a line of its own above the label. `inline`: on the label
+		 * line, before the values — 16 px less a rated row (20 in `steps`). Every form.
+		 */
+		rates?: 'above' | 'inline';
 	}
 }
 

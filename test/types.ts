@@ -32,6 +32,9 @@ Core.palette('#0066ff', 'sepia');
 Core.funnel(steps);
 // @ts-expect-error — form is a closed set
 Charts.funnel(steps, { form: 'pyramid' });
+Charts.funnel(steps, { rates: 'inline' });
+// @ts-expect-error — the rate goes above or inline
+Charts.funnel(steps, { rates: 'right' });
 // @ts-expect-error — the legend is a pair
 Charts.funnel(steps, { legend: ['base'] });
 // @ts-expect-error — only the losses group exists

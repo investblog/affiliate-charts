@@ -25,5 +25,7 @@ The milestone table is in
   per-milestone releases)
 - [x] 1.1.0 — the series' `second` (hex or `'tint'`) and `gutter` in percent, from the second consumer's
   issues #1 and #2 (ADR 021); the demo shows both (2026-10-10)
+- [x] 1.2.0 — the funnel's `rates: 'inline'`: the rate on the label line, before the value, from the
+  first consumer (ADR 010 addendum; 2026-10-11)
 - [ ] Decide: a lighter `tint` on the dark theme (reported as dull; by design it blends toward the
   surface; a change alters bytes → 1.2.0)

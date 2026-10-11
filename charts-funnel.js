@@ -25,6 +25,7 @@
 		if (!Array.isArray(steps)) fail('`steps` must be an array');
 		if (opts.form != null && opts.form !== 'bars' && opts.form !== 'steps' && opts.form !== 'shape') fail('unknown form');
 		var shape = opts.form === 'shape', losses = false, main = 0, legend = opts.legend, key = [], lo = 0, hi = 0;
+		if (opts.rates !== undefined && opts.rates !== 'above' && opts.rates !== 'inline') fail('`rates` must be "above" or "inline"');
 		if (legend != null && !(Array.isArray(legend) && legend.length === 2 && typeof legend[0] === 'string' && typeof legend[1] === 'string')) fail('`legend` must be two strings');
 		for (var i = 0; i < steps.length; i++) {
 			var s = steps[i] || {}, at = 'step ' + i, row = [_.str(s.label, at + ' label')].concat(bar(s, at));
@@ -66,7 +67,7 @@
 
 	function draw(steps, opts, earned) {
 		var p = opts.classPrefix || 'chart', form = opts.form || 'bars', pal = _.palette(opts.brand, opts.theme);
-		var lo = 0, hi = 0, prev = null, y = 0, out = '', marks = '', i, s;
+		var lo = 0, hi = 0, prev = null, y = 0, out = '', marks = '', inline = opts.rates === 'inline', i, s;
 		for (i = 0; i < steps.length; i++) {
 			s = steps[i];
 			lo = Math.min(lo, s.value, s.earned ? s.earned.value : 0);
@@ -86,19 +87,24 @@
 					'stroke', 'currentColor', 'stroke-opacity', 0.2]);
 				y += BLOCK;
 			}
-			var row = '', tip = s.label + ': ' + s.display + (s.earned ? ' / ' + s.earned.display : '');
+			var row = '', chip = '', tip = s.label + ': ' + s.display + (s.earned ? ' / ' + s.earned.display : '');
 			if (s.rate !== undefined) {
 				var rate = s.rate === null ? DASH : s.rate;
 				tip += ' (' + rate + ')';
-				row += _.el('text', ['class', p + '-rate', 'x', s.part ? INDENT : 0, 'y', y + 12, 'fill-opacity', 0.7,
+				chip = _.el(inline ? 'tspan' : 'text', ['class', p + '-rate', 'x', inline ? null : s.part ? INDENT : 0, 'y', inline ? null : y + 12, 'fill-opacity', 0.7,
 					'font-size', form === 'steps' ? 13 : 12, 'font-weight', form === 'steps' ? 600 : null], _.esc(DOWN + rate));
-				y += form === 'steps' ? RATE + 4 : RATE;
+				if (!inline) {
+					row += chip;
+					chip = '';
+					y += form === 'steps' ? RATE + 4 : RATE;
+				}
 			}
-			var valText = s.earned ? _.el('tspan', ['fill-opacity', 0.75], _.esc(s.display)) + ' · ' +
-				_.el('tspan', ['font-weight', 600], _.esc(s.earned.display)) : _.esc(s.display);
+			// inline (ADR 010, 1.2.0) the chip leads the values, an en space after it, and counts in the split
+			var valText = (chip && chip + '\u2002') + (s.earned ? _.el('tspan', ['fill-opacity', 0.75], _.esc(s.display)) + ' · ' +
+				_.el('tspan', ['font-weight', 600], _.esc(s.earned.display)) : _.esc(s.display));
 			// the row's <title> keeps a cut label whole
 			var ll = _.labelLine(p, s.label, valText, s.label.length + (s.part ? 2 : 0) + s.display.length +
-				(s.earned ? s.earned.display.length + 3 : 0) + 2, s.part ? INDENT : 0, y);
+				(s.earned ? s.earned.display.length + 3 : 0) + 2 + (chip && rate.length + 3), s.part ? INDENT : 0, y);
 			row += ll.svg;
 			y += ll.h;
 			var h = form === 'shape' ? SHAPE : s.part ? PART : BAR, top = y;
@@ -142,6 +148,8 @@
 		var key = check(steps, opts), earned = !!key.earned;
 		// only what is drawn goes into the ids: a legend no step needs changes nothing (ADR 003)
 		key.push([opts.form || 'bars', earned ? opts.legend : null, opts.title, opts.desc, opts.brand, opts.theme]);
+		// appended only when set, so a chart without it keeps its 1.x ids
+		if (opts.rates === 'inline') key.push('inline');
 		var d = draw(steps, opts, earned);
 		return _.svg(opts, d.h, d.body, JSON.stringify(key));
 	};

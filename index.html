@@ -66,6 +66,10 @@
 		<p class="meta" id="formNote" hidden>The classic shape draws one positive series: counts only. Money funnels have two bars a step, losses and negatives.</p>
 		<p class="meta" id="areaNote" hidden>An area draws one series: two would hide each other. This example has two, so it is drawn as lines.</p>
 		<p class="meta" id="partNote" hidden>The shape leaves out part steps such as unique clicks: they are subsets, not stages.</p>
+		<label id="ratesField">rates <select id="rates">
+			<option value="">above the label</option>
+			<option value="inline">inline</option>
+		</select></label>
 		<label id="secondField">second <select id="second">
 			<option value="">opposite hue</option>
 			<option value="tint">tint</option>
@@ -299,6 +303,8 @@ function app() {
 		if (ex.legend) o.legend = LEGEND;
 		if (ex.highlight != null) o.highlight = ex.highlight;
 		if (chart() === 'heatmap') { o.form = ex.form; o.format = ex.format; }
+		// the funnel's rate on the label line (ADR 010, 1.2.0)
+		if (chart() === 'funnel' && $('rates').value) o.rates = 'inline';
 		// the series' second colour (a second series only) and its gutter (ADR 021)
 		if (chart() === 'series') {
 			if ($('second').value && ex.names.length > 1) o.second = $('second').value === 'tint' ? 'tint' : $('secondHex').value;
@@ -365,6 +371,7 @@ function app() {
 		if (money && $('form').value === 'shape') $('form').value = 'bars';
 		$('formNote').hidden = !money;
 		$('partNote').hidden = !funnel || $('form').value !== 'shape';
+		$('ratesField').hidden = !funnel;
 		// a series of two drawn as lines when the area is asked for
 		$('areaNote').hidden = chart() !== 'series' || $('form').value !== 'area' || (!sheet && DAYS[$('example').value].names.length < 2);
 		// second and gutter are the series' own; second needs a second series
@@ -390,7 +397,7 @@ function app() {
 			({ series: 'points', tile: 'tile', rank: 'rows', share: 'parts', heatmap: 'cells', meter: 'meter', sankey: 'nodes, links' }[fn] || 'steps') + ', ' +
 			JSON.stringify(o, null, 1).replace(/\n\s*/g, ' ') + ');\nCharts.init(el, svg);';
 	}
-	['show', 'chart', 'example', 'form', 'theme', 'brand', 'second', 'secondHex', 'gutter', 'width', 'titled'].forEach(function (id) {
+	['show', 'chart', 'example', 'form', 'rates', 'theme', 'brand', 'second', 'secondHex', 'gutter', 'width', 'titled'].forEach(function (id) {
 		$(id).addEventListener('input', draw);
 	});
 	draw();

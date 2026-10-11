@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0 — 2026-10-11
+
+One option for the funnel, from its first consumer (ADR 010, addendum). Without it every chart keeps its
+bytes and ids.
+
+- `rates: 'inline'` puts each step's `rate` on the label line, muted, before the value
+  (`↓ 7.8%  410`), instead of on a line of its own above the label. A rated row is 16 px shorter
+  (20 px in `steps`); a five-step count funnel goes from 264 to 200 px. The chip counts towards the
+  label-and-value split; the label is never cut for it. `rates: 'above'` is the default.
+
 ## 1.1.0 — 2026-10-10
 
 Two options for the series, from its second consumer (ADR 021). Without them every chart keeps its bytes.

@@ -83,12 +83,13 @@ A step:
 | `part` | A subset of the nearest main step above it (unique clicks, 2nd deposits): indented, thinner, never stacked. |
 | `group: 'losses'` | Cancellations, rejected records: a block after the main steps, on the same scale. |
 | `gap` | Start a new block — a base of another kind, like GGR after deposits. |
-| `rate` | Your conversion string, shown above the row. `null` shows a dash. |
+| `rate` | Your conversion string, shown above the row (or before its value, with `rates: 'inline'`). `null` shows a dash. |
 
 Options: `title` and `desc` (the accessible name; without `title` the chart is `aria-hidden`, so keep
 your data table next to it), `form` (`'bars'`, `'steps'` with a ghost of the step before, `'shape'` for
-the classic centred funnel), `legend`, `brand` (`#rrggbb`), `theme` (`'light'` | `'dark'`) and
-`classPrefix`.
+the classic centred funnel), `legend`, `rates` (`'above'`, the default, or `'inline'`: the rate on the
+label line before the value, `↓ 7.8%  410`, 16 px less a row), `brand` (`#rrggbb`), `theme`
+(`'light'` | `'dark'`) and `classPrefix`.
 
 Bad input throws a `TypeError` starting with `affiliate-charts:` — the library never repairs data.
 
