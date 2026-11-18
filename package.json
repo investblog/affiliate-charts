@@ -1,6 +1,6 @@
 {
   "name": "affiliate-charts",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Affiliate dashboard charts as SVG strings: funnels in counts and money, a GGR-to-commission waterfall, daily series, KPI tiles, rankings, shares, heatmaps, cohorts and status matrices, meters, sankey flows. Renders under a strict CSP. Zero dependencies.",
   "main": "charts.js",
   "types": "charts.d.ts",
