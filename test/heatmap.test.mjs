@@ -8,8 +8,8 @@ const D = (values) => values.map((r) => r.map((v) => (v === null ? null : String
 const H = (rows, cols, values) => ({ rows, cols, values, display: D(values) });
 const grid = H(['Mon', 'Tue'], ['00', '01', '02', '03'], [[0, 25, 50, 100], [10, 39, 40, 99]]);
 const height = (svg) => Number(svg.match(/^<svg [^>]*height="([\d.]+)"/u)[1]);
-const cells = (svg) => [...svg.matchAll(/<rect class="chart-cell" x="([\d.]+)%" y="([\d.]+)" width="([\d.]+)%" height="20" fill="(#\w+)"><title>(.*?)<\/title>/gu)]
-	.map((m) => ({ x: +m[1], y: +m[2], w: +m[3], fill: m[4], title: m[5] }));
+const cells = (svg) => [...svg.matchAll(/<rect class="chart-cell chart-cell-(\d)" x="([\d.]+)%" y="([\d.]+)" width="([\d.]+)%" height="20" fill="(#\w+)"><title>(.*?)<\/title>/gu)]
+	.map((m) => ({ step: +m[1], x: +m[2], y: +m[3], w: +m[4], fill: m[5], title: m[6] }));
 // the ramp, recomputed from the steps' lightness on the brand's hue (ADR 018) through the core's shade
 const STEPS = { light: [0.71, 0.63, 0.55, 0.47, 0.39], dark: [0.52, 0.6, 0.68, 0.76, 0.84] };
 const ramp = (theme, brand) => STEPS[theme].map((L) => Charts._.shade(brand, L));
@@ -19,7 +19,8 @@ test('the ramp: five steps, each the brand\'s hue at the ADR\'s lightness, one h
 		const r = ramp(theme, '#0066ff');
 		assert.equal(new Set(r).size, 5);
 		const svg = Charts.heatmap(H(['a'], ['0', '1', '2', '3', '4'], [[0, 1, 2, 3, 4]]), { theme, brand: '#0066ff' });
-		assert.deepEqual([...svg.matchAll(/<rect x="\d+" y="[\d.]+" width="30" height="10" fill="(#\w+)"\/>/gu)].map((m) => m[1]), r, 'the scale shows the ramp');
+		assert.deepEqual([...svg.matchAll(/<rect class="chart-cell-(\d)" x="\d+" y="[\d.]+" width="30" height="10" fill="(#\w+)"\/>/gu)].map((m) => [+m[1], m[2]]),
+			r.map((f, i) => [i, f]), 'the scale shows the ramp, each swatch with its step\'s class');
 	}
 	// the shade keeps the hue: a blue brand's steps are all blue, getting darker in light mode
 	const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -32,6 +33,7 @@ test('steps: min(4, floor(v / max × 5)) over [0, max]; zero is the near-zero st
 	const r = ramp('light'), c = cells(Charts.heatmap(grid));
 	// 0 25 50 100 | 10 39 40 99 with max 100 → 0 1 2 4 | 0 1 2 4
 	assert.deepEqual(c.map((x) => r.indexOf(x.fill)), [0, 1, 2, 4, 0, 1, 2, 4]);
+	assert.deepEqual(c.map((x) => x.step), [0, 1, 2, 4, 0, 1, 2, 4], 'the step class names the fill\'s step');
 	// every value zero: the near-zero step, no division by zero (two cells found, so `every` is not vacuous)
 	const zero = cells(Charts.heatmap(H(['a'], ['x', 'y'], [[0, 0]])));
 	assert.ok(zero.length === 2 && zero.every((x) => x.fill === r[0]));
@@ -50,7 +52,7 @@ test('anatomy: a label line, 20px of cells, 6px; then the column labels and the 
 	// rows end at 2 × 46; x labels 12 below; the scale 10 below them, 28 high
 	assert.equal(height(svg), 92 + 12 + 10 + 28);
 	assert.match(svg, /<g class="chart-row"><text class="chart-label" x="0" y="13">Mon<\/text>/u);
-	assert.equal([...svg.matchAll(/<line x1="([\d.]+)%" x2="\1%" y1="20" y2="40" stroke="#fcfcfb" stroke-width="2"\/>/gu)].length, 3, 'a gap between cells, none at the edges');
+	assert.equal([...svg.matchAll(/<line class="chart-gap" x1="([\d.]+)%" x2="\1%" y1="20" y2="40" stroke="#fcfcfb" stroke-width="2"\/>/gu)].length, 3, 'a gap between cells, none at the edges');
 });
 
 test('column labels follow the series\' rule: the edges, then every k-th that fits at 343px', () => {
@@ -80,9 +82,9 @@ test('null is no data: no fill, a dash, a title; absent cohort cells are not dra
 
 test('cohort cells show their display when it fits a band at 343px, ink or white by the step', () => {
 	const tri = Charts.heatmap(H(['Apr'], ['M0', 'M1', 'M2'], [[100, 50, 0]]), { form: 'cohort' });
-	const t = [...tri.matchAll(/<text x="([\d.]+)%" y="34" text-anchor="middle" font-size="11" fill="(#\w+)" pointer-events="none">(.*?)<\/text>/gu)].map((m) => [m[3], m[2]]);
-	// steps 4, 2, 0 in light: L 0.39, 0.55 → white; 0.71 → ink
-	assert.deepEqual(t, [['100', '#fff'], ['50', '#fff'], ['0', '#11171c']]);
+	const t = [...tri.matchAll(/<text class="chart-cell-text-(\d)" x="([\d.]+)%" y="34" text-anchor="middle" font-size="11" fill="(#\w+)" pointer-events="none">(.*?)<\/text>/gu)].map((m) => [m[4], m[3], +m[1]]);
+	// steps 4, 2, 0 in light: L 0.39, 0.55 → white; 0.71 → ink; the class names the step
+	assert.deepEqual(t, [['100', '#fff', 4], ['50', '#fff', 2], ['0', '#11171c', 0]]);
 	const dark = Charts.heatmap(H(['Apr'], ['M0', 'M1', 'M2'], [[100, 50, 0]]), { form: 'cohort', theme: 'dark' });
 	assert.deepEqual([...dark.matchAll(/font-size="11" fill="(#\w+)"/gu)].map((m) => m[1]), ['#11171c', '#11171c', '#fff'], 'dark: 0.84, 0.68 ink; 0.52 white');
 	// 24 columns: a band is 14.3px at 343px, "100%" needs 30: no text, the title keeps it
@@ -110,7 +112,121 @@ test('accessible root, determinism, ids from what is drawn and the values, no in
 	assert.notEqual(id(Charts.heatmap(same(1), { title: 't', format: () => 'm' })), id(Charts.heatmap(same(2), { title: 't', format: () => 'm' })));
 	assert.notEqual(id(a), id(Charts.heatmap(grid, { title: 'Clicks', desc: 'By hour', theme: 'dark' })));
 	assert.doesNotMatch(a, /style|<script|data-|data:/u);
-	assert.match(Charts.heatmap(H(['a'], ['b', 'c'], [[null, 1]]), { classPrefix: 'k' }), /class="k-label".*class="k-cell-empty".*class="k-cell".*class="k-x".*class="k-legend"/su);
+	assert.match(Charts.heatmap(H(['a'], ['b', 'c'], [[null, 1]]), { classPrefix: 'k' }), /class="k-label".*class="k-cell-empty".*class="k-cell k-cell-4".*class="k-gap".*class="k-x".*class="k-legend"[^>]*><rect class="k-cell-0"/su);
+});
+
+// ── the status matrix (ADR 022) ──
+const xs = (svg) => [...svg.matchAll(/<text class="chart-x" x="([^"]+)" y="([\d.]+)"(?: text-anchor="(\w+)")?(?: font-size="(\d+)")?>([^<]*)<\/text>/gu)]
+	.map((m) => ({ x: m[1], y: +m[2], anchor: m[3], size: m[4], text: m[5] }));
+
+test('gutter: row labels in a left column on the cells\' line, end-anchored 6px before the cells; 26px a row', () => {
+	const svg = Charts.heatmap(grid, { gutter: 30 }), c = cells(svg);
+	// four bands in the remaining 70 %: 17.5 % each, from 30 %
+	assert.deepEqual(c.slice(0, 4).map((x) => [x.x, x.w, x.y]), [[30, 17.5, 0], [47.5, 17.5, 0], [65, 17.5, 0], [82.5, 17.5, 0]]);
+	assert.equal(c[4].y, 26);
+	assert.match(svg, /<g class="chart-row"><text class="chart-label" x="30%" y="14" dx="-6" text-anchor="end">Mon<\/text><rect/u);
+	assert.doesNotMatch(svg, /chart-value/u, 'no label line');
+	assert.deepEqual([...svg.matchAll(/<line class="chart-gap" x1="([\d.]+)%"/gu)].map((m) => +m[1]), [47.5, 65, 82.5, 47.5, 65, 82.5]);
+	// a 60px band holds a 2-character label: centred over its column, right of the gutter
+	assert.deepEqual(xs(svg).map((x) => x.x), ['38.75%', '91.25%', '56.25%', '73.75%']);
+	// an edge label wider than its band anchors at the cells' left edge, not at the chart's
+	const wide = xs(Charts.heatmap(H(['a'], ['Jurisdiction', 'b', 'c', 'Licensing'], [[1, 2, 3, 4]]), { gutter: 30 }));
+	// 12 × 8 = 96 and 9 × 8 = 72 px against a 60px band
+	assert.deepEqual(wide.slice(0, 2).map((x) => [x.text, x.x, x.anchor]), [['Jurisdiction', '30%', undefined], ['Licensing', '100%', 'end']]);
+	// rows end at 2 × 26; bottom labels 12 below; the scale 10 below them, 28 high
+	assert.equal(height(svg), 52 + 12 + 10 + 28);
+	// 46 − 26 = 20px less a row
+	assert.equal(height(Charts.heatmap(grid)) - height(svg), 2 * 20);
+});
+
+test('gutter: a label is cut at what the column holds at 343px, surrogate-safe, its full text in a title', () => {
+	const label = (rows, gutter) => Charts.heatmap(H(rows, ['x'], rows.map(() => [1])), { gutter }).match(/<text class="chart-label"[^>]*>(.*?)<\/text>/u)[1];
+	// 20 %: (68.6 − 6) / 8 → 7 characters
+	assert.equal(label(['Casino1'], 20), 'Casino1');
+	assert.equal(label(['Casino Royale'], 20), '<title>Casino Royale</title>Casino…');
+	// 10 %, the floor: (34.3 − 6) / 8 → 3 characters, never fewer
+	assert.equal(label(['abcd'], 10), '<title>abcd</title>ab…');
+	assert.equal(label(['a😀bcd'], 10), '<title>a😀bcd</title>a…', 'an emoji is dropped whole');
+	// the cut follows the gutter
+	assert.equal(label(['Casino Royale'], 50), 'Casino Royale');
+});
+
+test('gutter: the cohort text fits the narrower band', () => {
+	const text = (n, gutter) => /font-size="11"/u.test(Charts.heatmap({ rows: ['a'], cols: Array.from({ length: n }, (_, i) => 'M' + i),
+		values: [Array(n).fill(1)], display: [Array(n).fill('100%')] }, { form: 'cohort', gutter }));
+	// "100%" needs 30px: 343 × 0.5 / 4 = 42.9 fits; / 6 = 28.6 does not; without a gutter / 6 = 57 fits
+	assert.ok(text(4, 50));
+	assert.ok(!text(6, 50));
+	assert.ok(text(6));
+});
+
+test('domain: steps over [lo, hi], not the data\'s max; the scale prints lo and hi', () => {
+	const r = ramp('light'), row = H(['a'], ['x', 'y', 'z'], [[0, 12, 30]]);
+	assert.deepEqual(cells(Charts.heatmap(row)).map((x) => x.step), [0, 2, 4], 'relative: 30 is the top');
+	const fixed = Charts.heatmap(row, { domain: [0, 60] });
+	assert.deepEqual(cells(fixed).map((x) => x.step), [0, 1, 2], '⌊v / 60 × 5⌋');
+	assert.deepEqual(cells(fixed).map((x) => x.fill), [r[0], r[1], r[2]]);
+	assert.match(fixed, /<text x="0" y="[\d.]+">0<\/text><text x="158" y="[\d.]+" text-anchor="end">60<\/text>/u);
+	// the domain's ends: hi is the top step, lo the near one; a negative lo is the near end
+	const neg = Charts.heatmap(H(['a'], ['x', 'y', 'z'], [[-10, 15, 40]]), { domain: [-10, 40], format: (v) => `${v}d` });
+	assert.deepEqual(cells(neg).map((x) => x.step), [0, 2, 4], '⌊(v + 10) / 50 × 5⌋');
+	assert.match(neg, />-10d<\/text><text x="158" y="[\d.]+" text-anchor="end">40d<\/text>/u);
+	// every value equal to lo: the near step, no division by zero
+	assert.ok(cells(Charts.heatmap(H(['a'], ['x'], [[5]]), { domain: [5, 6] })).every((x) => x.step === 0));
+});
+
+test('short: a header above the grid at 11px, every column when the longest fits its band', () => {
+	const cols = Array.from({ length: 10 }, (_, i) => 'Column ' + i), short = cols.map((_, i) => 'C' + i + 'x');
+	const m = (n, gutter) => Charts.heatmap({ rows: ['a', 'b'], cols: cols.slice(0, n), short: short.slice(0, n),
+		values: [Array(n).fill(1), Array(n).fill(2)], display: [Array(n).fill('1'), Array(n).fill('2')] }, { gutter });
+	const ten = m(10, 18), head = xs(ten);
+	// 343 × 0.82 / 10 = 28.13px a band; three capitals at 8px and 4px of spacing, 28, fit: all ten, centred,
+	// at 11px, at the top
+	assert.equal(head.length, 10);
+	// no two overlap at 343px: centres at least a short and 4px apart
+	const at = head.map((x) => (parseFloat(x.x) - 18) / 82 * 343 * 0.82).sort((a, b) => a - b);
+	assert.ok(at.every((v, i) => !i || v - at[i - 1] >= 3 * 8 + 4));
+	assert.ok(head.every((x) => x.y === 13 && x.size === '11' && x.anchor === 'middle'));
+	assert.deepEqual(head.map((x) => x.text).sort(), short.slice().sort());
+	// the grid starts below the header; full names stay in the titles; no bottom labels
+	assert.equal(cells(ten)[0].y, 20);
+	assert.equal(cells(ten)[0].title, 'a · Column 0: 1');
+	// header, two rows of 26, then the scale 10 below the cells
+	assert.equal(height(ten), 20 + 52 + 4 + 28);
+	// the other side of the boundary: 19 % → 27.78px a band: every second, the 9th too close to the last
+	assert.deepEqual(xs(m(10, 19)).map((x) => x.text), ['C0x', 'C9x', 'C2x', 'C4x', 'C6x']);
+	// eleven at 30 % → 21.8px: an edge short wider than its band anchors at the cells' edges
+	const eleven = Array.from({ length: 11 }, (_, i) => 'Col ' + i), sh = eleven.map((_, i) => String(i).padStart(3, 'k'));
+	const e = xs(Charts.heatmap({ rows: ['a'], cols: eleven, short: sh, values: [Array(11).fill(1)], display: [Array(11).fill('1')] }, { gutter: 30 }));
+	assert.deepEqual(e.map((x) => [x.text, x.anchor]), [['kk0', undefined], ['k10', 'end'], ['kk2', 'middle'], ['kk4', 'middle'], ['kk6', 'middle'], ['kk8', 'middle']]);
+	assert.equal(e[0].x, '30%');
+	// digits are no narrower here: the estimate is a capital's
+	assert.equal(xs(Charts.heatmap({ rows: ['a'], cols: cols, short: cols.map((_, i) => String(100 + i)),
+		values: [Array(10).fill(1)], display: [Array(10).fill('1')] }, { gutter: 19 })).length, 5);
+	// an emoji is one character: three of them are a short
+	assert.match(Charts.heatmap({ ...grid, short: ['a', 'b', 'c', '😀😀😀'] }), />😀😀😀<\/text>/u);
+	// without a gutter, in the label-line form, the header sits above the first label line
+	const line = Charts.heatmap({ rows: ['a'], cols: ['x', 'y'], short: ['X', 'Y'], values: [[1, 2]], display: [['1', '2']] });
+	assert.match(line, /<text class="chart-label" x="0" y="33">a<\/text>/u);
+	assert.equal(cells(line)[0].y, 40);
+	assert.deepEqual(xs(line).map((x) => [x.x, x.text]), [['25%', 'X'], ['75%', 'Y']]);
+});
+
+test('header: false and legend: false drop their marks and their height', () => {
+	const none = (o) => Charts.heatmap(grid, o);
+	// the default: rows end at 92, labels at 104, the scale 114–142
+	assert.equal(height(none({ header: false })), 92 + 4 + 28, 'no labels: the scale 10 below the cells');
+	assert.doesNotMatch(none({ header: false }), /chart-x/u);
+	assert.equal(height(none({ legend: false })), 92 + 12 + 4, '4px below the labels\' baseline');
+	assert.doesNotMatch(none({ legend: false }), /chart-legend|class="chart-cell-0"/u);
+	assert.match(none(), /class="chart-cell-0"/u, 'the probe finds the swatch when it is drawn');
+	assert.equal(height(none({ header: false, legend: false })), 86, 'the last row\'s cells');
+	assert.equal(height(none({ header: true, legend: true })), height(none()), 'true is the default');
+	const sh = { ...grid, short: ['a', 'b', 'c', 'd'] };
+	assert.equal(height(Charts.heatmap(sh, { gutter: 20, legend: false })), 20 + 52 - 6, 'header, rows, no trailing pad');
+	const off = Charts.heatmap(sh, { gutter: 20, header: false });
+	assert.doesNotMatch(off, /chart-x/u);
+	assert.equal(cells(off)[0].y, 0, 'no header row');
 });
 
 const throwsCases = [
@@ -132,6 +248,29 @@ const throwsCases = [
 	['a format that is not a function', grid, { format: 'n' }, /`format` must be a function/u],
 	['a format that returns a number', grid, { format: (v) => v }, /format\(v\) must be a string/u],
 	['a bad theme', grid, { theme: 'sepia' }, /theme/u],
+	// ADR 022
+	['a gutter under 10', grid, { gutter: 5 }, /`gutter` is a percent from 10 to 50/u],
+	['a gutter over 50', grid, { gutter: 60 }, /`gutter` is a percent from 10 to 50/u],
+	['a gutter as a string', grid, { gutter: '30' }, /`gutter` is a percent from 10 to 50/u],
+	['a gutter of NaN', grid, { gutter: NaN }, /`gutter` is a percent from 10 to 50/u],
+	['a domain that is a number', grid, { domain: 60 }, /`domain` must be \[lo, hi\] with lo < hi/u],
+	['a domain of one end', grid, { domain: [0] }, /`domain` must be \[lo, hi\]/u],
+	['a domain of three', grid, { domain: [0, 1, 2] }, /`domain` must be \[lo, hi\]/u],
+	['an empty domain', grid, { domain: [100, 100] }, /`domain` must be \[lo, hi\] with lo < hi/u],
+	['a reversed domain', grid, { domain: [100, 0] }, /`domain` must be \[lo, hi\] with lo < hi/u],
+	['a domain end of NaN', grid, { domain: [0, NaN] }, /domain 1 must be a finite number/u],
+	['a domain end of Infinity', grid, { domain: [-Infinity, 0] }, /domain 0 must be a finite number/u],
+	['a domain whose span overflows', H(['a'], ['x'], [[0]]), { domain: [-1.7e308, 1.7e308] }, /`domain` must be \[lo, hi\]/u],
+	['a value over the domain', grid, { domain: [0, 99] }, /row 0: a value outside the domain/u],
+	['a value under the domain', grid, { domain: [5, 100] }, /row 0: a value outside the domain/u],
+	['short that is a string', { ...grid, short: 'abcd' }, undefined, /`short` must hold one string per column/u],
+	['short of another length', { ...grid, short: ['a', 'b'] }, undefined, /`short` must hold one string per column/u],
+	['an empty short', { ...grid, short: ['a', '', 'c', 'd'] }, undefined, /short 1 must be one to three characters/u],
+	['a short of four', { ...grid, short: ['a', 'b', 'c', 'dddd'] }, undefined, /short 3 must be one to three characters/u],
+	['a short of four emoji', { ...grid, short: ['a', 'b', 'c', '😀😀😀😀'] }, undefined, /short 3 must be one to three characters/u],
+	['a numeric short', { ...grid, short: ['a', 'b', 'c', 4] }, undefined, /short 3 must be one to three characters/u],
+	['a header that is a string', grid, { header: 'none' }, /`header` must be a boolean/u],
+	['a legend that is a number', grid, { legend: 0 }, /`legend` must be a boolean/u],
 ];
 for (const [name, data, options, msg] of throwsCases) {
 	test(`throws: ${name}`, () => {

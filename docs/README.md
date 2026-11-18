@@ -390,11 +390,18 @@ interface HeatmapCells {
   rows: string[]; cols: string[];          // caller strings
   values: (number | null)[][];             // values[row][col]; null: no data
   display: (string | null)[][];            // the same shape; null exactly where the value is null
+  short?: string[];                        // 1–3 characters per column: a header above the grid
 }
-interface HeatmapOptions extends Common { form?: 'grid' | 'cohort' }   // default 'grid'
+interface HeatmapOptions extends Common {
+  form?: 'grid' | 'cohort';                // default 'grid'
+  gutter?: number;                         // 10–50: row labels in a left column of that percent
+  domain?: [number, number];               // a fixed domain for the ramp; values outside throw
+  header?: boolean;                        // false: no column labels
+  legend?: boolean;                        // false: no scale
+}
 ```
 
-Layout and colour: ADR 018. In short:
+Layout and colour: ADR 018; the status-matrix options: ADR 022. In short:
 
 - **Five steps of the brand's hue**, quantised over `[0, max]`; more is darker on light surfaces,
   brighter on dark ones. Negative values throw (no diverging form).
@@ -404,12 +411,22 @@ Layout and colour: ADR 018. In short:
 - `grid`: every row full, no text in cells. `cohort`: a row may be shorter than `cols` — the cells
   past it are absent, not zero — and a cell shows its `display` at 11 px when it fits one band at
   343 px.
-- Every cell has a `<title>`: `row · col: display`. Class hooks: `-row`, `-cell`, `-cell-empty`, `-x`,
-  `-legend`, plus the core's `-label`.
+- Every cell has a `<title>`: `row · col: display`. Class hooks: `-row`, `-cell` and `-cell-N` (the
+  step, 0–4, also on the scale's swatches), `-cell-empty`, `-gap`, `-cell-text-N` (cohort text), `-x`,
+  `-legend`, plus the core's `-label`. A page that switches themes at run time can recolour the steps
+  in its own stylesheet and render once; the measured contrast then is the page's to keep.
+- **A status matrix** (ADR 022): `gutter` puts the row labels in a left column on the cells' line (26 px
+  a row instead of 46), end-anchored before the cells and cut at what the column holds at 343 px;
+  `domain: [lo, hi]` quantises over a fixed range (`⌊(v − lo) / (hi − lo) × 5⌋`, negatives allowed
+  inside it) and the scale prints `format(lo)` and `format(hi)`; `short` draws a header of 1–3
+  characters above the grid, at 11 px, every column when the longest fits its band at 343 px, every
+  k-th otherwise; `header: false` and `legend: false` drop the column labels and the scale.
 - Throws: `rows` or `cols` not a non-empty array of strings; `values` or `display` not an array of one
   array per row; a row longer than `cols`, or shorter in the `grid` form; a `display` row of another
   length than its `values` row; a value `null` whose display is not, or the reverse; a value that is
-  not finite or is negative; an unknown `form`.
+  not finite, or negative without a `domain`; an unknown `form`; `gutter` not a number from 10 to 50;
+  `domain` not two finite numbers with `lo < hi`, or a value outside it; `short` not one string of one
+  to three characters per column; `header` or `legend` not a boolean.
 
 ### Group D — cohorts, flows, targets
 

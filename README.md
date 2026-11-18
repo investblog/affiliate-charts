@@ -14,7 +14,7 @@ Made by [301](https://301.st) for the [OktagonBet partner programme](https://okt
 first user and sponsor.
 
 **[Live demo →](https://investblog.github.io/affiliate-charts/)** — every option wired to a control,
-four example funnels, two waterfalls, three daily series, four KPI tiles, two rankings, two shares, two heatmaps, two meters and two flows, light and dark, and a width slider to watch the bars follow their container.
+four example funnels, two waterfalls, three daily series, four KPI tiles, two rankings, two shares, three heatmaps, two meters and two flows, light and dark, and a width slider to watch the bars follow their container.
 
 [![Six charts drawn by affiliate-charts: a money funnel, a waterfall from GGR to commission, daily GGR and commission columns, a sankey from sources to first deposits, a cohort heatmap and a donut of clicks by device](https://investblog.github.io/affiliate-charts/docs/preview.svg)](https://investblog.github.io/affiliate-charts/)
 
@@ -22,7 +22,7 @@ four example funnels, two waterfalls, three daily series, four KPI tiles, two ra
   under `default-src 'self'`, where most chart libraries break.
 - **Zero dependencies.** One call returns markup, in Node at build time or in the browser.
 - **Small.** A core plus one file per chart: the core and the funnel are 4.5 KB gzipped together, the
-  waterfall adds 1.1 KB, the daily series 2.9 KB, sparklines and KPI tiles 1.6 KB, rankings 0.9 KB, part to whole 1.3 KB, heatmaps and cohorts 1.8 KB, meters 0.9 KB, flows 1.8 KB.
+  waterfall adds 1.1 KB, the daily series 2.9 KB, sparklines and KPI tiles 1.6 KB, rankings 0.9 KB, part to whole 1.3 KB, heatmaps and cohorts 2.4 KB, meters 0.9 KB, flows 1.8 KB.
 - **Reads on a phone.** Bars follow the width of their container; text keeps its pixel size.
 - **Honest by construction.** Steps are never summed, money and counts never share an axis, a missing
   rate is a dash and never `0%`, and the library never formats or computes a number it shows: every
@@ -42,9 +42,11 @@ CommonJS: `require('affiliate-charts/charts-funnel.js')`. Or from a CDN, no buil
 then the chart; the page gets the global `Charts`:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/affiliate-charts@1.0/charts.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/affiliate-charts@1.0/charts-funnel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/affiliate-charts@1.3/charts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/affiliate-charts@1.3/charts-funnel.min.js"></script>
 ```
+
+Pin a minor version (`@1.3`) or an exact one: within a minor version the same input draws the same bytes.
 
 A cabinet that ships `script-src 'self'` installs from npm and bundles instead.
 
@@ -212,6 +214,35 @@ dark one. `form: 'grid'` (default) is for full grids such as clicks by hour and 
 lets rows stop early and writes each value in its cell when it fits. `null` is no data — a dash, never
 the lightest colour. Values are magnitudes: a negative one throws.
 
+**A status matrix** — entities × attributes on a known scale, such as days left before each fact is
+re-checked, out of 60:
+
+```js
+const matrix = Charts.heatmap({
+  rows: ['Alpha Casino', 'Bravo Bet'],
+  cols: ['Licence', 'Payments', 'Bonus'],
+  short: ['LIC', 'PAY', 'BON'],                   // a header above the grid; full names stay in the titles
+  values: [[52, 0, 31], [12, 44, null]],
+  display: [['52 days left', 'due today', '31 days left'], ['12 days left', '44 days left', null]],
+}, { gutter: 30, domain: [0, 60], format: (v) => v + ' d', title: 'Days left before a re-check' });
+```
+
+- `gutter` (10–50) moves the row labels into a left column of that percent of the width, on the cells'
+  line: 26 px a row instead of 46. Labels are cut to what the column holds on a 375 px phone; a cut one
+  keeps its full text in a `<title>`. Pick the percent for your card; the markup does not change with it.
+- `domain: [lo, hi]` fixes the scale: a value's step no longer depends on the other values, and the
+  scale prints `format(lo)` and `format(hi)`. A value outside throws. Negative values are fine inside a
+  domain. Want the urgent end dark? Pass `60 − days` as the value and keep your own text in `display`.
+- `short` (one to three characters per column) draws a header above the grid. Every column gets one when
+  the longest fits its band on a phone; otherwise every second or third. Ten shorts of three capitals
+  fit with a gutter up to 18, ten of two up to 40 (row labels up to 16 characters). Shorts are ordinary
+  page text: translate or transliterate them with the rest of the page. `header: false` drops the column
+  labels and `legend: false` the scale, for a page that explains both in its own caption.
+- One render for both themes: each cell carries its step (`chart-cell-0` … `chart-cell-4`, also on the
+  scale's swatches), the lines between cells `chart-gap`. A page that switches themes at run time can
+  repaint them in its stylesheet: `.dark .chart-cell-4 { fill: #c7d7ff }`. Those colours are then yours
+  to keep readable.
+
 ## Meters
 
 ```js
@@ -255,7 +286,7 @@ its full `label` and `display` in a key underneath. One colour: nodes your `bran
   `chart-bar-total`, `chart-bar-up`, `chart-bar-down`, `chart-label`, `chart-value`, `chart-rate`,
   `chart-legend`, `chart-grid`, `chart-axis`, and for the series `chart-line`, `chart-area`, `chart-dot`,
   `chart-prev`, `chart-tick`, `chart-x`, `chart-key`, `chart-hit`, and for the tile `chart-delta`,
-  `chart-delta-good`, `chart-delta-bad`, `chart-trend`, `chart-bar-muted` in a ranking, `chart-part-1` … `chart-part-6` in a share, `chart-cell` in a heatmap, `chart-track` and `chart-mark` in a meter, `chart-node`, `chart-link` and `chart-tag` in a sankey); a stylesheet can recolour any of them.
+  `chart-delta-good`, `chart-delta-bad`, `chart-trend`, `chart-bar-muted` in a ranking, `chart-part-1` … `chart-part-6` in a share, `chart-cell`, `chart-cell-0` … `chart-cell-4`, `chart-gap` and `chart-cell-text-0` … `chart-cell-text-4` in a heatmap, `chart-track` and `chart-mark` in a meter, `chart-node`, `chart-link` and `chart-tag` in a sankey); a stylesheet can recolour any of them.
 - `Charts.palette(brand, theme)` returns `{ solid, light, opacity }` to paint your table to match.
 - The chart takes the width of its container. Text is laid out for 13 px and screens from 375 px.
 - The same input gives the same bytes within a minor version: pin the exact version.

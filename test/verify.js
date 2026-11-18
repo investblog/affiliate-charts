@@ -94,6 +94,16 @@
 			display: [['0', '25', null, '100'], ['15', '50', '75', '99']] }, { title: 'Heat', brand: '#e11d48' }, 'heatmap'],
 		['cohort', { rows: ['Apr', 'May', 'Jun'], cols: ['M0', 'M1', 'M2'], values: [[100, 62, 9], [100, 63], [100]],
 			display: [['100%', '62%', '9%'], ['100%', '63%'], ['100%']] }, { title: 'Cohort', form: 'cohort', theme: 'dark' }, 'heatmap'],
+		// the status matrix (ADR 022): Cyrillic and Latin names in an 18 % side column, two of them cut, ten
+		// 3-capital shorts (all fit at 343px up to an 18 % gutter), a fixed domain; verify.css repaints step 4
+		['matrix', { rows: ['Альфа', 'Северный ветер', 'Golden Harbour', 'Zed'],
+			cols: ['Licence', 'Jurisdiction', 'Payments', 'Bonus', 'Wagering', 'Support', 'Games', 'Withdrawal', 'KYC', 'Owner'],
+			short: ['LIC', 'JUR', 'PAY', 'BON', 'WAG', 'SUP', 'GAM', 'WDR', 'KYC', 'OWN'],
+			// the data's max is 50, under the domain's 60, so steps over the domain differ from steps over the data
+			values: [[50, 49, 30, 24, 12, 0, 45, 47, 35, 23], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [50, 50, 50, 50, 50, 0, 0, 0, 0, 0], [30, 30, 30, 30, 30, 30, 30, 30, 30, 30]],
+			display: [['50', '49', '30', '24', '12', '0', '45', '47', '35', '23'], ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+				['50', '50', '50', '50', '50', '0', '0', '0', '0', '0'], ['30', '30', '30', '30', '30', '30', '30', '30', '30', '30']] },
+		{ title: 'Matrix', gutter: 18, domain: [0, 60], format: function (v) { return v + ' d'; } }, 'heatmap'],
 		// the meter: a third of the way, a tier mark at half
 		['meter', { label: 'Tier 3', value: 40, display: '40', target: 120, targetDisplay: 'tier 3 at 120', marks: [{ value: 60, label: 'Tier 2' }] },
 			{ title: 'Meter', theme: 'dark' }, 'meter'],
@@ -148,7 +158,7 @@
 		});
 		check('ids are unique across charts on one page', function () {
 			var ids = [].map.call(document.querySelectorAll('#charts svg [id]'), function (e) { return e.id; });
-			return ids.length === 23 && new Set(ids).size === ids.length;
+			return ids.length === 24 && new Set(ids).size === ids.length;
 		});
 		check('aria-labelledby resolves inside its own chart', function () {
 			return [].every.call(document.querySelectorAll('#charts svg[aria-labelledby]'), function (s) {
@@ -455,6 +465,28 @@
 				var b = glyphs(x), cell = box(c[k]);
 				return b.left >= cell.left - 0.5 && b.right <= cell.right + 0.5;
 			}) && hex(getComputedStyle(t[0]).fill) === '#11171c' && hex(getComputedStyle(t[2]).fill) === '#ffffff';
+		});
+		// the status matrix (ADR 022)
+		check('matrix: side labels end before the cells and stay inside the chart; every row on its cells\' line', function () {
+			var s = svg('matrix'), r = box(s), rows = s.querySelectorAll('.chart-row');
+			return rows.length === 4 && [].every.call(rows, function (g) {
+				var l = glyphs(g.querySelector('.chart-label')), c = box(g.querySelector('.chart-cell'));
+				return l.right <= c.left - 4 && l.left >= r.left - 0.5 && l.top >= c.top - 2 && l.bottom <= c.bottom + 2;
+			}) && near(box(rows[0].querySelector('.chart-cell')).left, r.left + r.width * 0.18);
+		});
+		check('matrix: ten shorts above the grid, each centred on its own column, none touching the next (over 0.5px apart)', function () {
+			var s = svg('matrix'), r = box(s), x = [].slice.call(s.querySelectorAll('.chart-x')), first = [].slice.call(s.querySelectorAll('.chart-row')[0].querySelectorAll('.chart-cell'));
+			var b = x.map(glyphs).sort(function (p, q) { return p.left - q.left; }), cells = first.map(box);
+			return x.length === 10 && cells.length === 10 && b.every(function (t, k) {
+				return near((t.left + t.right) / 2, (cells[k].left + cells[k].right) / 2, 1) && t.left >= r.left && t.right <= r.right + 0.5 &&
+					t.bottom <= cells[k].top && (!k || t.left - b[k - 1].right > 0.5);
+			});
+		});
+		check('matrix: steps over the domain, and a page class repaints one step', function () {
+			// 50 49 30 24 12 0 over [0, 60] → 4 4 2 2 1 0 (over the data's 50 it would be 4 4 3 2 1 0); verify.css paints .chart-cell-4 #010203 here
+			var c = [].slice.call(svg('matrix').querySelectorAll('.chart-row')[0].querySelectorAll('.chart-cell')).slice(0, 6);
+			var steps = c.map(function (e) { return (e.getAttribute('class').match(/chart-cell-(\d)/) || [])[1]; });
+			return steps.join() === '4,4,2,2,1,0' && hex(getComputedStyle(c[0]).fill) === '#010203' && hex(getComputedStyle(c[2]).fill) !== '#010203';
 		});
 		// the meter
 		check('meter: the track spans the chart, the fill a third of it, the tier mark at half', function () {

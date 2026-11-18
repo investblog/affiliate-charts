@@ -161,3 +161,19 @@ their checks. A feature, so the series' budget is re-frozen at the measurement +
 
 The core is untouched. A page that draws the series alone pays 5792 B gzipped; the whole catalog is
 17 293 B.
+
+## Addendum (1.3.0, the heatmap as a status matrix, 2026-11-18)
+
+Five options from issue #3 (ADR 022): a side column, a fixed domain, a header of shorts, `header` and
+`legend` switches, and class hooks per step, with their checks. Measured by taking one feature at a
+time out of a copy: the step classes cost 24 B, the domain 114 B and `legend: false` 31 B. The side
+column, the header and the band they share are the other ~476 B; they share code and cannot be
+measured apart. Since then every fit estimate reads one band of the gutter's remainder. A feature, so
+the budget is re-frozen at the measurement + 2.5 %, rounded up to the next 64 B:
+
+| File | Before | After | Frozen |
+|---|---|---|---|
+| `charts-heatmap.js` | 1819 B | 2464 B | **2560 B** (was 1920) |
+
+The core is untouched. A page that draws the heatmap alone pays 5081 B gzipped; the whole catalog is
+18 040 B.

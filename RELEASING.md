@@ -45,6 +45,9 @@ npm version minor          # or patch
 git push && git push --tags
 ```
 
+On a minor release, also move the README's CDN pin (`affiliate-charts@1.3`) to the new minor. Keep
+`package.json` `description` at 255 characters or fewer: the registry cuts the rest mid-sentence.
+
 `release.yml` runs on the `v*` tag: it checks the tag against `package.json`, re-runs every gate,
 verifies the tarball and publishes with provenance. A version already on the registry exits green.
 

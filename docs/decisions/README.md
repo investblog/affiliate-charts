@@ -31,3 +31,4 @@ context → decision → consequences.
 - [019 — the sankey: short tags beside the nodes, the names in a key, one colour](019-sankey.md)
 - [020 — the pre-release review: what it found and what changed](020-review-fixes.md)
 - [021 — the series: the caller's second colour, and a gutter in percent](021-series-second-and-gutter.md)
+- [022 — the heatmap as a status matrix: a side column, a fixed domain, a header, classes per step](022-heatmap-status-matrix.md)

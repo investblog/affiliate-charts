@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.3.0 — 2026-11-18
+
+The heatmap as a status matrix, from issue #3 (ADR 022). Every new option is opt-in. Every heatmap's
+bytes and ids change once, because of the new class tokens.
+
+- `gutter` (10–50) moves the row labels into a left column on the cells' line: a row takes 26 px instead
+  of 46. Labels end 6 px before the cells and are cut to what the column holds at 343 px; a cut label
+  keeps its full text in a `<title>`.
+- `domain: [lo, hi]` quantises over a fixed range instead of `[0, max]`. The scale prints `format(lo)`
+  and `format(hi)`. A value outside throws; negative values are allowed inside a domain.
+- `cells.short`, one to three characters per column, draws a header above the grid at 11 px. Every
+  column gets one when the longest fits its band at 343 px, every k-th otherwise.
+- `header: false` drops the column labels and `legend: false` drops the scale, together with their height.
+- Class hooks per step: `-cell-N` on cells and swatches, `-gap` on the lines between cells, and
+  `-cell-text-N` on cohort text. A page can repaint the steps for a run-time theme switch and render once.
+- The heatmap's size budget is re-frozen at 2560 B (ADR 012); the module grows from 1819 to 2464 B gzipped.
+
 ## 1.2.0 — 2026-10-11
 
 One option for the funnel, from its first consumer (ADR 010, addendum). Without it every chart keeps its

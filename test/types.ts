@@ -128,6 +128,16 @@ void hm;
 Charts7.heatmap(week, { form: 'calendar' });
 // @ts-expect-error — the display is required
 Charts7.heatmap({ rows: ['a'], cols: ['b'], values: [[1]] });
+// the status matrix (ADR 022)
+Charts7.heatmap({ ...week, short: ['0', '1'] }, { gutter: 30, domain: [0, 60], header: false, legend: false });
+// @ts-expect-error — short is strings
+Charts7.heatmap({ ...week, short: [0, 1] });
+// @ts-expect-error — a domain is two numbers
+Charts7.heatmap(week, { domain: [0] });
+// @ts-expect-error — the header is on or off, not a place
+Charts7.heatmap(week, { header: 'top' });
+// @ts-expect-error — the gutter is a percent number
+Charts7.heatmap(week, { gutter: '30%' });
 // @ts-expect-error — the heatmap module does not type the share
 Charts7.share(devices);
 

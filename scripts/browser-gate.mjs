@@ -96,7 +96,7 @@ async function demo(pw, port) {
 			tile: [['epc', 'cpa', 'cr', 'ftd'], [null], '.chart-value'],
 			rank: [['sources', 'focus'], [null], '.chart-bar'],
 			share: [['devices', 'geo'], ['bar', 'donut'], '.chart-part'],
-			heatmap: [['hours', 'cohorts'], [null], '.chart-cell'],
+			heatmap: [['hours', 'cohorts', 'matrix'], [null], '.chart-cell'],
 			meter: [['tier', 'cap'], [null], '.chart-track'],
 			sankey: [['funnel', 'geo'], [null], '.chart-link'] };
 		for (const [chart, [examples, forms, mark]] of Object.entries(charts)) {
@@ -241,7 +241,13 @@ const MUTATIONS = [
 	{ label: 'the donut stretched', file: 'charts-share.js', edits: [["'viewBox', '0 0 100 100']", "'viewBox', '0 0 100 100', 'preserveAspectRatio', 'none']"]] },
 	{ label: 'bar gaps at the edges', file: 'charts-share.js', edits: [['if (!donut && at) gaps +=', 'if (!donut) gaps +=']] },
 	{ label: 'the heatmap is not registered', file: 'charts-heatmap.js', edits: [['core.heatmap = factory(core._);', 'factory(core._);']] },
-	{ label: 'heatmap steps by rounding', file: 'charts-heatmap.js', edits: [['Math.min(4, Math.floor(v / max * 5))', 'Math.min(4, Math.round(v / max * 4))']] },
+	{ label: 'heatmap steps by rounding', file: 'charts-heatmap.js', edits: [['Math.min(4, Math.floor((v - lo) / (hi - lo) * 5))', 'Math.min(4, Math.round((v - lo) / (hi - lo) * 4))']] },
+	{ label: 'side labels start-anchored over the cells', file: 'charts-heatmap.js', edits: [["'dx', -6, 'text-anchor', 'end']", "'dx', -6]"]] },
+	{ label: 'side labels cut by the whole width', file: 'charts-heatmap.js', edits: [['Math.floor((NARROW * g / 100 - 6) / GLYPH)', 'Math.floor((NARROW - 6) / GLYPH)']] },
+	{ label: 'shorts placed without the gutter', file: 'charts-heatmap.js', edits: [["out += xl(m, _.pct(off + (m + 0.5) * w), 'middle');", "out += xl(m, _.pct((m + 0.5) * w), 'middle');"]] },
+	{ label: 'shorts at 13px', file: 'charts-heatmap.js', edits: [["'font-size', S ? 11 : null", "'font-size', null"]] },
+	{ label: 'the domain ignored', file: 'charts-heatmap.js', edits: [['lo = dom ? dom[0] : 0, hi = dom ? dom[1] : max', 'lo = 0, hi = max']] },
+	{ label: 'cells without their step class', file: 'charts-heatmap.js', edits: [["p + '-cell ' + p + '-cell-' + s,", "p + '-cell',"]] },
 	{ label: 'a null cell filled near zero', file: 'charts-heatmap.js', edits: [["'height', CELL, 'fill', 'transparent'", "'height', CELL, 'fill', ramp[0]"]] },
 	{ label: 'cohort text always white', file: 'charts-heatmap.js', edits: [["STEPS[t][s] >= 0.6 ? INK : '#fff'", "'#fff'"]] },
 	{ label: 'the meter is not registered', file: 'charts-meter.js', edits: [['core.meter = factory(core._);', 'factory(core._);']] },

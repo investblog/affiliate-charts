@@ -5,3 +5,5 @@ body { margin: 0; padding: 16px; font: 14px/1.4 system-ui, sans-serif; }
 .card svg { display: block; }
 #out li.fail { color: #a33330; }
 .card.narrow { max-width: 160px; }
+/* ADR 022: a page repaints a heatmap step through its class; the matrix check reads it back */
+#card-matrix .chart-cell-4 { fill: #010203; }

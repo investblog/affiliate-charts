@@ -27,5 +27,11 @@ The milestone table is in
   issues #1 and #2 (ADR 021); the demo shows both (2026-10-10)
 - [x] 1.2.0 — the funnel's `rates: 'inline'`: the rate on the label line, before the value, from the
   first consumer (ADR 010 addendum; 2026-10-11)
+- [ ] 1.3.0 — the heatmap as a status matrix (issue #3, ADR 022): `gutter`, `domain`, `cells.short`,
+  `header: false`, `legend: false`, class hooks per step. Drawn and gated 2026-11-18. First real-project
+  check passed the same day: 6 × 10, a 448 px slot, two-character shorts, `gutter: 35`, `domain: [0, 60]`;
+  208 px against ~364 px before. Next: release and an answer on the issue
+- [ ] Decide: a public `ramp(brand, theme)` → the five step colours, so a page can write its theme CSS
+  for one render without reading fills from two (asked for by the first matrix consumer; nice to have)
 - [ ] Decide: a lighter `tint` on the dark theme (reported as dull; by design it blends toward the
   surface; a change alters bytes → 1.2.0)

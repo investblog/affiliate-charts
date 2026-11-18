@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>affiliate-charts — live demo</title>
-<meta name="description" content="Affiliate dashboard charts as SVG strings: conversion funnels in counts and money, base and partner commission, losses and negative GGR, under a strict CSP.">
+<meta name="description" content="Affiliate dashboard charts as SVG strings: funnels in counts and money, a GGR-to-commission waterfall, daily series, KPI tiles, rankings, shares, heatmaps, cohorts and status matrices, meters and sankey flows. Renders under a strict CSP.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="affiliate-charts — charts for partner cabinets, as SVG strings">
+<meta property="og:description" content="Funnels, waterfalls, daily series, KPI tiles, rankings, shares, heatmaps, status matrices, meters and flows. Strict CSP, zero dependencies.">
+<meta property="og:url" content="https://investblog.github.io/affiliate-charts/">
+<meta property="og:image" content="https://investblog.github.io/affiliate-charts/docs/social.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
@@ -38,7 +46,10 @@
 	.card h2 { font-size: 13px; font-weight: 600; margin: 0 0 12px; opacity: .7; }
 	.note { color: var(--card-ink); opacity: .6; font-size: 13px; margin: 0; }
 	#stage.sheet { grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); align-items: start; justify-items: stretch; }
-	@media (max-width: 48rem) { main { grid-template-columns: 1fr; } aside { border-right: 0; border-bottom: 1px solid var(--line); } #stage { padding: 16px; } }
+	/* on a phone the cards run edge to edge with 16px gutters, so a 375px screen gives a chart the 343px the
+	   layout promises (ADR 009) */
+	@media (max-width: 48rem) { main { grid-template-columns: 1fr; } aside { border-right: 0; border-bottom: 1px solid var(--line); }
+		#stage { padding: 16px 0; } .card { padding: 20px 16px; border-radius: 0; } }
 </style>
 </head>
 <body>
@@ -236,6 +247,18 @@ function app() {
 			cells: { rows: wd, cols: hrs, values: hv, display: hv.map(function (r) { return r.map(function (v) { return v === null ? null : count(v); }); }) } },
 		cohorts: { option: 'cohorts by first-deposit month', name: 'Still depositing, by first-deposit month', form: 'cohort', format: function (v) { return v + '%'; },
 			cells: { rows: cm, cols: ['M0', 'M1', 'M2', 'M3', 'M4', 'M5'], values: cv, display: cv.map(function (r) { return r.map(function (v) { return v + '%'; }); }) } },
+		// a status matrix (ADR 022): days left before each fact on a review page is re-checked, out of 60; a
+		// side column, a fixed domain, a header of shorts; null is a fact never checked
+		matrix: { option: 'status matrix: days to re-check', name: 'Days left before a re-check, of 60', form: 'grid', gutter: 30, domain: [0, 60],
+			format: function (v) { return v + ' d'; }, cells: (function () {
+				var rows = ['Alpha Casino', 'Bravo Bet', 'Charlie Slots', 'Delta Play', 'Echo Spins', 'Foxtrot Win'];
+				var cols = ['Licence', 'Payments', 'Bonus', 'Wagering', 'Withdrawal', 'Verification', 'Support', 'Games'];
+				var values = rows.map(function (_, r) {
+					return cols.map(function (_, c) { return r === 3 && c === 5 ? null : (r * 17 + c * 23 + r * c * 7) % 61; });
+				});
+				return { rows: rows, cols: cols, short: ['LIC', 'PAY', 'BON', 'WAG', 'WDR', 'KYC', 'SUP', 'GAM'], values: values,
+					display: values.map(function (r) { return r.map(function (v) { return v === null ? null : v ? v + ' days left' : 'due today'; }); }) };
+			})() },
 	};
 	// meters: a revenue-share tier ahead with marks on the way; a CPA cap passed
 	var METERS = {
@@ -302,7 +325,13 @@ function app() {
 		if ($('titled').checked) o.title = ex.name;
 		if (ex.legend) o.legend = LEGEND;
 		if (ex.highlight != null) o.highlight = ex.highlight;
-		if (chart() === 'heatmap') { o.form = ex.form; o.format = ex.format; }
+		if (chart() === 'heatmap') {
+			o.form = ex.form;
+			o.format = ex.format;
+			// the status matrix's side column and fixed domain (ADR 022)
+			if (ex.gutter) o.gutter = ex.gutter;
+			if (ex.domain) o.domain = ex.domain;
+		}
 		// the funnel's rate on the label line (ADR 010, 1.2.0)
 		if (chart() === 'funnel' && $('rates').value) o.rates = 'inline';
 		// the series' second colour (a second series only) and its gutter (ADR 021)
