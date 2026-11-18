@@ -31,7 +31,7 @@ The milestone table is in
   `header: false`, `legend: false`, class hooks per step. First real-project check: 6 × 10, a 448 px
   slot, two-character shorts, `gutter: 35`, `domain: [0, 60]`; 208 px against ~364 px before. Released
   2026-11-18 with a repo revision: npm description, demo phone layout and OpenGraph, `docs/social.png`
-- [ ] Upload `docs/social.png` as the repository's social preview (GitHub Settings; no API)
+- [x] Upload `docs/social.png` as the repository's social preview (GitHub Settings; no API; 2026-11-18)
 - [ ] Decide: a public `ramp(brand, theme)` → the five step colours, so a page can write its theme CSS
   for one render without reading fills from two (asked for by the first matrix consumer; nice to have)
 - [ ] Decide: a lighter `tint` on the dark theme (reported as dull; by design it blends toward the
