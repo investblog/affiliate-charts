@@ -35,4 +35,5 @@ The milestone table is in
 - [ ] Decide: a public `ramp(brand, theme)` → the five step colours, so a page can write its theme CSS
   for one render without reading fills from two (asked for by the first matrix consumer; nice to have)
 - [ ] Decide: a lighter `tint` on the dark theme (reported as dull; by design it blends toward the
-  surface; a change alters bytes → 1.2.0)
+  surface; a change alters bytes, so it needs a minor version — the "→ 1.2.0" written here on
+  2026-10-10 went stale when 1.2.0 shipped the funnel's `rates` instead)
